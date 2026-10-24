@@ -181,14 +181,16 @@ found that workers, not planners, used most of the tokens (principle 3).
   checked in CI, so a regression fails a check instead of waiting for the weekly review.
 - **One authoritative definition** for every piece of knowledge (*The Pragmatic Programmer*'s
   DRY). The optimiser lists things defined in several places and proposes the one place.
-- **Cost per unit of value, not total spend** (FinOps unit economics): tokens and dollars per merged
-  change, by role and by model. Spend that rises with merged changes is fine; cost per change that
+- **Cost per unit of value, not total spend** (FinOps unit economics): tokens per merged change, by
+  role and by model, priced as a share of the weekly limit on a Pro or Max plan and in dollars on
+  an API key. Spend that rises with merged changes is fine; cost per change that
   rises is not.
 - **Where to look for tokens:** changes sent back and built again; what every session loads
   (CLAUDE.md, skill and agent descriptions, MCP servers); the model each role runs on (move a role
   down a tier when it does as well on the same tickets); long sessions.
 - **Measure from what Claude Code reports:** its OpenTelemetry metrics (`claude_code.token.usage`,
-  `claude_code.cost.usage`) and `/usage`. The Claude Console's Usage page is the billing record.
+  `claude_code.cost.usage`) and `/usage`. The billing record is claude.ai's usage settings on a plan
+  and the Claude Console's Usage page on an API key.
 - **Propose, never change.** Each saving becomes a builder ticket with the measured before and
   after. Ops watch raises red when spend passes the budget; the optimiser finds out why.
 
