@@ -82,22 +82,95 @@ screen, one design-token source that generates every copy.
 
 ## How it maps to Claude Code
 
-- **Roles** → agent files in `.claude/agents/`, each with its model, effort and tools.
-- **Procedures** → skills (edge-case checklist, design review from screenshots, release).
-- **The per-change pipeline** → a saved workflow (build → QA and review → integrate).
-- **Scheduled roles** (ops watch, optimiser, librarian) → routines.
-- **Hard rules** → hooks: builders cannot push to `main`; nothing merges without passing checks.
+- **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
+  builders also get their own worktree.
+- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`).
+- **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`.
+- **Scheduled roles** (ops watch, optimiser, librarian) → routines, which `setup` creates in each
+  product because a plugin cannot ship them.
+- **Hard rules** → a plugin hook (only the integrator pushes to `main` or merges) and GitHub branch
+  protection (nothing merges without passing checks).
 
-## Open decisions
+## Decisions
 
-- **Packaging:** a Claude Code plugin, a template repo to copy, or both.
-- **Ticket store:** GitHub Issues, Linear, or markdown files in the repo.
-- **Coordination:** Claude Code agent teams (experimental, off by default) or subagents plus
-  workflows.
-- **Where the decision queue lives:** an artifact page, an issue label, or a file.
-- **Models and budget:** which model per role, and a token budget per change.
-- **What is generic:** the edge-case checklist names failure classes; each product supplies its own
-  fixtures.
+Made on 24 Oct 2026, after checking the Claude Code docs and the plugins that already cover parts
+of this (see Sources).
+
+- **Packaging: one plugin plus a `setup` skill.** The plugin ships the agents, skills, hooks and
+  workflows. Plugins cannot ship scheduled routines, and routines are not shared between people, so
+  `setup` does the per-product part: it creates the routines, turns on branch protection for
+  `main`, adds the labels and the fixtures folder, and writes the product's short CLAUDE.md. There
+  is no template repo to copy and then fall out of sync with.
+- **Tickets: GitHub Issues.** PRs and merges already live there, and `gh` reaches all of it.
+  Markdown ticket files would put every builder on the same files (principle 5); Linear adds
+  another login.
+- **Coordination: subagents plus saved workflows, not agent teams.** Agent teams are experimental
+  and off by default, and the docs steer sequential work to subagents; this pipeline is sequential.
+  Separate sessions messaging each other is the other option, and six of the 31 lessons in a
+  published team built that way are about those messages failing.
+- **Two workflows, split where the founder decides.** `propose` runs steps 1 and 2 and ends with one
+  queue item carrying the brief and the mockups, so the founder decides and picks in one sitting.
+  `build` starts from a decided issue and runs steps 3 to 5. A workflow cannot stop mid-run to ask,
+  so the founder's decision has to fall between workflows.
+- **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
+  issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
+  only if the label proves clumsy.
+- **Red lights: ops watch opens a `red` issue, and the integrator merges nothing while one is
+  open.** A routine cannot push to a phone itself, but an issue notifies through GitHub, and
+  blocking merges is what makes principle 9 hold.
+- **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook reads
+  which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
+  integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
+  nothing local can get around it.
+- **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
+  Opus 5.5 for the product lead, architect and reviewer, Sonnet 5.5 for builders and Haiku 5.5 for
+  ops watch.
+- **Generic vs product:** the plugin holds the edge-case checklist, which names failure classes;
+  each product supplies its own fixtures and keeps its own rules in its own repo.
+- **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
+  parts of this, but they churn (Compound Engineering renamed its commands; GSD's original repo was
+  archived) and their auto-triggered skills would compete with these roles. Ideas are copied with
+  credit once the licence allows: Superpowers' test-first and worktree skills for builders, the
+  lessons in fayerman-source/agent-team, GSD's rule that the orchestrator never writes code, and a
+  local merge queue for the integrator. Products that use the team turn the overlapping plugins off.
+
+## Still open
+
+- **Can a workflow step run in its own worktree?** The docs give `isolation: worktree` to subagents
+  only. If a step cannot, the builder makes its own with plain `git worktree add`.
+- **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? The merge
+  guard has to match it exactly.
+- **Token budget per change:** set after measuring the first ten changes.
+
+## Build order
+
+Each step runs on a real change in a real product before the next one starts. Home Manual comes
+first: its failures are known, so it shows whether the team prevents them.
+
+1. **Guardrails.** Branch protection, the plugin hook and a first `setup`. Done when a builder's
+   push to `main` is blocked. This step also answers the first two open questions.
+2. **Ops watch.** Day one, as the team table says. Its first check is Home Manual's nightly
+   off-site backup.
+3. **`build` with three roles:** one builder (own worktree, tests first from the fixtures), one
+   reviewer combining QA and code review (read only), and the integrator. Run it on three to five
+   real issues.
+4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
+   completes the starting five.
+5. **Grow on demand:** the architect for schema or shared changes; two to four parallel builders
+   once one is routine; then the security reviewer, optimiser, librarian and researcher as their
+   kind of work appears.
+
+## How we'll know it works
+
+One number per cost in the first table, and one for the founder's attention:
+
+| cost | measure | should |
+|---|---|---|
+| Built before deciding | lines deleted within two weeks of being written | fall |
+| Found bugs late | bugs found after merge, against bugs found before | mostly be found before |
+| Many writers, one branch | merges not made by the integrator | be zero |
+| Red lights left red | age of the oldest open `red` issue | be hours, not days |
+| The founder's attention | items in the decision queue each day | fit one sitting |
 
 ## Sources
 
@@ -110,3 +183,10 @@ screen, one design-token source that generates every copy.
   [Claude Code agent teams](https://code.claude.com/docs/en/agent-teams)
 - OpenAI — [Harness engineering](https://openai.com/index/harness-engineering/) (Feb 2026),
   [Symphony](https://openai.com/index/open-source-codex-orchestration-symphony/) (Apr 2026)
+- Claude Code docs, for the decisions — [Plugin components](https://code.claude.com/docs/en/plugins/components),
+  [Hooks](https://code.claude.com/docs/en/hooks), [Workflows](https://code.claude.com/docs/en/workflows),
+  [Routines](https://code.claude.com/docs/en/routines), [Worktrees](https://code.claude.com/docs/en/worktrees)
+- Existing plugins borrowed from — [Superpowers](https://github.com/obra/superpowers),
+  [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
+  [GSD Core](https://github.com/open-gsd/gsd-core),
+  [claude-code-merge-queue](https://github.com/funador/claude-code-merge-queue)
