@@ -8,5 +8,7 @@ the flow and the open decisions.
   rule or a hook; its evidence goes in `docs/`.
 - Keep the design doc current when a decision is made — record the decision and why, not a
   changelog.
+- The repo is the plugin: `.claude-plugin/`, `agents/`, `skills/`, `hooks/`. Run the tests with
+  `python3 -m unittest discover -s tests`.
 - Nothing here is home-manual specific. A rule that only makes sense for one product does not
   belong in the reusable team.
