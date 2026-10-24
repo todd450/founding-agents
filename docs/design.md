@@ -137,11 +137,39 @@ of this (see Sources).
   Airbnb. The founder picks the exemplars, since they are taste; Airbnb for the designer was the
   founder's choice.
 - **Token cost belongs to the optimiser.** Nobody owned it, and principle 3 only works if someone
-  measures it. The optimiser tracks tokens and dollars per merged change, by role and model, and
-  proposes cuts as builder tasks; ops watch raises red when spend passes the budget.
+  measures it. The optimiser tracks tokens per merged change, by role and model, and what they cost:
+  a share of the weekly limit on a Pro or Max plan, dollars on an API key. It proposes cuts as
+  builder tasks; ops watch raises red when spend passes the budget.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect and reviewer, Sonnet 5.5 for builders and Haiku 5.5 for
   ops watch.
+- **On a Pro or Max plan the team paces itself to the weekly limit.** A plan meters a rolling 5-hour
+  window and a weekly limit, not dollars, and the weekly limit is the one a team runs into.
+  Allowance left at the weekly reset is lost; going past it stops runs or bills usage credits at
+  API rates. Before `build` takes a ticket it compares how much of the week's limit is used with
+  how much of the week has gone: ahead of pace it builds only decided issues; behind pace near the
+  reset it also takes work kept for spare allowance. The status line's `rate_limits` field is the
+  only reading a program can get, so `setup` adds a status line that saves it where `build` reads
+  it. Hooks and routines cannot read it, and it updates only while a session is open.
+- **Spare allowance goes to deciding and checking, and to the hours the founder is away.** Work
+  kept for spare allowance is more edge-case scenarios, a second review pass, more mockups to pick
+  from, and the optimiser's and librarian's tickets; never a feature nobody decided on, since
+  building before deciding was the costliest of the four costs. Routines run on the plan with no
+  charge for the cloud machine, so ops watch, the optimiser and the librarian run overnight while
+  the founder decides during the day. A routine or headless run that hits the limit fails instead
+  of pausing, so each run takes one ticket and leaves its issue where the next run picks it up.
+- **Nothing falls through to paid billing by accident.** `claude -p` always uses `ANTHROPIC_API_KEY`
+  when it is set, so no environment meant to run on the plan sets it. No run uses `--bare`, which
+  never reads the plan's login and is due to become the default for `-p`. Fast mode and
+  `/code-review ultra` bill only as usage credits, so the pipeline uses neither. Whether usage
+  credits are on, and their monthly cap, is the founder's call; with them off, a run that hits the
+  limit stops and waits. Every agent and workflow step names its model, because Max otherwise runs
+  Opus 5.5; Opus and Sonnet also have separate limits, so a heavy day of Opus review does not stop
+  the Sonnet builders.
+- **Each person runs the team on their own login.** Anthropic's terms cover one subscriber's
+  ordinary use through the documented paths: `claude -p`, a `claude setup-token` token for CI, and
+  routines. The plugin never ships or shares a token; anyone else who uses it signs in with their
+  own account or an API key.
 - **Generic vs product:** the plugin holds the edge-case checklist, which names failure classes;
   each product supplies its own fixtures and keeps its own rules in its own repo.
 - **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
@@ -156,8 +184,12 @@ of this (see Sources).
 - **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? Not yet
   tested: the test runs headless sessions, which need the `claude` command line signed in. Until
   then the merge guard accepts both `agent-team:integrator` and `integrator`.
-- **Token budget per change:** set after measuring the first ten changes; the optimiser owns it once
-  it exists.
+- **Each change's share of the week:** on a plan the budget is a share of the weekly limit, not
+  dollars, and Anthropic publishes no numbers for the limits. Set it after measuring the first ten
+  changes with `/usage`; the optimiser owns it once it exists.
+- **Can a routine run `build` overnight, and know how much of the week is left?** Running decided
+  issues while the founder is away would use allowance that otherwise expires, but nothing
+  documented shows a routine starting a plugin workflow or reading the plan's remaining limit.
 
 ## Build order
 
@@ -203,6 +235,14 @@ One number per cost in the first table, and one for the founder's attention:
 - Claude Code docs, for the decisions — [Plugin components](https://code.claude.com/docs/en/plugins/components),
   [Hooks](https://code.claude.com/docs/en/hooks), [Workflows](https://code.claude.com/docs/en/workflows),
   [Routines](https://code.claude.com/docs/en/routines), [Worktrees](https://code.claude.com/docs/en/worktrees)
+- Spending a plan — [Using Claude Code with your Pro or Max plan](https://support.claude.com/en/articles/11145838-using-claude-code-with-your-pro-or-max-plan),
+  Claude Code docs on [costs](https://code.claude.com/docs/en/costs),
+  [the status line](https://code.claude.com/docs/en/statusline),
+  [headless runs](https://code.claude.com/docs/en/headless),
+  [authentication](https://code.claude.com/docs/en/authentication),
+  [fast mode](https://code.claude.com/docs/en/fast-mode),
+  [ultrareview](https://code.claude.com/docs/en/ultrareview) and
+  [legal and compliance](https://code.claude.com/docs/en/legal-and-compliance) (read 24 Oct 2026)
 - Each role's exemplar — listed in [exemplars.md](exemplars.md)
 - Existing plugins borrowed from — [Superpowers](https://github.com/obra/superpowers),
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
