@@ -112,6 +112,11 @@ of this (see Sources).
   queue item carrying the brief and the mockups, so the founder decides and picks in one sitting.
   `build` starts from a decided issue and runs steps 3 to 5. A workflow cannot stop mid-run to ask,
   so the founder's decision has to fall between workflows.
+- **Builders get their worktree from the workflow step.** A workflow's `agent()` takes
+  `isolation: 'worktree'` (and `agentType` for a named agent); the workflow script reference
+  documents both, though the public docs page does not. Tested on 24 Oct 2026: such a step ran in
+  a fresh worktree under `.claude/worktrees/` on its own branch, and the worktree was removed when
+  the step changed nothing. No `git worktree add` fallback is needed.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -136,10 +141,9 @@ of this (see Sources).
 
 ## Still open
 
-- **Can a workflow step run in its own worktree?** The docs give `isolation: worktree` to subagents
-  only. If a step cannot, the builder makes its own with plain `git worktree add`.
-- **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? The merge
-  guard has to match it exactly.
+- **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? Not yet
+  tested: the test runs headless sessions, which need the `claude` command line signed in. Until
+  then the merge guard accepts both `agent-team:integrator` and `integrator`.
 - **Token budget per change:** set after measuring the first ten changes.
 
 ## Build order
@@ -148,7 +152,7 @@ Each step runs on a real change in a real product before the next one starts. Ho
 first: its failures are known, so it shows whether the team prevents them.
 
 1. **Guardrails.** Branch protection, the plugin hook and a first `setup`. Done when a builder's
-   push to `main` is blocked. This step also answers the first two open questions.
+   push to `main` is blocked. This step also tests which agent name hooks see.
 2. **Ops watch.** Day one, as the team table says. Its first check is Home Manual's nightly
    off-site backup.
 3. **`build` with three roles:** one builder (own worktree, tests first from the fixtures), one
