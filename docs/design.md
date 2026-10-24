@@ -33,7 +33,7 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other home/account shapes, other language, phone width, failed read, second user, time zones | read and run |
 | Check | **Code reviewer** | every change | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | changes to routes, permissions, storage or model calls | findings | read only |
-| | **Optimiser** | weekly | page cost, dead code, one thing defined in several places | proposes builder tasks |
+| | **Optimiser** | weekly | page cost, token cost per merged change, dead code, one thing defined in several places | proposes builder tasks |
 | Ship & run | **Integrator** | the only merger | rebase, run checks, gate production, cut releases | `main` and production |
 | | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder | read plus notifications |
 | | **Librarian** | after each incident; a weekly prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
@@ -41,6 +41,9 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 **Start with five:** product lead, designer, builders, a reviewer combining QA and code review, and
 the integrator. Add the others when their kind of work appears — except ops watch, which belongs on
 day one.
+
+Each role borrows the practices of a team or person known for that job, such as Airbnb for the
+designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 
 ## How a change flows
 
@@ -127,6 +130,15 @@ of this (see Sources).
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
   nothing local can get around it.
+- **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)). A named practice
+  ("storyboard the journey", "test the merge, not the branch") gives an agent something concrete to
+  do and gives the founder words to correct it with; "be a great designer" does neither. Roles
+  borrow practices, not looks, so the designer works like Airbnb without making products look like
+  Airbnb. The founder picks the exemplars, since they are taste; Airbnb for the designer was the
+  founder's choice.
+- **Token cost belongs to the optimiser.** Nobody owned it, and principle 3 only works if someone
+  measures it. The optimiser tracks tokens and dollars per merged change, by role and model, and
+  proposes cuts as builder tasks; ops watch raises red when spend passes the budget.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect and reviewer, Sonnet 5.5 for builders and Haiku 5.5 for
   ops watch.
@@ -144,7 +156,8 @@ of this (see Sources).
 - **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? Not yet
   tested: the test runs headless sessions, which need the `claude` command line signed in. Until
   then the merge guard accepts both `agent-team:integrator` and `integrator`.
-- **Token budget per change:** set after measuring the first ten changes.
+- **Token budget per change:** set after measuring the first ten changes; the optimiser owns it once
+  it exists.
 
 ## Build order
 
@@ -190,6 +203,7 @@ One number per cost in the first table, and one for the founder's attention:
 - Claude Code docs, for the decisions — [Plugin components](https://code.claude.com/docs/en/plugins/components),
   [Hooks](https://code.claude.com/docs/en/hooks), [Workflows](https://code.claude.com/docs/en/workflows),
   [Routines](https://code.claude.com/docs/en/routines), [Worktrees](https://code.claude.com/docs/en/worktrees)
+- Each role's exemplar — listed in [exemplars.md](exemplars.md)
 - Existing plugins borrowed from — [Superpowers](https://github.com/obra/superpowers),
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
