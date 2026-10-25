@@ -211,13 +211,25 @@ of this (see Sources).
 
 ## Build order
 
-Each step runs on a real change in a real product before the next one starts. The first product
-should be one whose failures are already known, so it shows whether the team prevents them.
+Each step runs on a real change in a real product before the next one starts.
+
+**The first product is the Agent Team website** ([todd450/agent-team-site](https://github.com/todd450/agent-team-site)),
+decided by the founder on 24 Oct 2026. Its job is to find out whether anyone but the founder wants
+the team, and its case study, the record of the team building it, is the only proof the site can
+offer. A fresh product also shows the team from its first commit, with no history it has to work
+around. The four costs stay the evidence the team is shaped by; whether it prevents them shows up
+in the measures below. A website bends the order in two places:
+
+- **The decide lane comes before `build`** (step 4 before step 3): nothing on a site can be built
+  until its words and look are decided.
+- **Ops watch's first check is the site itself:** a nightly check that the Pages deploy is green
+  and every link resolves, since a new site runs no scheduled job of its own yet.
 
 1. **Guardrails.** Branch protection, the plugin hook and a first `setup`. Done when a builder's
-   push to `main` is blocked. This step also tests which agent name hooks see.
-2. **Ops watch.** Day one, as the team table says. Its first check is a scheduled job the first
-   product already runs, such as a nightly off-site backup.
+   push to `main` is blocked. Done on 24 Oct 2026 on the website: its `main` needs a pull request
+   with admins included, and the hook blocked a builder session's push.
+2. **Ops watch.** Day one, as the team table says. Its first check is a scheduled job the product
+   runs, or for a new product a check of the product itself.
 3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
    holdouts), and the integrator. Run it on three to five real issues.
