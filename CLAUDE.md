@@ -10,5 +10,5 @@ the flow and the open decisions.
   changelog.
 - The repo is the plugin: `.claude-plugin/`, `agents/`, `skills/`, `hooks/`. Run the tests with
   `python3 -m unittest discover -s tests`.
-- Nothing here is home-manual specific. A rule that only makes sense for one product does not
+- Nothing here is product specific. A rule that only makes sense for one product does not
   belong in the reusable team.
