@@ -1,14 +1,14 @@
 {
-  "name": "agent-team",
+  "name": "founding-agents",
   "owner": {
     "name": "Todd Holloway"
   },
   "metadata": {
-    "description": "The agent-team plugin: a reusable team of Claude Code agents for one founder"
+    "description": "The Founding Agents plugin: a reusable team of Claude Code agents for one founder"
   },
   "plugins": [
     {
-      "name": "agent-team",
+      "name": "founding-agents",
       "description": "A reusable team of Claude Code agents that builds products alongside one founder",
       "source": "./"
     }

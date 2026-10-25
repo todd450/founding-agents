@@ -1,12 +1,12 @@
 ---
 name: setup
-description: Set up a product repo for the agent team. Use when adding the agent team to a product, or when the founder asks to turn on or redo branch protection. Turns on branch protection for the default branch after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, or when the founder asks to turn on or redo branch protection. Turns on branch protection for the default branch after the founder confirms.
 ---
 
-# Set up a product for the agent team
+# Set up a product for Founding Agents
 
 This first version covers branch protection only. Routines, labels and fixtures arrive with the
-build steps that use them (`docs/design.md` in the agent-team repo, "Build order").
+build steps that use them (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. `protect_branch.py` sits in this skill's directory.
 
