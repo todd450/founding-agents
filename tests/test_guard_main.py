@@ -98,10 +98,14 @@ class GuardTest(unittest.TestCase):
         self.assertBlocked("gh pr merge 1", agent="agent-team:reviewer")
         self.assertBlocked("gh pr merge 1", agent="other-plugin:builder")
 
+    def test_blocks_an_integrator_from_outside_the_plugin(self):
+        for agent in ("integrator", "other-plugin:integrator"):
+            self.assertBlocked("gh pr merge 1", agent=agent)
+            self.assertBlocked("git push origin main", agent=agent)
+
     def test_allows_the_integrator(self):
-        for agent in ("agent-team:integrator", "integrator"):
-            self.assertAllowed("gh pr merge 1 --merge", agent=agent)
-            self.assertAllowed("git push origin main", agent=agent)
+        self.assertAllowed("gh pr merge 1 --merge", agent="agent-team:integrator")
+        self.assertAllowed("git push origin main", agent="agent-team:integrator")
 
     def test_ignores_commands_that_only_mention_push_or_merge(self):
         for command in (

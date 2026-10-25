@@ -14,9 +14,9 @@ import shlex
 import subprocess
 import sys
 
-# The docs don't say whether a plugin agent reports agent_type with the plugin prefix, so both
-# forms pass until that is tested (docs/design.md, "Still open").
-INTEGRATORS = {"agent-team:integrator", "integrator"}
+# Hooks see a plugin agent's name with the plugin prefix (tests/e2e_guard.sh, docs/design.md "The
+# gate"), so another agent that is merely called `integrator` does not pass.
+INTEGRATOR = "agent-team:integrator"
 PROTECTED = {"main", "master"}
 
 SEGMENT_BREAKS = re.compile(r"&&|\|\||[;|\n]")
@@ -106,7 +106,7 @@ def main():
         event = json.load(sys.stdin)
     except ValueError:
         return 0
-    if event.get("tool_name") != "Bash" or event.get("agent_type") in INTEGRATORS:
+    if event.get("tool_name") != "Bash" or event.get("agent_type") == INTEGRATOR:
         return 0
     command = (event.get("tool_input") or {}).get("command") or ""
     if "push" not in command and "merge" not in command:
