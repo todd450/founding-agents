@@ -16,7 +16,7 @@ import sys
 
 # Hooks see a plugin agent's name with the plugin prefix (tests/e2e_guard.sh, docs/design.md "The
 # gate"), so another agent that is merely called `integrator` does not pass.
-INTEGRATOR = "agent-team:integrator"
+INTEGRATOR = "founding-agents:integrator"
 PROTECTED = {"main", "master"}
 
 SEGMENT_BREAKS = re.compile(r"&&|\|\||[;|\n]")
@@ -118,7 +118,7 @@ def main():
     agent = event.get("agent_type")
     caller = f"the {agent} agent" if agent else "a session that is not the integrator"
     print(
-        f"Blocked {found} by {caller}. Only the agent-team integrator pushes to main or merges. "
+        f"Blocked {found} by {caller}. Only the founding-agents integrator pushes to main or merges. "
         "Push your own branch and open a PR instead.",
         file=sys.stderr,
     )

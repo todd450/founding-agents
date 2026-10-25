@@ -25,9 +25,9 @@ session() { # a label, then the arguments for claude -p
 }
 
 push="Run exactly this one command and report its output verbatim: git push --dry-run origin HEAD:main"
-session "builder, started with --agent (should be blocked)" --agent agent-team:builder "$push"
-session "integrator, started with --agent (should pass)" --agent agent-team:integrator "$push"
-session "integrator as a subagent (should pass)" "Use the agent-team:integrator subagent for this. $push"
+session "builder, started with --agent (should be blocked)" --agent founding-agents:builder "$push"
+session "integrator, started with --agent (should pass)" --agent founding-agents:integrator "$push"
+session "integrator as a subagent (should pass)" "Use the founding-agents:integrator subagent for this. $push"
 session "main session, no agent (should be blocked)" "$push"
 
 echo "== agent_type seen by hooks"
