@@ -5,9 +5,9 @@ exist; after that it records the decisions behind them.
 
 ## Where it comes from
 
-Home Manual was built from June to October 2026 by one founder and many parallel Claude sessions:
-5,410 commits in under five months, with no real users yet. Its history showed four costs, each of
-which this team is shaped to prevent:
+The founder's first product was built from June to October 2026 with many parallel Claude
+sessions: 5,410 commits in under five months, with no real users yet. Its history showed four
+costs, each of which this team is shaped to prevent:
 
 | cost | evidence in that history | what the team does instead |
 |---|---|---|
@@ -58,7 +58,7 @@ starts with the context it needs.
 
 ## Principles
 
-From Home Manual's history, and from what published agent teams reported by October 2026:
+From the first product's history, and from what published agent teams reported by October 2026:
 
 1. **Decide before building.** Mockups and briefs are cheap; production code carries costs forever
    (fixes, guards, translations, review).
@@ -73,8 +73,8 @@ From Home Manual's history, and from what published agent teams reported by Octo
 6. **A gate before production.** At two to four builders a merge queue costs little; large teams
    dropped single merge gates only at hundreds of agents or tens of thousands of merges a day.
 7. **Lessons become code.** A rule that must hold is a test, a lint rule or a hook. The
-   always-loaded rules file is a short map into `docs/` (Home Manual's grew to 4,392 lines before it
-   was cut to 337; OpenAI found the same).
+   always-loaded rules file is a short map into `docs/` (the first product's grew to 4,392 lines
+   before it was cut to 337; OpenAI found the same).
 8. **Least privilege per role, and per-action approval** by a checking model instead of prompts.
 9. **A red scheduled check stops other work** until it is fixed.
 10. **Protect the founder's attention.** One decision queue, read once a day; each item carries a
