@@ -33,7 +33,7 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
 | Check | **Code reviewer** | every change | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | changes to routes, permissions, storage or model calls | findings | read only |
-| | **Optimiser** | weekly | page cost, dead code, one thing defined in several places | proposes builder tasks |
+| | **Optimiser** | weekly | page cost, token cost per merged change, dead code, one thing defined in several places | proposes builder tasks |
 | Ship & run | **Integrator** | the only merger | rebase, run checks, gate production, cut releases | `main` and production |
 | | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder | read plus notifications |
 | | **Librarian** | after each incident; a weekly prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
@@ -41,6 +41,9 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 **Start with five:** product lead, designer, builders, a reviewer combining QA and code review, and
 the integrator. Add the others when their kind of work appears — except ops watch, which belongs on
 day one.
+
+Each role borrows the practices of a team or person known for that job, such as Airbnb for the
+designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 
 ## How a change flows
 
@@ -113,6 +116,11 @@ of this (see Sources).
   queue item carrying the brief and the mockups, so the founder decides and picks in one sitting.
   `build` starts from a decided issue and runs steps 3 to 5. A workflow cannot stop mid-run to ask,
   so the founder's decision has to fall between workflows.
+- **Builders get their worktree from the workflow step.** A workflow's `agent()` takes
+  `isolation: 'worktree'` (and `agentType` for a named agent); the workflow script reference
+  documents both, though the public docs page does not. Tested on 24 Oct 2026: such a step ran in
+  a fresh worktree under `.claude/worktrees/` on its own branch, and the worktree was removed when
+  the step changed nothing. No `git worktree add` fallback is needed.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -123,9 +131,46 @@ of this (see Sources).
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
   nothing local can get around it.
+- **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)). A named practice
+  ("storyboard the journey", "test the merge, not the branch") gives an agent something concrete to
+  do and gives the founder words to correct it with; "be a great designer" does neither. Roles
+  borrow practices, not looks, so the designer works like Airbnb without making products look like
+  Airbnb. The founder picks the exemplars, since they are taste; Airbnb for the designer was the
+  founder's choice.
+- **Token cost belongs to the optimiser.** Nobody owned it, and principle 3 only works if someone
+  measures it. The optimiser tracks tokens per merged change, by role and model, and what they cost:
+  a share of the weekly limit on a Pro or Max plan, dollars on an API key. It proposes cuts as
+  builder tasks; ops watch raises red when spend passes the budget.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect and reviewer, Sonnet 5.5 for builders and Haiku 5.5 for
   ops watch.
+- **On a Pro or Max plan the team paces itself to the weekly limit.** A plan meters a rolling 5-hour
+  window and a weekly limit, not dollars, and the weekly limit is the one a team runs into.
+  Allowance left at the weekly reset is lost; going past it stops runs or bills usage credits at
+  API rates. Before `build` takes a ticket it compares how much of the week's limit is used with
+  how much of the week has gone: ahead of pace it builds only decided issues; behind pace near the
+  reset it also takes work kept for spare allowance. The status line's `rate_limits` field is the
+  only reading a program can get, so `setup` adds a status line that saves it where `build` reads
+  it. Hooks and routines cannot read it, and it updates only while a session is open.
+- **Spare allowance goes to deciding and checking, and to the hours the founder is away.** Work
+  kept for spare allowance is more edge-case scenarios, a second review pass, more mockups to pick
+  from, and the optimiser's and librarian's tickets; never a feature nobody decided on, since
+  building before deciding was the costliest of the four costs. Routines run on the plan with no
+  charge for the cloud machine, so ops watch, the optimiser and the librarian run overnight while
+  the founder decides during the day. A routine or headless run that hits the limit fails instead
+  of pausing, so each run takes one ticket and leaves its issue where the next run picks it up.
+- **Nothing falls through to paid billing by accident.** `claude -p` always uses `ANTHROPIC_API_KEY`
+  when it is set, so no environment meant to run on the plan sets it. No run uses `--bare`, which
+  never reads the plan's login and is due to become the default for `-p`. Fast mode and
+  `/code-review ultra` bill only as usage credits, so the pipeline uses neither. Whether usage
+  credits are on, and their monthly cap, is the founder's call; with them off, a run that hits the
+  limit stops and waits. Every agent and workflow step names its model, because Max otherwise runs
+  Opus 5.5; Opus and Sonnet also have separate limits, so a heavy day of Opus review does not stop
+  the Sonnet builders.
+- **Each person runs the team on their own login.** Anthropic's terms cover one subscriber's
+  ordinary use through the documented paths: `claude -p`, a `claude setup-token` token for CI, and
+  routines. The plugin never ships or shares a token; anyone else who uses it signs in with their
+  own account or an API key.
 - **Generic vs product:** the plugin holds the edge-case checklist, which names failure classes;
   each product supplies its own fixtures and holdouts, and keeps its own rules in its own repo.
 - **Holdout scenarios: QA keeps some edge-case scenarios hidden from builders.** For each failure
@@ -152,11 +197,15 @@ of this (see Sources).
 
 ## Still open
 
-- **Can a workflow step run in its own worktree?** The docs give `isolation: worktree` to subagents
-  only. If a step cannot, the builder makes its own with plain `git worktree add`.
-- **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? The merge
-  guard has to match it exactly.
-- **Token budget per change:** set after measuring the first ten changes.
+- **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? Not yet
+  tested: the test runs headless sessions, which need the `claude` command line signed in. Until
+  then the merge guard accepts both `agent-team:integrator` and `integrator`.
+- **Each change's share of the week:** on a plan the budget is a share of the weekly limit, not
+  dollars, and Anthropic publishes no numbers for the limits. Set it after measuring the first ten
+  changes with `/usage`; the optimiser owns it once it exists.
+- **Can a routine run `build` overnight, and know how much of the week is left?** Running decided
+  issues while the founder is away would use allowance that otherwise expires, but nothing
+  documented shows a routine starting a plugin workflow or reading the plan's remaining limit.
 
 ## Build order
 
@@ -164,7 +213,7 @@ Each step runs on a real change in a real product before the next one starts. Th
 should be one whose failures are already known, so it shows whether the team prevents them.
 
 1. **Guardrails.** Branch protection, the plugin hook and a first `setup`. Done when a builder's
-   push to `main` is blocked. This step also answers the first two open questions.
+   push to `main` is blocked. This step also tests which agent name hooks see.
 2. **Ops watch.** Day one, as the team table says. Its first check is a scheduled job the first
    product already runs, such as a nightly off-site backup.
 3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
@@ -202,6 +251,15 @@ One number per cost in the first table, and one for the founder's attention:
 - Claude Code docs, for the decisions — [Plugin components](https://code.claude.com/docs/en/plugins/components),
   [Hooks](https://code.claude.com/docs/en/hooks), [Workflows](https://code.claude.com/docs/en/workflows),
   [Routines](https://code.claude.com/docs/en/routines), [Worktrees](https://code.claude.com/docs/en/worktrees)
+- Spending a plan — [Using Claude Code with your Pro or Max plan](https://support.claude.com/en/articles/11145838-using-claude-code-with-your-pro-or-max-plan),
+  Claude Code docs on [costs](https://code.claude.com/docs/en/costs),
+  [the status line](https://code.claude.com/docs/en/statusline),
+  [headless runs](https://code.claude.com/docs/en/headless),
+  [authentication](https://code.claude.com/docs/en/authentication),
+  [fast mode](https://code.claude.com/docs/en/fast-mode),
+  [ultrareview](https://code.claude.com/docs/en/ultrareview) and
+  [legal and compliance](https://code.claude.com/docs/en/legal-and-compliance) (read 24 Oct 2026)
+- Each role's exemplar — listed in [exemplars.md](exemplars.md)
 - Existing plugins borrowed from — [Superpowers](https://github.com/obra/superpowers),
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
