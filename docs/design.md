@@ -29,8 +29,8 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Researcher** | ongoing | interview guides, synthesis of what users said, the one metric | no code; never contacts users without the founder |
 | | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
 | Build | **Architect** | each new surface; any schema or shared change | the plan builders work from, with the day-one defaults set | plans, schema review |
-| | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the edge-case fixtures | their own worktree |
-| | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other home/account shapes, other language, phone width, failed read, second user, time zones | read and run |
+| | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
+| | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
 | Check | **Code reviewer** | every change | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | changes to routes, permissions, storage or model calls | findings | read only |
 | | **Optimiser** | weekly | page cost, token cost per merged change, dead code, one thing defined in several places | proposes builder tasks |
@@ -63,7 +63,8 @@ From Home Manual's history, and from what published agent teams reported by Octo
 1. **Decide before building.** Mockups and briefs are cheap; production code carries costs forever
    (fixes, guards, translations, review).
 2. **The builder never grades itself.** A separate evaluator drives the real app against hard pass
-   marks. Expect to tune it: Anthropic found Claude a lenient QA agent out of the box.
+   marks, including scenarios the builder never saw. Expect to tune it: Anthropic found Claude a
+   lenient QA agent out of the box.
 3. **The strongest model plans; cheaper models build.** Cursor's current swarm splits planners and
    workers this way; workers used most of the tokens.
 4. **Work runs as tickets, not sessions.** One ticket, one agent run, one worktree (OpenAI's
@@ -102,8 +103,8 @@ of this (see Sources).
 - **Packaging: one plugin plus a `setup` skill.** The plugin ships the agents, skills, hooks and
   workflows. Plugins cannot ship scheduled routines, and routines are not shared between people, so
   `setup` does the per-product part: it creates the routines, turns on branch protection for
-  `main`, adds the labels and the fixtures folder, and writes the product's short CLAUDE.md. There
-  is no template repo to copy and then fall out of sync with.
+  `main`, adds the labels, the fixtures folder and the holdout repo, and writes the product's short
+  CLAUDE.md. There is no template repo to copy and then fall out of sync with.
 - **Tickets: GitHub Issues.** PRs and merges already live there, and `gh` reaches all of it.
   Markdown ticket files would put every builder on the same files (principle 5); Linear adds
   another login.
@@ -171,7 +172,22 @@ of this (see Sources).
   routines. The plugin never ships or shares a token; anyone else who uses it signs in with their
   own account or an API key.
 - **Generic vs product:** the plugin holds the edge-case checklist, which names failure classes;
-  each product supplies its own fixtures and keeps its own rules in its own repo.
+  each product supplies its own fixtures and holdouts, and keeps its own rules in its own repo.
+- **Holdout scenarios: QA keeps some edge-case scenarios hidden from builders.** For each failure
+  class, some scenarios are visible fixtures that builders write their tests from; the rest are
+  holdouts that only edge-case QA reads. A builder that writes tests from the cases it can see and
+  then makes them pass has shown its code fits those cases, not that it handles the class. Agents
+  shape code to the tests in front of them without meaning to, and Claude is a lenient QA agent
+  out of the box (principle 2), so a scenario the builder never saw is the one check it cannot
+  have fitted. StrongDM keeps its scenarios outside the codebase for the same reason, like a
+  held-back test set. A change that passes every visible test and fails a holdout is exactly what
+  this exists to catch.
+- **How holdouts stay hidden.** They live in a separate private repo that `setup` creates and
+  clones outside the product's folder, because a builder's worktree holds everything in the
+  product repo. A plugin hook blocks builder agents from reading that path; like the merge guard
+  it is best-effort, since a builder's shell can reach any file on the machine. When a holdout
+  fails, QA sends back the failure class and what went wrong, not the scenario. A scenario a
+  builder has seen moves into the visible fixtures, and a new holdout replaces it.
 - **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
   parts of this, but they churn (Compound Engineering renamed its commands; GSD's original repo was
   archived) and their auto-triggered skills would compete with these roles. Ideas are copied with
@@ -193,16 +209,16 @@ of this (see Sources).
 
 ## Build order
 
-Each step runs on a real change in a real product before the next one starts. Home Manual comes
-first: its failures are known, so it shows whether the team prevents them.
+Each step runs on a real change in a real product before the next one starts. The first product
+should be one whose failures are already known, so it shows whether the team prevents them.
 
 1. **Guardrails.** Branch protection, the plugin hook and a first `setup`. Done when a builder's
    push to `main` is blocked. This step also tests which agent name hooks see.
-2. **Ops watch.** Day one, as the team table says. Its first check is Home Manual's nightly
-   off-site backup.
-3. **`build` with three roles:** one builder (own worktree, tests first from the fixtures), one
-   reviewer combining QA and code review (read only), and the integrator. Run it on three to five
-   real issues.
+2. **Ops watch.** Day one, as the team table says. Its first check is a scheduled job the first
+   product already runs, such as a nightly off-site backup.
+3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
+   one reviewer combining QA and code review (read only; runs the visible fixtures and the
+   holdouts), and the integrator. Run it on three to five real issues.
 4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
    completes the starting five.
 5. **Grow on demand:** the architect for schema or shared changes; two to four parallel builders
@@ -248,3 +264,5 @@ One number per cost in the first table, and one for the founder's attention:
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
   [claude-code-merge-queue](https://github.com/funador/claude-code-merge-queue)
+- Holdout scenarios — [StrongDM Software Factory](https://rywalker.com/research/strongdm-factory)
+  (a third-party write-up, Sep 2026)
