@@ -131,6 +131,11 @@ of this (see Sources).
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
   nothing local can get around it.
+- **The hook trusts only `agent-team:integrator`.** Hooks see a plugin agent's name with the plugin
+  prefix, both when a session starts with `--agent` and when the agent runs as a subagent; a
+  session with no agent reports none. Tested on 24 Oct 2026 with `tests/e2e_guard.sh`: the builder
+  and the plain session were blocked, the integrator passed both ways. Accepting the bare name
+  would let any user or project agent called `integrator` merge, so the guard no longer does.
 - **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)). A named practice
   ("storyboard the journey", "test the merge, not the branch") gives an agent something concrete to
   do and gives the founder words to correct it with; "be a great designer" does neither. Roles
@@ -197,9 +202,6 @@ of this (see Sources).
 
 ## Still open
 
-- **What name does a plugin agent report to hooks:** bare, or with the plugin prefix? Not yet
-  tested: the test runs headless sessions, which need the `claude` command line signed in. Until
-  then the merge guard accepts both `agent-team:integrator` and `integrator`.
 - **Each change's share of the week:** on a plan the budget is a share of the weekly limit, not
   dollars, and Anthropic publishes no numbers for the limits. Set it after measuring the first ten
   changes with `/usage`; the optimiser owns it once it exists.
