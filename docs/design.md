@@ -214,11 +214,11 @@ of this (see Sources).
 Each step runs on a real change in a real product before the next one starts.
 
 **The first product is the Agent Team website** ([todd450/agent-team-site](https://github.com/todd450/agent-team-site)),
-decided by the founder on 24 Oct 2026. Its job is to find out whether anyone but the founder wants
-the team, and its case study, the record of the team building it, is the only proof the site can
-offer. A fresh product also shows the team from its first commit, with no history it has to work
-around. The four costs stay the evidence the team is shaped by; whether it prevents them shows up
-in the measures below. A website bends the order in two places:
+decided by the founder on 24 Oct 2026. It is a test bed: a small real product that gives every build
+step a real change to run on, not a launch to outside users. A fresh product also shows the team
+from its first commit, with no history it has to work around. The four costs stay the evidence the
+team is shaped by; whether it prevents them shows up in the measures below. The plugin repo stays
+private, since the founder is the only user for now. A website bends the order in two places:
 
 - **The decide lane comes before `build`** (step 4 before step 3): nothing on a site can be built
   until its words and look are decided.
