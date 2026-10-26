@@ -130,19 +130,8 @@ Sources: Kent Beck, *Test-Driven Development: By Example* (Addison-Wesley, 2002)
 ## Edge-case QA — Elisabeth Hendrickson
 
 The failure checklist names classes of failure. Hendrickson's heuristics generate the cases inside
-each class, and her exploratory testing drives the real app instead of reading the code.
-
-- **Zero, one, many:** none, exactly one, and more than the screen expects, for every list, count
-  and attachment.
-- **Goldilocks:** too small, too big, just right: empty text, the longest name, the largest file,
-  the last day of the month.
-- **Interrupt:** drop the network, reload, go back, submit twice, close in the middle of a save.
-- **Follow the data:** create, read, update and delete each thing, then check every place it
-  appears.
-- **Charters, not scripts:** each session is "explore <area> with <resource> to discover
-  <information>".
-- **Each failure carries its steps, what was expected, what happened and the fixture that
-  reproduces it,** so the builder can turn it into a test.
+each class, and her exploratory testing drives the real app instead of reading the code. Until the
+team splits QA from code review, the practices are in [agents/reviewer.md](../agents/reviewer.md).
 
 Sources: Elisabeth Hendrickson, [*Explore It!*](https://pragprog.com/titles/ehxta/explore-it/)
 (Pragmatic Bookshelf, 2013), and her Test Heuristics Cheat Sheet (with James Lyndsay and Dale
@@ -150,12 +139,9 @@ Emery).
 
 ## Code reviewer — Google's code review guide
 
-- **The standard:** approve a change once it definitely improves the code's overall health, even if
-  it is not perfect; never approve one that makes it worse.
-- **Look at:** design, behaviour, complexity (could it be simpler; is it built for needs
-  nobody has yet), tests, naming, comments, consistency with the code around it.
-- **Mark polish as "Nit:"** so the builder knows it may skip it; anything unmarked must be fixed.
-- **Send back a change that is too large** and ask for it to be split, without reviewing it.
+Google's guide gives the reviewer a standard to approve against and words for what must be fixed
+and what may be skipped. The practices are in [agents/reviewer.md](../agents/reviewer.md), with
+edge-case QA's.
 
 Sources: Google, [The standard of code review](https://google.github.io/eng-practices/review/reviewer/standard.html)
 and [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html).
