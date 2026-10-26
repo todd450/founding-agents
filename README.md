@@ -3,9 +3,9 @@
 A reusable team of Claude Code agents that builds products alongside one founder. The founder
 decides scope and taste and talks to users; the agents plan, build, check, ship and watch.
 
-**Status:** step 1 of the build order is done: the plugin skeleton, the merge guard and a first
-`setup` skill for branch protection, running on the first product, the Founding Agents website. No team
-runs yet.
+**Status:** steps 1 and 2 of the build order are done, running on the first product, the Founding
+Agents website: the plugin skeleton, the merge guard, and a `setup` skill that turns on branch
+protection and installs ops watch's nightly site check. No team runs yet.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.
