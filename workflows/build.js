@@ -17,6 +17,8 @@ const raw = args && typeof args === 'object' ? args.issue : args
 const issue = Number(String(raw ?? '').replace(/[^0-9]/g, ''))
 if (!issue) throw new Error('Name the issue to build, e.g. /founding-agents:build 12')
 
+const decided = t => t.decision ? `\n\nThe founder decided: ${t.decision}\nThe change builds what they picked; the mockups show the design, not code to copy.` : ''
+
 const TICKET = {
   type: 'object',
   properties: {
@@ -25,8 +27,9 @@ const TICKET = {
     repo: { type: 'string', description: 'owner/name' },
     title: { type: 'string' },
     body: { type: 'string' },
+    decision: { type: 'string', description: "the founder's pick and notes from the comments, with the mockup branch if there is one; empty if none" },
   },
-  required: ['ready', 'reason', 'repo', 'title', 'body'],
+  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision'],
 }
 const BUILT = {
   type: 'object',
@@ -70,9 +73,9 @@ phase('Check')
 const ticket = await agent(
   `Check whether issue #${issue} in this repo can be built. Read only; change nothing.
 - \`gh repo view --json nameWithOwner\` gives the repo.
-- \`gh issue view ${issue} --json title,body,state,labels\`: it must be open and labelled \`decided\`.
+- \`gh issue view ${issue} --json title,body,state,labels,comments\`: it must be open and labelled \`decided\`.
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${issue} is that issue. A red scheduled check stops other work until it is fixed.
-Return ready, and when it is not, the reason in one sentence. Return the title and body as they are.`,
+Return ready, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-${issue}\`) as the decision.`,
   { label: `check #${issue}`, phase: 'Check', model: 'haiku', effort: 'low', schema: TICKET },
 )
 if (!ticket) throw new Error(`Could not read issue #${issue}`)
@@ -84,7 +87,7 @@ for (let round = 1; round <= ROUNDS; round++) {
   const task = round === 1
     ? `Build issue #${issue} in ${ticket.repo}: ${ticket.title}
 
-${ticket.body}
+${ticket.body}${decided(ticket)}
 
 Work on a branch named \`build/issue-${issue}\`. Open the PR against the default branch, and end its description with "Closes #${issue}".`
     : `The reviewer sent PR #${built.pr_number} for issue #${issue} back. Check out its branch in your worktree with \`gh pr checkout ${built.pr_number}\`, fix every finding that is not a Nit, rerun the whole suite, and push to the same branch. Do not open a new PR.
@@ -103,7 +106,7 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
   review = await agent(
     `Review PR #${built.pr_number} in ${ticket.repo}, which builds issue #${issue}: ${ticket.title}
 
-${ticket.body}
+${ticket.body}${decided(ticket)}
 
 Post your review on the PR, then return the verdict and every finding.`,
     { label: `reviewer, round ${round}`, phase: 'Review', agentType: 'founding-agents:reviewer', model: 'opus', schema: REVIEW },
