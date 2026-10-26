@@ -1,0 +1,124 @@
+export const meta = {
+  name: 'propose',
+  description: 'Turn an idea into one decision for the founder: the product lead writes the brief, the designer mocks up options, and one queue item carries both',
+  whenToUse: 'When the founder has an idea or an issue to shape before anything is built, e.g. /founding-agents:propose 7 or /founding-agents:propose "a pricing page"',
+  phases: [
+    { title: 'Brief', detail: 'the product lead writes the brief and recommends', model: 'opus' },
+    { title: 'Design', detail: 'the designer storyboards and mocks up two or three options', model: 'opus' },
+    { title: 'Queue', detail: 'one needs-founder item with the brief, the options and their costs', model: 'haiku' },
+  ],
+}
+
+const raw = args && typeof args === 'object' ? (args.issue ?? args.idea) : args
+const text = String(raw ?? '').trim()
+const issue = /^#?\d+$/.test(text) ? Number(text.replace('#', '')) : 0
+if (!text) throw new Error('Name an issue or describe the idea, e.g. /founding-agents:propose 7')
+
+const BRIEF = {
+  type: 'object',
+  properties: {
+    repo: { type: 'string', description: 'owner/name' },
+    issue: { type: 'integer' },
+    recommend: { type: 'string', enum: ['go', 'no-go'] },
+    reason: { type: 'string', description: 'the recommendation in one sentence' },
+    overruled: { type: 'boolean', description: "true when the founder has said in a comment to go ahead despite a no-go" },
+  },
+  required: ['repo', 'issue', 'recommend', 'reason', 'overruled'],
+}
+const DESIGN = {
+  type: 'object',
+  properties: {
+    branch: { type: 'string' },
+    stopped_because: { type: 'string', description: 'why there are no mockups, such as screenshots that could not be taken; empty otherwise' },
+    recommended: { type: 'string', description: 'the letter of the option you recommend' },
+    options: {
+      type: 'array',
+      maxItems: 3,
+      items: {
+        type: 'object',
+        properties: {
+          letter: { type: 'string' },
+          name: { type: 'string' },
+          stars: { type: 'integer', description: 'where it sits from 1 to 11 stars' },
+          what: { type: 'string', description: 'what the option does at the key moment, in two sentences' },
+          cost: { type: 'string', description: 'what it costs to build, against the appetite' },
+          html: { type: 'string', description: 'path of the page on the branch' },
+          phone: { type: 'string', description: 'path of the phone screenshot on the branch' },
+          desktop: { type: 'string', description: 'path of the desktop screenshot on the branch' },
+        },
+        required: ['letter', 'name', 'stars', 'what', 'cost', 'html', 'phone', 'desktop'],
+      },
+    },
+  },
+  required: ['branch', 'stopped_because', 'recommended', 'options'],
+}
+const POSTED = {
+  type: 'object',
+  properties: { comment_url: { type: 'string' } },
+  required: ['comment_url'],
+}
+
+phase('Brief')
+const brief = await agent(
+  issue
+    ? `Shape issue #${issue} into a brief. Read it and its comments. Keep your recommendation honest even if the founder has overruled an earlier no-go in a comment, and report the overrule. If its body is already a full brief, keep it and fix only what is missing; otherwise write the brief into the issue's body with \`gh issue edit ${issue} --body-file -\`.`
+    : `Shape this idea into a brief, and open it as a new issue titled "Brief: <the idea in a few words>":
+
+${text}`,
+  { label: 'product lead', phase: 'Brief', agentType: 'founding-agents:product-lead', model: 'opus', schema: BRIEF },
+)
+if (!brief) throw new Error('The product lead returned nothing')
+
+let design = null
+if (brief.recommend === 'go' || brief.overruled) {
+  design = await agent(
+    `Mock up issue #${brief.issue} in ${brief.repo}. Read its brief first: the who, the appetite and the no-gos bound the options. Storyboard the journey, then make two or three options at different stars, each an HTML page with phone and desktop screenshots, on the branch \`propose/issue-${brief.issue}\`. Push the branch and return every option with its paths on the branch.`,
+    { label: 'designer', phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', schema: DESIGN },
+  )
+  if (!design) throw new Error('The designer returned nothing')
+  if (design.stopped_because || design.options.length < 2) {
+    return { issue: brief.issue, status: 'stopped in design', reason: design.stopped_because || 'fewer than two options' }
+  }
+}
+
+const file = path => `https://github.com/${brief.repo}/blob/${design.branch}/${path}`
+const lines = [
+  `**Decision needed:** go or no-go on the brief above${design ? ', and which option' : ''}. The product lead recommends **${brief.recommend}**: ${brief.reason}`,
+  '',
+]
+if (brief.overruled && brief.recommend === 'no-go') lines.push('You overruled the no-go, so here are the options.', '')
+if (design) {
+  for (const o of design.options) {
+    const pick = o.letter === design.recommended ? ' (recommended)' : ''
+    lines.push(
+      `### ${o.letter}. ${o.name}${pick}: ${o.stars} stars`,
+      '',
+      `${o.what} **Cost:** ${o.cost}`,
+      '',
+      `<img src="${file(o.phone)}?raw=true" width="195" alt="${o.letter} on a phone"> <img src="${file(o.desktop)}?raw=true" width="560" alt="${o.letter} on a desktop">`,
+      '',
+      `[Open the page](${file(o.html)})`,
+      '',
+    )
+  }
+}
+lines.push(
+  design
+    ? `**To decide:** reply with the letter you pick and any notes, then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
+    : `**To decide:** to overrule the no-go, say so in a reply and run \`/founding-agents:propose ${brief.issue}\` again for mockups. Otherwise close the issue; nothing is kept for later.`,
+)
+const item = lines.join('\n')
+
+phase('Queue')
+const posted = await agent(
+  `Post this comment on issue #${brief.issue} in ${brief.repo} exactly as written, with \`gh issue comment ${brief.issue} --repo ${brief.repo} --body-file -\`, then add the label with \`gh issue edit ${brief.issue} --repo ${brief.repo} --add-label needs-founder\`. Return the comment's URL.
+
+${item}`,
+  { label: 'queue item', phase: 'Queue', model: 'haiku', effort: 'low', schema: POSTED },
+)
+return {
+  issue: brief.issue,
+  recommend: brief.recommend,
+  options: design ? design.options.map(o => o.letter) : [],
+  queue_item: posted ? posted.comment_url : 'not posted',
+}

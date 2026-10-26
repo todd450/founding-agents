@@ -1,46 +1,23 @@
 """The build workflow checks the ticket, loops builder and reviewer, and only then merges."""
 
-import json
-import shutil
-import subprocess
+import sys
 import unittest
 from pathlib import Path
 
-WORKFLOW = Path(__file__).resolve().parent.parent / "workflows" / "build.js"
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
-# Runs the workflow body with agent() answering from a script of replies, one list per label
-# prefix, and prints the result and every agent call as JSON.
-HARNESS = r"""
-const fs = require('fs')
-const [source, argsJson, repliesJson] = process.argv.slice(1)
-const replies = JSON.parse(repliesJson)
-const calls = []
-const agent = async (prompt, opts) => {
-  calls.push({ label: opts.label, agentType: opts.agentType || null, isolation: opts.isolation || null,
-               model: opts.model || null, prompt })
-  const key = Object.keys(replies).find(prefix => opts.label.startsWith(prefix))
-  return key ? replies[key].shift() : null
-}
-const body = fs.readFileSync(source, 'utf8').replace('export const meta', 'const meta')
-const run = new Function('args', 'agent', 'phase', 'log', `return (async () => {${body}})()`)
-run(JSON.parse(argsJson), agent, () => {}, () => {})
-  .then(result => console.log(JSON.stringify({ result, calls })))
-  .catch(error => console.log(JSON.stringify({ error: error.message, calls })))
-"""
-
-READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs."}
+READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs.", "decision": ""}
 PR = {"pr_number": 4, "pr_url": "https://github.com/o/r/pull/4", "stopped_because": ""}
 APPROVE = {"verdict": "approve", "findings": []}
 CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "where": "slug.py:3", "what": "empty title crashes"}]}
 MERGED = {"merged": True, "merge_commit": "abc1234", "reason": ""}
 
 
-@unittest.skipUnless(shutil.which("node"), "needs node")
+@unittest.skipUnless(HAVE_NODE, "needs node")
 class BuildWorkflowTest(unittest.TestCase):
     def run_workflow(self, replies, args=12):
-        out = subprocess.run(["node", "-e", HARNESS, str(WORKFLOW), json.dumps(args), json.dumps(replies)],
-                             capture_output=True, text=True, check=True).stdout
-        return json.loads(out)
+        return run_workflow("build", replies, args)
 
     def labels(self, run):
         return [call["label"] for call in run["calls"]]
@@ -69,6 +46,12 @@ class BuildWorkflowTest(unittest.TestCase):
         prompt = run["calls"][2]["prompt"]
         self.assertIn("Turn titles into slugs.", prompt)
         self.assertNotIn("Return the PR's number", prompt)
+
+    def test_the_founders_pick_reaches_the_builder_and_the_reviewer(self):
+        ticket = {**READY, "decision": "B, with a shorter headline (mockups on propose/issue-12)"}
+        run = self.run_workflow({"check": [ticket], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
+        for call in run["calls"][1:3]:
+            self.assertIn("The founder decided: B, with a shorter headline", call["prompt"])
 
     def test_findings_go_back_to_the_builder_on_the_same_pr(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "reviewer": [CHANGES, APPROVE],

@@ -136,6 +136,29 @@ of this (see Sources).
   it on the same PR, the reviewer approved with nits only, and the integrator merged it. The
   builder's and reviewer's worktrees stay behind once they hold commits, so they pile up under
   `.claude/worktrees/` until something removes them.
+- **`propose` in its first version: brief, mockups, one queue item.** It runs as
+  `/founding-agents:propose <issue or idea>`. The product lead writes the brief into the issue (a new
+  one for an idea in words) and recommends go or no-go. On a go, the designer storyboards the journey
+  and makes two or three options at different stars. A no-go skips the mockups, since mockups for
+  an idea the product lead advises against are spent allowance; the item still reaches the founder,
+  who can overrule it. The last step posts one comment built by the script, not written by a model,
+  so every item has the same shape: the recommendation, each option with its stars, cost and
+  screenshots, and how to answer. The founder answers by replying with a letter and adding
+  `decided`; `build` reads that reply and hands it to the builder and the reviewer. The product
+  lead and the designer run on Opus, since they plan and judge. Tested on 26 Oct 2026 on a
+  throwaway repo: on an idea with no evidence behind it the product lead recommended no-go and
+  offered a smaller bet, and the designer was skipped. After the founder overruled it in a comment,
+  the designer storyboarded three options at 3, 5 and 7 stars and pushed only their pages and
+  screenshots, and the queue item showed all three with costs. The first try found that the
+  designer had no `Skill` tool, so it could not find the screenshot script and built a CI renderer
+  instead; it now has the tool, and stops when screenshots cannot be taken. A headless run
+  (`claude -p`) stops waiting for a workflow after 600 seconds unless
+  `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` is set.
+- **Mockups: one HTML page per option on a `propose/issue-<n>` branch, with screenshots in the
+  issue.** Decided by the founder on 25 Oct 2026. A page shows real content at real lengths and can
+  be opened at any width; the phone and desktop screenshots, taken with headless Chrome by the
+  `mockup-screenshots` skill, let the founder compare options in the issue without opening
+  anything. The branch is never merged, so mockups never become product code by accident.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -268,7 +291,8 @@ private, since the founder is the only user for now. A website bends the order i
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
    holdouts), and the integrator. Run it on three to five real issues.
 4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
-   completes the starting five.
+   completes the starting five. Built and tested on a throwaway repo on 26 Oct 2026; done once it
+   has run on the website's brief.
 5. **Grow on demand:** the architect for schema or shared changes; two to four parallel builders
    once one is routine; then the security reviewer, optimiser, librarian and researcher as their
    kind of work appears.
