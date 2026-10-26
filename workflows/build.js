@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'When the founder asks to build a decided issue in the current product repo, e.g. /founding-agents:build 12',
   phases: [
     { title: 'Check', detail: 'the issue is decided and no red issue is open', model: 'haiku' },
-    { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'sonnet' },
+    { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
     { title: 'Review', detail: 'edge-case QA and code review on the PR', model: 'opus' },
     { title: 'Merge', detail: 'the integrator tests the merge and merges', model: 'sonnet' },
   ],
@@ -96,7 +96,7 @@ Findings:
 ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`).join('\n')}`
   const result = await agent(
     `${task}\n\nReturn the PR's number and URL, or 0 and why you stopped without one.`,
-    { label: `builder, round ${round}`, phase: 'Build', agentType: 'founding-agents:builder', isolation: 'worktree', model: 'sonnet', schema: BUILT },
+    { label: `builder, round ${round}`, phase: 'Build', agentType: 'founding-agents:builder', isolation: 'worktree', model: 'opus', schema: BUILT },
   )
   if (!result || !result.pr_number) {
     return { issue, status: 'stopped in build', reason: result ? result.stopped_because : 'the builder returned nothing', pr: built && built.pr_url }
