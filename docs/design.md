@@ -106,6 +106,11 @@ of this (see Sources).
   `setup` does the per-product part: it creates the routines, turns on branch protection for
   `main`, adds the labels, the fixtures folder and the holdout repo, and writes the product's short
   CLAUDE.md. There is no template repo to copy and then fall out of sync with.
+- **The plugin's version changes with every change a product should get.** An install keeps its
+  copy by version, and `claude plugin update` reports a plugin as current while its version is
+  unchanged: on 26 Oct 2026 the website's install at 0.1.0 still lacked `build` and `propose`
+  after both had merged. A merged change that adds or alters an agent, skill, hook or workflow
+  bumps `.claude-plugin/plugin.json`; a docs-only change does not.
 - **Tickets: GitHub Issues.** PRs and merges already live there, and `gh` reaches all of it.
   Markdown ticket files would put every builder on the same files (principle 5); Linear adds
   another login.
@@ -291,8 +296,10 @@ private, since the founder is the only user for now. A website bends the order i
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
    holdouts), and the integrator. Run it on three to five real issues.
 4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
-   completes the starting five. Built and tested on a throwaway repo on 26 Oct 2026; done once it
-   has run on the website's brief.
+   completes the starting five. Done on 26 Oct 2026 on the website: on its brief the product lead
+   recommended go on a smaller test-bed site and rewrote the brief to match, the designer pushed
+   three options at 2, 5 and 7 stars to `propose/issue-1`, and one `needs-founder` queue item
+   carried them with their costs.
 5. **Grow on demand:** the architect for schema or shared changes; two to four parallel builders
    once one is routine; then the security reviewer, optimiser, librarian and researcher as their
    kind of work appears.
