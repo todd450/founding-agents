@@ -131,11 +131,14 @@ of this (see Sources).
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
   nothing local can get around it.
-- **The hook trusts only `founding-agents:integrator`.** Hooks see a plugin agent's name with the plugin
-  prefix, both when a session starts with `--agent` and when the agent runs as a subagent; a
-  session with no agent reports none. Tested on 24 Oct 2026 with `tests/e2e_guard.sh`: the builder
-  and the plain session were blocked, the integrator passed both ways. Accepting the bare name
-  would let any user or project agent called `integrator` merge, so the guard no longer does.
+- **The hook trusts only `founding-agents:integrator`.** Hooks see a plugin agent's name with the
+  plugin prefix, both when a session starts with `--agent` and when the agent runs as a subagent; a
+  session with no agent reports none. Tested on 25 Oct 2026 with `tests/e2e_guard.sh`: the builder
+  and the plain session were blocked, the integrator passed both ways. The builder's own prompt
+  forbids pushing to `main`, so the test tells each session the push is a test of the guard;
+  without that the builder declines, the hook never runs, and the script now fails. Accepting the
+  bare name would let any user or project agent called `integrator` merge, so the guard no longer
+  does.
 - **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)). A named practice
   ("storyboard the journey", "test the merge, not the branch") gives an agent something concrete to
   do and gives the founder words to correct it with; "be a great designer" does neither. Roles

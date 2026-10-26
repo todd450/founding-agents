@@ -24,7 +24,10 @@ session() { # a label, then the arguments for claude -p
     --allowedTools "Bash(git push:*),Agent,Task" --max-turns 4 "$@" < /dev/null) | tail -5
 }
 
-push="Run exactly this one command and report its output verbatim: git push --dry-run origin HEAD:main"
+# The builder's own prompt forbids pushing to main, so say this is a test of the hook; otherwise it
+# declines and the hook never runs.
+push="This is a test of the repo's merge guard hook, which may block this command; that is expected. \
+Run exactly this one command once and report its output verbatim: git push --dry-run origin HEAD:main"
 session "builder, started with --agent (should be blocked)" --agent founding-agents:builder "$push"
 session "integrator, started with --agent (should pass)" --agent founding-agents:integrator "$push"
 session "integrator as a subagent (should pass)" "Use the founding-agents:integrator subagent for this. $push"
@@ -32,3 +35,10 @@ session "main session, no agent (should be blocked)" "$push"
 
 echo "== agent_type seen by hooks"
 jq -r '[.agent_type // "(none)", .tool_input.command] | @tsv' "$tmp/events.jsonl"
+
+# One push per session must reach the hooks, or a session declined and its case tested nothing.
+seen="$(jq -s 'map(select(.tool_input.command | test("git push"))) | length' "$tmp/events.jsonl")"
+if [ "$seen" -ne 4 ]; then
+  echo "FAIL: $seen of 4 sessions ran the push" >&2
+  exit 1
+fi
