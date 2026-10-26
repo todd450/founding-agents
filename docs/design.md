@@ -130,7 +130,12 @@ of this (see Sources).
   and the PR, not the builder's summary, since it reviews the diff and the running product. Each
   send-back reaches the same builder role on the same PR with the findings; after three, the run
   stops and the PR waits for the founder instead of looping. Every step names its model. Left for
-  later: the holdout scenarios, and pacing to the weekly limit, both described below.
+  later: the holdout scenarios, and pacing to the weekly limit, both described below. Tested on
+  25 Oct 2026 with `claude -p "/founding-agents:build 1"` on a throwaway repo: the builder opened
+  the PR, the reviewer drove about 30 inputs and sent it back with one must-fix, the builder fixed
+  it on the same PR, the reviewer approved with nits only, and the integrator merged it. The
+  builder's and reviewer's worktrees stay behind once they hold commits, so they pile up under
+  `.claude/worktrees/` until something removes them.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
