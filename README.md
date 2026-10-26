@@ -1,10 +1,10 @@
-# Agent Team
+# Founding Agents
 
 A reusable team of Claude Code agents that builds products alongside one founder. The founder
 decides scope and taste and talks to users; the agents plan, build, check, ship and watch.
 
 **Status:** step 1 of the build order is done: the plugin skeleton, the merge guard and a first
-`setup` skill for branch protection, running on the first product, the Agent Team website. No team
+`setup` skill for branch protection, running on the first product, the Founding Agents website. No team
 runs yet.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
@@ -13,8 +13,8 @@ runs yet.
 To try it in a product, from Claude Code:
 
 ```
-/plugin marketplace add todd450/agent-team
-/plugin install agent-team@agent-team
+/plugin marketplace add todd450/founding-agents
+/plugin install founding-agents@founding-agents
 ```
 
 Then ask Claude to run the `setup` skill in the product's repo. The merge guard needs `python3`.

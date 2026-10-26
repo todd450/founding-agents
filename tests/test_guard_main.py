@@ -38,7 +38,7 @@ class GuardTest(unittest.TestCase):
     def tearDownClass(cls):
         cls.tmp.cleanup()
 
-    def check(self, command, agent="agent-team:builder", branch="feat/x", tool="Bash"):
+    def check(self, command, agent="founding-agents:builder", branch="feat/x", tool="Bash"):
         run("git", "switch", "-q", branch, cwd=self.repo)
         event = {"tool_name": tool, "tool_input": {"command": command}, "cwd": str(self.repo)}
         if agent:
@@ -95,7 +95,7 @@ class GuardTest(unittest.TestCase):
         self.assertBlocked("gh pr merge 1", agent=None)
 
     def test_blocks_other_agents(self):
-        self.assertBlocked("gh pr merge 1", agent="agent-team:reviewer")
+        self.assertBlocked("gh pr merge 1", agent="founding-agents:reviewer")
         self.assertBlocked("gh pr merge 1", agent="other-plugin:builder")
 
     def test_blocks_an_integrator_from_outside_the_plugin(self):
@@ -104,8 +104,8 @@ class GuardTest(unittest.TestCase):
             self.assertBlocked("git push origin main", agent=agent)
 
     def test_allows_the_integrator(self):
-        self.assertAllowed("gh pr merge 1 --merge", agent="agent-team:integrator")
-        self.assertAllowed("git push origin main", agent="agent-team:integrator")
+        self.assertAllowed("gh pr merge 1 --merge", agent="founding-agents:integrator")
+        self.assertAllowed("git push origin main", agent="founding-agents:integrator")
 
     def test_ignores_commands_that_only_mention_push_or_merge(self):
         for command in (
