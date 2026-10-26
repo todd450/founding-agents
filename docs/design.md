@@ -244,7 +244,10 @@ private, since the founder is the only user for now. A website bends the order i
    push to `main` is blocked. Done on 24 Oct 2026 on the website: its `main` needs a pull request
    with admins included, and the hook blocked a builder session's push.
 2. **Ops watch.** Day one, as the team table says. Its first check is a scheduled job the product
-   runs, or for a new product a check of the product itself.
+   runs, or for a new product a check of the product itself. Done on 25 Oct 2026 on the website:
+   Pages serves the README as a placeholder, the nightly site check is installed through `setup`,
+   its first run on GitHub was green, and a red run by hand opened one `red` issue, updated it and
+   closed it on green.
 3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
    holdouts), and the integrator. Run it on three to five real issues.
