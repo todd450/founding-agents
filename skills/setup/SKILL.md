@@ -51,6 +51,18 @@ Rerun the same steps whenever the plugin's copy in `ops_watch/` changes; the dry
 files differ. The scheduled run stops if the repo sees no activity for 60 days, which GitHub does to
 every scheduled workflow in a public repo; ops watch cannot raise red about its own silence.
 
+## Labels
+
+`build` takes only issues labelled `decided`, the founder's yes. Create the queue's labels once,
+skipping any that exist:
+
+```
+gh label create needs-founder --color FBCA04 --description "Waiting on the founder's decision"
+gh label create decided --color 0E8A16 --description "The founder said yes; ready to build"
+```
+
+Ops watch creates `red` itself the first time a check fails.
+
 ## Needs
 
 The plugin's merge guard (`hooks/guard_main.py`) needs `python3` on the machine. It blocks every
