@@ -90,8 +90,9 @@ screen, one design-token source that generates every copy.
   builders also get their own worktree.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`).
 - **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`.
-- **Scheduled roles** (ops watch, optimiser, librarian) → routines, which `setup` creates in each
-  product because a plugin cannot ship them.
+- **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
+  because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
+  Actions schedules instead, which `setup` installs in the product.
 - **Hard rules** → a plugin hook (only the integrator pushes to `main` or merges) and GitHub branch
   protection (nothing merges without passing checks).
 
@@ -127,6 +128,17 @@ of this (see Sources).
 - **Red lights: ops watch opens a `red` issue, and the integrator merges nothing while one is
   open.** A routine cannot push to a phone itself, but an issue notifies through GitHub, and
   blocking merges is what makes principle 9 hold.
+- **Ops watch's site check runs as a nightly GitHub Actions job, not a routine.** Decided by the
+  founder on 25 Oct 2026. Checking that the Pages deploy is green and every link resolves needs no
+  model, so a script does it: it spends none of the plan's allowance and still runs when the week's
+  limit is used up, when a routine would fail without raising red. A failure opens one `red` issue,
+  kept current while the check stays red and closed by the next green run; the job itself passes,
+  so the issue is the only alarm, and it fails only when the check cannot run. A link that fails is
+  tried once more after a pause, so a blip does not raise red. `setup` copies the script into the
+  product, because a product's workflow cannot read this private repo; rerunning `setup` updates the
+  copy. GitHub stops a public repo's scheduled workflows after 60 days with no activity, and ops
+  watch cannot report its own silence; checks that need judgement (spend, release verdicts) stay
+  with the Haiku routine.
 - **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook reads
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
