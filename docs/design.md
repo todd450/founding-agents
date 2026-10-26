@@ -122,6 +122,15 @@ of this (see Sources).
   documents both, though the public docs page does not. Tested on 24 Oct 2026: such a step ran in
   a fresh worktree under `.claude/worktrees/` on its own branch, and the worktree was removed when
   the step changed nothing. No `git worktree add` fallback is needed.
+- **`build` in its first version: check, then builder and reviewer up to three rounds, then the
+  integrator.** It runs as `/founding-agents:build <issue>` from the product's folder. A cheap first
+  step refuses an issue without the `decided` label, or while a `red` issue is open (principle 9).
+  The builder works in its own worktree on `build/issue-<n>`; the reviewer gets its own worktree
+  too, so checking out the PR never moves the founder's checkout. The reviewer is given the issue
+  and the PR, not the builder's summary, since it reviews the diff and the running product. Each
+  send-back reaches the same builder role on the same PR with the findings; after three, the run
+  stops and the PR waits for the founder instead of looping. Every step names its model. Left for
+  later: the holdout scenarios, and pacing to the weekly limit, both described below.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -236,7 +245,9 @@ team is shaped by; whether it prevents them shows up in the measures below. The 
 private, since the founder is the only user for now. A website bends the order in two places:
 
 - **The decide lane comes before `build`** (step 4 before step 3): nothing on a site can be built
-  until its words and look are decided.
+  until its words and look are decided. On 25 Oct 2026 the founder chose to build step 3's agents
+  and workflow first anyway, tested on a throwaway repo; step 3 is done only once it has run on
+  three to five website issues, which come out of the decide lane.
 - **Ops watch's first check is the site itself:** a nightly check that the Pages deploy is green
   and every link resolves, since a new site runs no scheduled job of its own yet.
 
