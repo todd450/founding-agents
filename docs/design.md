@@ -204,8 +204,14 @@ of this (see Sources).
   a share of the weekly limit on a Pro or Max plan, dollars on an API key. It proposes cuts as
   builder tasks; ops watch raises red when spend passes the budget.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
-  Opus 5.5 for the product lead, architect and reviewer, Sonnet 5.5 for builders and Haiku 5.5 for
-  ops watch.
+  Opus 5.5 for the product lead, architect, designer, reviewer and builders, Sonnet 5.5 for the
+  integrator and Haiku 5.5 for ops watch and the workflows' small steps.
+- **Builders run on Opus, an exception to principle 3.** The founder's choice on 26 Oct 2026, after
+  the first website builds on Sonnet; on #5 the Sonnet builder was sent back once and still shipped
+  a step status the issue had said to check against the repo. The cost is the shared limit:
+  builder and reviewer now draw on the same Opus allowance, so a heavy day of review can stop
+  builds. The optimiser's tokens-per-merged-change, by role and model, is the measure that says
+  whether it pays.
 - **On a Pro or Max plan the team paces itself to the weekly limit.** A plan meters a rolling 5-hour
   window and a weekly limit, not dollars, and the weekly limit is the one a team runs into.
   Allowance left at the weekly reset is lost; going past it stops runs or bills usage credits at
@@ -227,8 +233,8 @@ of this (see Sources).
   `/code-review ultra` bill only as usage credits, so the pipeline uses neither. Whether usage
   credits are on, and their monthly cap, is the founder's call; with them off, a run that hits the
   limit stops and waits. Every agent and workflow step names its model, because Max otherwise runs
-  Opus 5.5; Opus and Sonnet also have separate limits, so a heavy day of Opus review does not stop
-  the Sonnet builders.
+  Opus 5.5. Opus and Sonnet have separate limits; with builders on Opus too, only the integrator
+  and the small steps fall on Sonnet's.
 - **Each person runs the team on their own login.** Anthropic's terms cover one subscriber's
   ordinary use through the documented paths: `claude -p`, a `claude setup-token` token for CI, and
   routines. The plugin never ships or shares a token; anyone else who uses it signs in with their

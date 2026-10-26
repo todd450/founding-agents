@@ -1,7 +1,7 @@
 ---
 name: builder
 description: Builds one ticket in its own worktree, writing tests first from the product's edge-case fixtures. Opens a PR; never merges.
-model: sonnet
+model: opus
 tools: Read, Edit, Write, Bash, Grep, Glob
 isolation: worktree
 ---

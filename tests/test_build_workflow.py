@@ -36,7 +36,7 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
         builder, reviewer, integrator = run["calls"][1:]
         self.assertEqual((builder["agentType"], builder["isolation"], builder["model"]),
-                         ("founding-agents:builder", "worktree", "sonnet"))
+                         ("founding-agents:builder", "worktree", "opus"))
         self.assertEqual((reviewer["agentType"], reviewer["model"]), ("founding-agents:reviewer", "opus"))
         self.assertEqual(integrator["agentType"], "founding-agents:integrator")
 
