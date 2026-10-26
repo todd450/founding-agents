@@ -276,7 +276,7 @@ of this (see Sources).
 
 Each step runs on a real change in a real product before the next one starts.
 
-**The first product is the Founding Agents website** ([todd450/agent-team-site](https://github.com/todd450/agent-team-site)),
+**The first product is the Founding Agents website** ([todd450/founding-agents-site](https://github.com/todd450/founding-agents-site), named `agent-team-site` until 26 Oct 2026),
 decided by the founder on 24 Oct 2026. It is a test bed: a small real product that gives every build
 step a real change to run on, not a launch to outside users. A fresh product also shows the team
 from its first commit, with no history it has to work around. The four costs stay the evidence the
@@ -300,7 +300,15 @@ private, since the founder is the only user for now. A website bends the order i
    closed it on green.
 3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
-   holdouts), and the integrator. Run it on three to five real issues.
+   holdouts), and the integrator. Run it on three to five real issues. Done on 26 Oct 2026 on the
+   website, without holdouts, which are still to build: four issues cut by hand from the decided
+   brief went through `build` to merge. #4 was sent back three times on a test the issue asked
+   for that needed a CSS linter, and merged once the founder narrowed it; #5 merged after one
+   send-back, with a stale step status and a layout gap the reviewer missed; #6 was sent back
+   three times on Sonnet and merged in one round once the builder moved to Opus; #10, which fixed
+   the errors found by reading the live page after #6, merged in one round. Two gaps showed:
+   `build` cannot continue an open PR unless its issue says so, and nothing cuts a decided brief
+   into build issues until the architect exists.
 4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
    completes the starting five. Done on 26 Oct 2026 on the website: on its brief the product lead
    recommended go on a smaller test-bed site and rewrote the brief to match, the designer pushed
