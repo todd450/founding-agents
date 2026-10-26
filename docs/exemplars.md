@@ -33,16 +33,7 @@ The starting five's combined reviewer takes both the edge-case QA and the code r
 
 The product lead says no by default and hands the founder a decision small enough for one
 sitting. *Shape Up* is a whole method for a small team built on a fixed amount of time with
-flexible scope.
-
-- **Appetite first.** Before any solution, the brief says how much time the idea is worth: a day,
-  a week, two weeks. The appetite is a budget, not an estimate.
-- **The brief adds rabbit holes and no-gos** to who, what evidence and how we'll know: what could
-  blow the appetite, and what is deliberately left out.
-- **No backlog.** An idea that is not picked is dropped; if it matters, it comes back. The decision
-  queue holds only items waiting on the founder.
-- **Cut scope, not time.** When the appetite runs out, the work ships smaller or stops; the
-  appetite is not extended without the founder.
+flexible scope. The practices are in [agents/product-lead.md](../agents/product-lead.md).
 
 Source: Ryan Singer, [*Shape Up*](https://basecamp.com/shapeup) (Basecamp, 2019).
 
@@ -63,31 +54,8 @@ Source: Rob Fitzpatrick, [*The Mom Test*](https://www.momtestbook.com/) (2013).
 
 The founder's choice. Airbnb's best-known design practices are about the whole experience rather
 than single screens, which is where a designer agent drifts when left alone: good-looking screens
-in a broken journey.
-
-- **Storyboard the journey before drawing screens.** In 2012 Airbnb's "Snow White" project drew the
-  guest's and the host's journeys frame by frame, the way Disney storyboards a film, and marked the
-  emotional moments. It showed the team that the moments that mattered most, such as a guest
-  arriving at the door, happened outside the website. Each mockup starts from the frames of the
-  journey, including the steps outside the product (an email, a notification, the moment the
-  person acts in the world).
-- **The 11-star exercise.** Brian Chesky's exercise: describe the one-star, five-star and then the
-  seven- to eleven-star versions of the key moment, and work back to the highest star the appetite
-  allows. The mockups the founder picks from are options at different stars, each with its cost.
-- **One design language.** Airbnb's Design Language System (from 2015) replaced one-off screens with
-  shared components across platforms, under four principles: unified, universal, iconic,
-  conversational. The designer builds from the product's existing components and its one
-  design-token source; a new component is a proposal of its own, not a side effect of a screen.
-- **Universal means everyone.** Airbnb is used around the world, so its design must be welcoming
-  and accessible to all. Mockups use real content at real lengths, in every language the product
-  ships, at phone width; no lorem ipsum.
-- **Design for trust.** Airbnb designed reputation and how much people reveal about themselves so
-  that strangers could trust each other. At each step the designer asks what the person has to trust
-  (that it saved, that it is private, that it is right) and what on the screen earns that trust.
-- **Review against the storyboard.** After the build, the review of the rendered screens checks the
-  journey and the chosen star, not just the match to the mockup.
-
-Not borrowed: Airbnb's look (its typeface, colours, icons and photography style). Taste in a product
+in a broken journey. The practices are in [agents/designer.md](../agents/designer.md). Not
+borrowed: Airbnb's look (its typeface, colours, icons and photography style); taste in a product
 comes from the founder's picks.
 
 Sources: Fast Company, [How Snow White helped Airbnb's mobile mission](https://www.fastcompany.com/3002813/how-snow-white-helped-airbnbs-mobile-mission)
