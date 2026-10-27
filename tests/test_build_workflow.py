@@ -8,10 +8,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
 READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs.", "decision": "",
-         "unseen": []}
+         "unseen": [], "open_pr": 0}
 PR = {"pr_number": 4, "pr_url": "https://github.com/o/r/pull/4", "stopped_because": ""}
 APPROVE = {"verdict": "approve", "findings": []}
-CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "where": "slug.py:3", "what": "empty title crashes"}]}
+CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "where": "slug.py:3", "what": "empty title crashes",
+                                       "repeat": False}]}
+REPEATED = {"verdict": "changes", "findings": [{**CHANGES["findings"][0], "repeat": True}]}
 MERGED = {"merged": True, "merge_commit": "abc1234", "reason": ""}
 
 
@@ -47,7 +49,7 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
         self.assertEqual(run["result"]["status"], "merged")
         self.assertEqual(self.labels(run), ["check #12", "builder, round 1", "reviewer, round 1", "integrator, PR #4",
-                                            "run report"])
+                                            "tidy worktrees", "run report"])
 
     def test_each_role_runs_as_its_plugin_agent_and_the_builder_in_a_worktree(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
@@ -75,7 +77,7 @@ class BuildWorkflowTest(unittest.TestCase):
                                  "run report": [{"comment_url": "https://github.com/o/r/issues/12#c1", "reason": ""}]})
         report = run["calls"][-1]
         self.assertEqual((report["label"], report["model"]), ("run report", "haiku"))
-        self.assertIn("--workflow build --issue 12 --post", report["prompt"])
+        self.assertIn("--workflow build --issue 12 --budget 5 --post", report["prompt"])
         self.assertEqual(run["result"]["report"], "https://github.com/o/r/issues/12#c1")
 
     def test_a_stalled_run_still_posts_its_report(self):
@@ -94,6 +96,52 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "reviewer": [CHANGES] * 3})
         self.assertIn("the founder decides", run["result"]["status"])
         self.assertNotIn("integrator, PR #4", self.labels(run))
+
+    def test_the_same_finding_unfixed_twice_goes_to_the_founder_before_round_three(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "reviewer": [CHANGES, REPEATED, APPROVE]})
+        self.assertIn("the same finding came back unfixed", run["result"]["status"])
+        self.assertEqual(run["result"]["findings"], REPEATED["findings"])
+        self.assertNotIn("builder, round 3", self.labels(run))
+
+    def test_new_findings_in_a_later_round_get_another_round(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "reviewer": [CHANGES, CHANGES, APPROVE],
+                                 "integrator": [MERGED]})
+        self.assertEqual(run["result"]["status"], "merged")
+
+    def test_the_reviewer_is_asked_to_mark_repeats_only_after_an_earlier_review(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR], "reviewer": [CHANGES, APPROVE],
+                                 "integrator": [MERGED]})
+        first, second = [call["prompt"] for call in run["calls"] if call["label"].startswith("reviewer")]
+        self.assertNotIn("as a repeat", first)
+        self.assertIn("as a repeat", second)
+
+    def test_an_open_pr_for_the_issue_is_continued_not_started_again(self):
+        run = self.run_workflow({"check": [{**READY, "open_pr": 9}], "builder": [{**PR, "pr_number": 9}],
+                                 "reviewer": [APPROVE], "integrator": [MERGED]})
+        builder, reviewer = run["calls"][1:3]
+        self.assertIn("PR #9 already builds issue #12", builder["prompt"])
+        self.assertIn("gh pr checkout 9", builder["prompt"])
+        self.assertIn("Do not open a new PR", builder["prompt"])
+        self.assertIn("as a repeat", reviewer["prompt"])
+        self.assertEqual(run["result"]["status"], "merged")
+
+    def test_a_continued_pr_that_repeats_a_finding_goes_to_the_founder_at_once(self):
+        run = self.run_workflow({"check": [{**READY, "open_pr": 9}], "builder": [{**PR, "pr_number": 9}, PR],
+                                 "reviewer": [REPEATED]})
+        self.assertIn("the same finding came back unfixed", run["result"]["status"])
+        self.assertNotIn("builder, round 2", self.labels(run))
+
+    def test_the_check_looks_for_an_open_pr_on_the_issue(self):
+        check = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]
+        self.assertIn("build/issue-12", check["prompt"])
+        self.assertIn("open_pr", check["prompt"])
+
+    def test_every_run_after_the_check_tidies_worktrees_before_its_report(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "reviewer": [CHANGES] * 3,
+                                 "tidy": [{"removed": 2, "kept": ["wf_1: 1 uncommitted change(s)"]}]})
+        self.assertEqual(self.labels(run)[-2:], ["tidy worktrees", "run report"])
+        self.assertIn("tidy-worktrees skill", run["calls"][-2]["prompt"])
+        self.assertEqual(run["result"]["worktrees_kept"], ["wf_1: 1 uncommitted change(s)"])
 
     def test_a_builder_that_stops_without_a_pr_ends_the_run(self):
         run = self.run_workflow({"check": [READY],
