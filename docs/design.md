@@ -241,6 +241,19 @@ of this (see Sources).
   holdouts, so the holdout guard now trusts `founding-agents:qa`. The split's cost: two Opus
   reviewers each round where there was one, and the reviewer was already the largest cost in five
   of six website builds; the optimiser's numbers say whether it pays.
+- **The optimiser and the librarian run as weekly routines that propose, never change.** Built on
+  27 Oct 2026, the same way as ops watch's daily routine: each one's instructions are a file
+  `setup` copies into the product (`.github/optimiser/routine.md`, `.github/librarian/routine.md`)
+  and keeps current, since a routine loads no plugin, and both reach GitHub only through `gh api`.
+  The optimiser reads the run reports for tokens per merged change, by role and model, this week
+  against last, posts the numbers as a comment on one standing issue, and proposes at most three
+  savings; it never proposes cutting a check or a review for tokens alone, leaving that trade to
+  the founder. The librarian reads the week's incidents (red issues, changes sent back again and
+  again, fixes for what a merge broke, runs that stopped for the founder), asks which check would
+  have stopped each, and files at most three guards or prunes. Every proposal is a `needs-founder`
+  issue, so a guard or a saving is built through `build` like any change, after the founder's
+  `decided`. Both run on Sonnet: they judge, but weekly and on a small amount of reading. Not yet
+  run on a real product.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -449,7 +462,8 @@ private, since the founder is the only user for now. A website bends the order i
    not yet run on the website); two to four parallel builders once one is routine (built into
    `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser,
    librarian and researcher as their kind of work appears. QA and code review became two roles,
-   with the security reviewer beside them, on 27 Oct 2026, not yet run on the website.
+   with the security reviewer beside them, on 27 Oct 2026, and the optimiser and librarian became
+   weekly routines the same day; none has run on the website yet.
 
 ## How we'll know it works
 

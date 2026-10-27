@@ -1,4 +1,4 @@
-"""Ops watch's routine reaches GitHub only through REST, and the product keeps its own checks."""
+"""The routines reach GitHub only through REST, and the product keeps its own checks."""
 
 import re
 import sys
@@ -11,16 +11,27 @@ sys.path.insert(0, str(SETUP))
 from install_kit import install, plan  # noqa: E402
 
 ROUTINE = (SETUP / "ops_watch" / "routine.md").read_text()
+ROUTINES = sorted(SETUP.glob("*/routine.md"))
 
 
 class RoutineTest(unittest.TestCase):
-    def test_uses_no_graphql_command_since_the_cloud_proxy_blocks_them(self):
+    def test_every_routine_uses_no_graphql_command_since_the_cloud_proxy_blocks_them(self):
         # In a routine, `gh issue`, `gh pr` and `gh repo view` go through GraphQL and get a 403.
-        # The routine names those three to warn against them; every command it runs is `gh api`.
-        commands = [c for c in re.findall(r"`(gh [^`]+)`", ROUTINE) if c not in ("gh issue", "gh pr", "gh repo view")]
-        self.assertTrue(commands)
-        for command in commands:
-            self.assertTrue(command.startswith("gh api"), command)
+        # A routine names those three to warn against them; every command it runs is `gh api`.
+        self.assertEqual([p.parent.name for p in ROUTINES], ["librarian", "ops_watch", "optimiser"])
+        for routine in ROUTINES:
+            text = routine.read_text()
+            commands = [c for c in re.findall(r"`(gh [^`]+)`", text) if c not in ("gh issue", "gh pr", "gh repo view")]
+            self.assertTrue(commands, routine)
+            for command in commands:
+                self.assertTrue(command.startswith("gh api"), f"{routine.parent.name}: {command}")
+
+    def test_the_weekly_routines_only_propose_and_leave_deciding_to_the_founder(self):
+        for name in ("optimiser", "librarian"):
+            text = (SETUP / name / "routine.md").read_text()
+            self.assertIn("labels[]=needs-founder", text)
+            self.assertIn("At most three", text)
+            self.assertIn("Never push", text)
 
     def test_runs_its_checks_then_the_products_own(self):
         for check in ("Scheduled checks ran", "`main` passes", "Merged changes are live", "Spend",
@@ -32,6 +43,13 @@ class RoutineTest(unittest.TestCase):
 
 
 class KitTest(unittest.TestCase):
+    def test_installs_the_weekly_routines_where_their_prompts_point(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for kit in ("optimiser", "librarian"):
+                install(root, plan(root, kit))
+                self.assertTrue((root / ".github" / kit / "routine.md").exists(), kit)
+
     def test_keeps_the_routine_current_and_the_products_checks_its_own(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Install one of setup's kits in a product repo: `basics`, `ci`, `ops-watch` or
-`ops-routine`. Prints the plan by default;
+"""Install one of setup's kits in a product repo: `basics`, `ci`, `ops-watch`,
+`ops-routine`, `optimiser` or `librarian`. Prints the plan by default;
 writes nothing without --apply.
 
 Kits are copied, not referenced, because a product's workflow cannot read the private plugin repo.
@@ -31,6 +31,12 @@ KITS = {
     "ops-routine": [
         (HERE / "ops_watch" / "routine.md", Path(".github/ops-watch/routine.md"), True),
         (HERE / "ops_watch" / "watch.md", Path(".github/ops-watch/watch.md"), False),
+    ],
+    "optimiser": [
+        (HERE / "optimiser" / "routine.md", Path(".github/optimiser/routine.md"), True),
+    ],
+    "librarian": [
+        (HERE / "librarian" / "routine.md", Path(".github/librarian/routine.md"), True),
     ],
 }
 
