@@ -7,7 +7,7 @@ export const meta = {
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
     { title: 'Review', detail: 'edge-case QA and code review side by side, and a security review when the change needs one', model: 'opus' },
     { title: 'Merge', detail: 'the integrator tests the merge and merges', model: 'sonnet' },
-    { title: 'Report', detail: "the run's time, tokens and cost, posted on the issue", model: 'haiku' },
+    { title: 'Report', detail: "the run's time, tokens, cost and whether it merged, posted on the issue", model: 'haiku' },
   ],
 }
 
@@ -111,6 +111,15 @@ const REPORTED = {
   required: ['comment_url', 'reason'],
 }
 
+const FILED = {
+  type: 'object',
+  properties: {
+    issue_url: { type: 'string', description: 'the issue opened or commented on; empty when neither was done' },
+    reason: { type: 'string', description: 'why it was not filed; empty when it was' },
+  },
+  required: ['issue_url', 'reason'],
+}
+
 const TIDIED = {
   type: 'object',
   properties: { removed: { type: 'integer' }, kept: { type: 'array', items: { type: 'string' }, description: 'each kept worktree and why' } },
@@ -118,15 +127,16 @@ const TIDIED = {
 }
 
 // A run that got past its first step removes the worktrees whose work is on GitHub, then posts its
-// time, tokens and cost on the issue, stalled runs too.
+// time, tokens, cost and whether it ended in a merge on the issue, stalled runs too.
 const report = async result => {
   phase('Report')
   const tidied = await agent(
     'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
     { label: 'tidy worktrees', phase: 'Report', model: 'haiku', effort: 'low', schema: TIDIED },
   )
+  const ended = result.status === 'merged' || (result.issues && result.issues.length && result.issues.every(r => r.status === 'merged')) ? 'merged' : 'stopped'
   const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --budget ${BUDGET} --post\`. Return the comment's URL, or why it was not posted.`,
+    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --budget ${BUDGET} --outcome ${ended} --post\`. Return the comment's URL, or why it was not posted.`,
     { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
   )
   return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted', worktrees_kept: tidied ? tidied.kept : [] }
@@ -172,6 +182,27 @@ ${again ? 'Earlier reviews on this PR are in its comments. Mark each finding an 
   }
 }
 
+// A must-fix the builder failed to fix twice is a mistake the next change can make too, so it goes to
+// the librarian as a `librarian` issue, built here rather than by a model so every one has the same shape.
+// Agents post with the founder's login, so the label, not the author, is what marks it.
+const LIBRARIAN_LABEL = 'gh label create librarian --color 1D76DB --description "A mistake a run made twice, for the librarian to turn into a check"'
+const lesson = (n, ticket, built, stuck) => {
+  const title = `Repeated finding on PR #${built.pr_number}`
+  const body = [
+    `**A finding came back unfixed.** \`build\` stopped on PR #${built.pr_number} (${built.pr_url}) for issue #${n}, ${ticket.title}, because a reviewer raised the same must-fix after the builder's fix:`,
+    '',
+    ...stuck.map(f => `- ${f.where}: ${f.what}`),
+    '',
+    `A mistake made twice is one the next change can make too, so fixing this PR is not enough. **Librarian:** find which check would have stopped it and why none did, then propose that check as a test, a lint rule, a hook or a skill, so it holds for every later change. Its failure message should say how to fix the problem, not only what failed, so the next builder can act on it.`,
+  ]
+  return agent(
+    `Open this issue in ${ticket.repo} exactly as written, labelled \`librarian\`, with \`gh issue create --repo ${ticket.repo} --label librarian --title "${title}" --body-file -\`. If the label does not exist yet, create it first with \`${LIBRARIAN_LABEL} --repo ${ticket.repo}\`. If \`gh issue list --repo ${ticket.repo} --label librarian --state open --json number,title\` already shows an issue with this title, comment the body on it with \`gh issue comment <its number> --repo ${ticket.repo} --body-file -\` instead of opening another. Return its URL, or why it was not filed.
+
+${body.join('\n')}`,
+    { label: `lesson, PR #${built.pr_number}`, phase: 'Review', model: 'haiku', effort: 'low', schema: FILED },
+  )
+}
+
 // Builder and reviewers, up to ROUNDS times. Returns the approved PR, or why it stopped.
 const develop = async (n, ticket) => {
   let built = null
@@ -208,7 +239,9 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
     if (review.verdict === 'approve') return { issue: n, status: 'approved', built }
     const stuck = review.findings.filter(f => f.must_fix && f.repeat)
     if ((round > 1 || resume) && stuck.length) {
-      return { issue: n, status: 'the same finding came back unfixed; the founder decides', pr: built.pr_url, findings: stuck }
+      const filed = await lesson(n, ticket, built, stuck)
+      return { issue: n, status: 'the same finding came back unfixed; the founder decides', pr: built.pr_url, findings: stuck,
+               lesson: filed ? (filed.issue_url || filed.reason) : 'not filed' }
     }
     log(`#${n}, round ${round}: the reviewers sent PR #${built.pr_number} back with ${review.findings.filter(f => f.must_fix).length} finding(s) to fix`)
   }

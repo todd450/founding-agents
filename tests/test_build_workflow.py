@@ -1,5 +1,6 @@
 """The build workflow checks the ticket, loops builder and reviewers, and only then merges."""
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -90,12 +91,13 @@ class BuildWorkflowTest(unittest.TestCase):
                                  "run report": [{"comment_url": "https://github.com/o/r/issues/12#c1", "reason": ""}]})
         report = run["calls"][-1]
         self.assertEqual((report["label"], report["model"]), ("run report", "haiku"))
-        self.assertIn("--workflow build --issue 12 --budget 5 --post", report["prompt"])
+        self.assertIn("--workflow build --issue 12 --budget 5 --outcome merged --post", report["prompt"])
         self.assertEqual(run["result"]["report"], "https://github.com/o/r/issues/12#c1")
 
-    def test_a_stalled_run_still_posts_its_report(self):
+    def test_a_stalled_run_still_posts_its_report_and_says_it_stopped(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "qa": [CHANGES] * 3})
         self.assertEqual(self.labels(run)[-1], "run report")
+        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
 
     def test_findings_go_back_to_the_builder_on_the_same_pr(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, APPROVE],
@@ -115,6 +117,36 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("the same finding came back unfixed", run["result"]["status"])
         self.assertEqual(run["result"]["findings"], [{**REPEATED["findings"][0], "where": "QA: slug.py:3"}])
         self.assertNotIn("builder #12, round 3", self.labels(run))
+
+    def test_the_same_finding_unfixed_twice_goes_to_the_librarian_as_an_issue(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, REPEATED],
+                                 "lesson": [{"issue_url": "https://github.com/o/r/issues/30", "reason": ""}]})
+        lesson = next(call for call in run["calls"] if call["label"] == "lesson, PR #4")
+        self.assertEqual(lesson["model"], "haiku")
+        self.assertIn("--label librarian", lesson["prompt"])
+        self.assertIn('--title "Repeated finding on PR #4"', lesson["prompt"])
+        self.assertIn("- QA: slug.py:3: empty title crashes", lesson["prompt"])
+        self.assertIn("https://github.com/o/r/pull/4", lesson["prompt"])
+        self.assertIn("a test, a lint rule, a hook or a skill", lesson["prompt"])
+        self.assertIn("say how to fix the problem, not only what failed", lesson["prompt"])
+        self.assertEqual(run["result"]["lesson"], "https://github.com/o/r/issues/30")
+        self.assertEqual(self.labels(run)[-2:], ["tidy worktrees", "run report"])
+
+    def test_the_librarian_issue_is_not_opened_twice_for_one_pr(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, REPEATED]})
+        prompt = next(call["prompt"] for call in run["calls"] if call["label"].startswith("lesson"))
+        self.assertIn("--label librarian --state open", prompt)
+        self.assertIn("instead of opening another", prompt)
+
+    def test_findings_that_are_new_each_round_file_no_lesson(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "qa": [CHANGES] * 3})
+        self.assertFalse([label for label in self.labels(run) if label.startswith("lesson")])
+
+    def test_the_librarian_label_is_created_as_setup_creates_it(self):
+        build = (Path(__file__).resolve().parent.parent / "workflows" / "build.js").read_text()
+        setup = (Path(__file__).resolve().parent.parent / "skills" / "setup" / "SKILL.md").read_text()
+        command = re.search(r"gh label create librarian [^'\n]+", build).group(0)
+        self.assertIn(command, setup)
 
     def test_new_findings_in_a_later_round_get_another_round(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "qa": [CHANGES, CHANGES, APPROVE],
@@ -224,6 +256,7 @@ class BuildBriefTest(unittest.TestCase):
         self.assertEqual(sorted(r["issue"] for r in run["result"]["issues"]), [21, 32, 43])
         self.assertEqual(self.labels(run).count("run report"), 1)
         self.assertIn("--workflow build --issue 7 ", run["calls"][-1]["prompt"])
+        self.assertIn("--outcome merged", run["calls"][-1]["prompt"])
 
     def test_an_issue_waits_until_the_one_it_builds_after_has_merged(self):
         labels = self.labels(self.run_brief())
@@ -253,6 +286,7 @@ class BuildBriefTest(unittest.TestCase):
         self.assertIn("#21", by_issue[32]["reason"])
         self.assertEqual(by_issue[43]["status"], "merged")
         self.assertNotIn("check #32", self.labels(run))
+        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
 
     def test_each_issue_is_checked_on_its_own_before_it_is_built(self):
         run = self.run_brief(**{"check #43": [{**READY, "ready": False, "reason": "a red issue is open"}]})
