@@ -254,6 +254,14 @@ of this (see Sources).
   issue, so a guard or a saving is built through `build` like any change, after the founder's
   `decided`. Both run on Sonnet: they judge, but weekly and on a small amount of reading. Not yet
   run on a real product.
+- **The researcher prepares and makes sense of conversations; the founder has them.** Built on
+  27 Oct 2026, at the founder's request and before any product has users, so it waits for one. It
+  is an agent the founder calls on demand, not a workflow step: research has no fixed place in a
+  change, and runs when a question comes up. Each question is an issue labelled `research`, holding
+  the interview guide, the founder's pasted notes and the synthesis, which keeps what people did
+  apart from what is inferred, with names and dates. The product lead reads those issues as the
+  strongest evidence a brief can cite. The researcher never contacts anyone, since every message
+  sent in the founder's name is the founder's to send.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -398,8 +406,11 @@ of this (see Sources).
   so no builder's context ever held them; QA adds one or two wherever a change touches a
   class that has none. A failing holdout is a must-fix finding naming only its class and what
   went wrong, and `build` asks for nothing more in the findings it hands the builder. Moving a
-  seen scenario into the visible fixtures is left to the founder until the librarian exists. Not
-  yet run on a real product.
+  seen scenario into the visible fixtures is left to the founder until the librarian exists.
+  Tested on 27 Oct 2026 with `tests/e2e_holdouts.sh` and real sessions: the builder started with
+  `--agent` and the code reviewer as a subagent were blocked, QA both ways and the founder's own
+  session read the scenario, and hooks saw each agent's name with the plugin prefix. Agents with
+  their own worktree need a repo with at least one commit. Not yet run on a real product.
 - **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
   parts of this, but they churn (Compound Engineering renamed its commands; GSD's original repo was
   archived) and their auto-triggered skills would compete with these roles. Ideas are copied with
@@ -463,7 +474,8 @@ private, since the founder is the only user for now. A website bends the order i
    `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser,
    librarian and researcher as their kind of work appears. QA and code review became two roles,
    with the security reviewer beside them, on 27 Oct 2026, and the optimiser and librarian became
-   weekly routines the same day; none has run on the website yet.
+   weekly routines the same day, and the researcher became an agent the founder calls; none has run
+   on the website yet. Every role in the team table now has an agent or a routine.
 
 ## How we'll know it works
 
