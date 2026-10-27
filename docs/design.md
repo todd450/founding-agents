@@ -95,7 +95,7 @@ screen, one design-token source that generates every copy.
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
-  `run-report`).
+  `run-report`, `compare-changes`).
 - **The per-change pipeline** → three saved workflows in the plugin: `propose`, `plan` and `build`.
 - **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
@@ -516,6 +516,15 @@ of this (see Sources).
   above the website's typical build and below its stalls, and the report flags a run over it above
   the table. Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
   spend waits for the optimiser.
+- **Whether the plugin pays is measured against changes made without it.** Asked for by the founder
+  on 27 Oct 2026: the measures below judge the team on its own, and say nothing about whether a
+  plain Claude session would have done as well. The `compare-changes` skill reads merged PRs and
+  compares the two groups on cost, time to merge and fixes needed within two weeks. A PR from
+  `build`'s branch counts as with the plugin; any other change needs a `with-plugin` or
+  `without-plugin` label, since nothing else on GitHub tells them apart. Cost is the run reports on
+  the PR and the issues it closes, so a plain session counts only once its own report is posted on
+  its PR. A fix later is a merged PR within two weeks that changed one of the same files and is
+  labelled or titled as a fix: a guess, so the table names each one for the founder to check.
 - **Evals test the agents themselves, and a change runs them before its version bump.** Decided by
   the founder on 27 Oct 2026 (#34), after the team's own recommendation. The tests in `tests/`
   run the workflows with scripted replies, so they prove the wiring, not the judgement: a change to
@@ -714,6 +723,9 @@ people want what the team built, which the other five cannot show:
 | The founder's attention | items in the decision queue each day | fit one sitting |
 | Built what nobody wanted | shipped briefs that did what "how we'll know" said, among those with a check-back verdict (the check-back prints it) | rise, with few briefs left at "can't tell yet" |
 | The founder's attention | share of `build` runs that merge without the founder (`run-report --runs`) | rise |
+
+Whether the team beats a plain Claude session on the same kind of change is the `compare-changes`
+skill's table: cost, time to merge and fixes within two weeks, with the plugin and without it.
 
 ## Sources
 
