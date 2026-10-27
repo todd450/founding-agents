@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "tests/test_status.py:16",
+        "what": "The unit test calls GitHub's API over the network and skips when it cannot reach it, so it passes offline or rate-limited and its result depends on today's issues, not on when the page was written. Check the red line against docs/status.md instead, with no network call.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 8,
+      "body": "**Code review: Changes needed**\n\n- tests/test_status.py:16: The unit test calls GitHub's API over the network and skips when it cannot reach it, so it passes offline or rate-limited and its result depends on today's issues, not on when the page was written. Check the red line against docs/status.md instead, with no network call."
+    }
+  ]
+}

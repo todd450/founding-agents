@@ -1,0 +1,55 @@
+{
+  "role": "qa",
+  "kind": "capability",
+  "class": "a false claim on the page graded as a Nit",
+  "origin": "founding-agents-site #10 (PR #11): the reviewer marked 'a name, a state, a date and a link' as a Nit though no test checks a link; it merged and is still on main",
+  "summary": "A record line says the band's tests check a name and a link; they check only a state and a date. The right review makes it a must-fix.",
+  "right_answer": "send back",
+  "step": {
+    "workflow": "build",
+    "args": 10,
+    "label": "qa",
+    "pr": 11
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-10",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Record the status band"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 10,
+        "title": "Add the status band to the record",
+        "body": "Add a line to the record for the status band: what merged and what its tests check.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 11,
+        "title": "Record the status band",
+        "body": "Adds the status band's line to the record.\n\nCloses #10",
+        "headRefName": "build/issue-10",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": []
+      }
+    ]
+  }
+}
