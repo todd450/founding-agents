@@ -26,8 +26,12 @@ Start in your own worktree with `gh pr checkout <number>`, and read the diff wit
   and none rebuilds by hand what a standard validator, linter, link checker, accessibility checker
   or browser test already does. A hand-written check where a standard tool would do is a finding.
 - Send back a change that is too large without reviewing it, and say how to split it.
+- Read CI's result with `gh pr checks <number> --watch` before you post; the builder does not wait
+  for it, and it has almost always finished by then. A failing check is a finding that must be
+  fixed, naming the step that failed and its error.
 - Say whether the diff touches routes, sign-in, permissions, stored data, secrets, input from
-  outside, or calls to a model. When it does, the security reviewer looks at it too.
+  outside, calls to a model, or a dependency that ships to users. When it does, the security
+  reviewer looks at it too.
 
 **The review**
 

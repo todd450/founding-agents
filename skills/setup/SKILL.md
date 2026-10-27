@@ -51,9 +51,11 @@ founder (a paid plan, or making the repo public). Change neither.
 
 ## Ops watch's site check
 
-For a product served by GitHub Pages. A nightly GitHub Actions run checks that the latest Pages
-deploy is green and that every link on the site resolves, the site's own pages and the links they
-make to other sites. A failure opens one `red` issue, which GitHub notifies the founder of; it is
+A nightly GitHub Actions run checks that the deploy is up and that every link on the site resolves,
+the site's own pages and the links they make to other sites. For a product on GitHub Pages it asks
+the Pages API whether the latest deploy is green. A product served elsewhere sets the repository
+variable `OPS_WATCH_URL` to its live address (`gh variable set OPS_WATCH_URL --body <address>`),
+and the check then crawls that address instead of asking Pages. A failure opens one `red` issue, which GitHub notifies the founder of; it is
 kept current while the check stays red and closed by the next green run. The run passes either
 way, and fails only when the check itself cannot run.
 
