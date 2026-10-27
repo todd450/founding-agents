@@ -1,15 +1,30 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, or to install or update ops watch's nightly site check. Turns on branch protection for the default branch after the founder confirms, and installs ops watch through a PR.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, or to install or update CI or ops watch's nightly site check. Installs CI and ops watch through PRs, and turns on branch protection that requires CI's check after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
-This version covers branch protection and ops watch's site check. The other routines, labels and
-fixtures arrive with the build steps that use them (`docs/design.md` in the Founding Agents repo,
-"Build order").
+This version covers CI, branch protection and ops watch's site check. The other routines, labels
+and fixtures arrive with the build steps that use them (`docs/design.md` in the Founding Agents
+repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
+
+## CI
+
+Every product gets one CI job, `check`, that runs `./check.sh` on each pull request and on the
+default branch. `check.sh` is the product's one command for every check: its tests, and the
+standard validators, linters, link and accessibility checkers and browser tests the builder adds.
+Branch protection then requires `check`, so nothing merges unless it passes.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py ci` shows the files:
+   `.github/workflows/ci.yml`, which setup keeps current, and a starter `check.sh` that runs the
+   Python tests in `tests/`. A product that already has `check.sh` keeps its own.
+2. **Apply on a branch.** Make a branch, rerun with `--apply`, commit, open a PR, and check the
+   `check` job passes on it. A failure there is a real failure the product had all along: fix it in
+   its own PR first.
+3. **After the merge,** require the check: branch protection below, with `--check check`.
 
 ## Branch protection
 
@@ -25,7 +40,11 @@ Run everything from the product repo's folder. The scripts sit in this skill's d
 4. **Apply.** Rerun with `--apply`. Add `--replace` only when protection already exists and the
    founder agreed to replace it after seeing it.
 5. **Report** what is now on, and what is still missing: required checks if the repo has no CI yet
-   (add CI, then rerun with `--apply --replace`).
+   (add CI above, then rerun with `--apply --replace --check check`).
+
+Always name the required check with `--check check` once CI is in. Without it the script requires
+every check on the latest commit, and a scheduled job such as ops watch's `site` would then block
+every pull request, since it never runs on one.
 
 If GitHub refuses because the repo is private on a free plan, say so and leave the choice to the
 founder (a paid plan, or making the repo public). Change neither.
@@ -38,10 +57,10 @@ make to other sites. A failure opens one `red` issue, which GitHub notifies the 
 kept current while the check stays red and closed by the next green run. The run passes either
 way, and fails only when the check itself cannot run.
 
-1. **Dry run.** `python3 <this skill's directory>/install_ops_watch.py` shows which files it would
-   write (`.github/workflows/ops-watch.yml` and `.github/ops-watch/check_site.py`) and which site it
-   would watch. If Pages is off, tell the founder the check would raise red until it is on, and ask
-   before turning Pages on, since that is a setting on GitHub.
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py ops-watch` shows which files it
+   would write (`.github/workflows/ops-watch.yml` and `.github/ops-watch/check_site.py`) and which
+   site it would watch. If Pages is off, tell the founder the check would raise red until it is on,
+   and ask before turning Pages on, since that is a setting on GitHub.
 2. **Apply on a branch.** Make a branch, rerun with `--apply`, commit the two files and open a PR.
    The default branch is protected, so they reach it only through the PR.
 3. **After the merge,** run the workflow once by hand (`gh workflow run ops-watch.yml`) and check

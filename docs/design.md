@@ -186,6 +186,21 @@ of this (see Sources).
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
   nothing local can get around it.
+- **Every product's checks run in one CI job that branch protection requires.** Decided by the
+  founder on 26 Oct 2026. `setup` installs a `ci` workflow whose one job, `check`, runs `check.sh`,
+  the product's single command for every check, then makes `check` the required status check. The
+  website showed why: its 46 tests ran only when an agent chose to run them, since it had no CI
+  and its protection required no checks, so a change that broke them could still have merged.
+  `setup` keeps the workflow current but never replaces `check.sh`, which the product owns.
+- **Builders use standard tools before writing checks, and test behaviour, not wording.** Decided
+  with the CI. The website's tests rebuilt by hand what standard tools do: 53 regular-expression
+  searches over the HTML, a home-made tag parser whose bug on `<br/>` cost a review round, a colour
+  rule that needed a CSS linter and sent #4 back three times, and layout tests that read the CSS
+  text and passed while the rendered page had no gutter. Some pinned today's exact wording, and
+  one called GitHub's API. The builder now reaches first for a validator, a linter with rules for
+  the product's conventions, a link checker, an accessibility checker and a real browser at phone
+  and desktop widths, all run from `check.sh`, and writes custom tests only for the product's own
+  rules and facts. The reviewer sends back a hand-written check where a standard tool would do.
 - **The hook trusts only `founding-agents:integrator`.** Hooks see a plugin agent's name with the
   plugin prefix, both when a session starts with `--agent` and when the agent runs as a subagent; a
   session with no agent reports none. Tested on 25 Oct 2026 with `tests/e2e_guard.sh`: the builder
