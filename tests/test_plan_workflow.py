@@ -32,11 +32,11 @@ class PlanWorkflowTest(unittest.TestCase):
         self.assertIn("labelled `decided`", prompt)
         self.assertIn('Part of #7', prompt)
 
-    def test_a_planned_brief_names_its_issues_in_order_and_the_first_to_build(self):
+    def test_a_planned_brief_names_its_issues_in_order_and_how_to_build_them(self):
         run = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)
         self.assertEqual(run["result"]["status"], "planned")
         self.assertEqual(run["result"]["issues"], ["#8 Add the price table", "#9 Link pricing from the home page (after #8)"])
-        self.assertEqual(run["result"]["next"], "/founding-agents:build 8")
+        self.assertEqual(run["result"]["next"], "/founding-agents:build 7")
         self.assertEqual(self.labels(run), ["check #7", "architect", "run report"])
 
     def test_the_architect_runs_as_its_plugin_agent_on_opus_with_the_founders_answers(self):

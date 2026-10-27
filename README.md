@@ -10,7 +10,7 @@ decides scope and taste and talks to users; the agents plan, build, check, ship 
 and `/founding-agents:build`, which built the site's page through four decided issues. Step 5,
 growing the team on demand, has begun with the architect: `/founding-agents:plan` cuts a decided
 brief into build issues, asking the founder first about any technical decision the brief left
-open.
+open, and `/founding-agents:build <brief>` builds them two to four at a time.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.
