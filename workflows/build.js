@@ -40,14 +40,14 @@ const decided = t => t.decision ? `\n\nThe founder decided: ${t.decision}\nThe c
 const TICKET = {
   type: 'object',
   properties: {
-    ready: { type: 'boolean' },
+    ready: { type: 'boolean', description: 'false only when a check fails or a decision is unseen; an open PR for the issue is not a reason' },
     reason: { type: 'string', description: 'why it cannot start; empty when ready' },
     repo: { type: 'string', description: 'owner/name' },
     title: { type: 'string' },
     body: { type: 'string' },
     decision: { type: 'string', description: "the founder's pick and notes from the comments, with the mockup branch if there is one; empty if none" },
     unseen: { type: 'array', items: { type: 'string' }, description: 'each technical one-way door the issue settles that the founder has not seen; empty if none' },
-    open_pr: { type: 'integer', description: 'the open PR that already builds this issue; 0 if none' },
+    open_pr: { type: 'integer', description: 'the open PR that already builds this issue, which the builder continues; 0 if none. It never makes the issue unready' },
     security: { type: 'boolean', description: `true when what the issue asks for touches ${SECURITY}` },
     parts: {
       type: 'array',
@@ -157,7 +157,7 @@ const check = n => agent(
 - If its body says "Build after #<m>", each #<m> must be closed.
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${n} is that issue. A red scheduled check stops other work until it is fixed.
 - Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` or \`plan\` queue item on this issue or on the brief it is part of, with the founder's choice; the \`decided\` label on the issue or its brief is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
-- \`gh pr list --state open --json number,headRefName,body\`: an open PR on the branch \`build/issue-${n}\`, or one whose description closes #${n}, already builds it. Return its number as open_pr, or 0.
+- \`gh pr list --state open --json number,headRefName,body\`: an open PR on the branch \`build/issue-${n}\`, or one whose description closes #${n}, already builds it. Return its number as open_pr, or 0. An open PR is never a reason to stop: it does not make the issue unready, because the builder continues that PR from its reviews; only the checks above and below decide ready.
 - Return security true when what the issue asks for touches ${SECURITY}, so its security review starts beside the other reviews; false when it plainly touches none of them, such as copy, layout or a test.
 Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments on the issue, or on the brief it is part of, hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-<the issue or brief the mockups were made for>\`) as the decision.`,
   { label: `check #${n}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
