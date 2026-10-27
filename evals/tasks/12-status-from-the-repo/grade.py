@@ -19,7 +19,7 @@ def grade(t):
     for n, (state, day) in RECORDED.items():
         yield f"step {n} says {state}, {day}", n in shown and shown[n].strip().startswith(state) and day in shown[n]
     band = re.search(r'class="band-head">(.*?)</div>', page, re.S)
-    line = band.group(1) if band else page
+    line = re.sub(r"<[^>]+>", "", band.group(1) if band else page)
     # The meaning, not the words: an honest rewording of "No open red issue" passes.
     yield "the red line says none is open", re.search(r"\bno\b[^.]*\bred issue|red issues?[^.]*\bnone\b", line, re.I) and not re.search(
         r"\b(one|a|\d+)\s+(open\s+)?red issues?\s+(is|are)\s+open", line, re.I)

@@ -82,6 +82,23 @@ class TaskTest(unittest.TestCase):
         trial.git(work, "merge", "-q", "--no-edit", "build/issue-19")
         self.assertFalse(checks.suite(work))
 
+    def test_the_red_line_is_graded_on_its_meaning_not_its_words(self):
+        # Every phrasing here came from a real trial; the first run's grader failed all but the first.
+        task = trial.load("12-status-from-the-repo")
+        site = (EVALS / "fixtures" / "site" / "index.html").read_text()
+        for line in ("No open red issue. Nothing is blocked.", "No red issue is open: nothing is holding merges.",
+                     "No red issue is open.", 'Open <code>red</code> issues: <span class="red-count">none</span>.'):
+            with self.subTest(line):
+                folder = Path(self.folder.name) / str(abs(hash(line)))
+                trial.make(task, folder)
+                trial.apply(task, folder, answer(task, "reference"))
+                checkout = trial.Trial(task, folder).branch("build/issue-12")
+                (checkout / "index.html").write_text(site.replace("No open red issue. Nothing is blocked.", line))
+                trial.git(checkout, "commit", "-q", "--allow-empty", "-am", "Reword the red line")
+                trial.git(checkout, "push", "-q", "origin", "build/issue-12")
+                checks = dict(trial.grade(task, folder))
+                self.assertTrue(checks["the red line says none is open"])
+
     def test_some_tasks_want_a_stop_a_refusal_or_an_approval(self):
         # One-sided evals make one-sided agents: a role that sends everything back must not score well.
         wanted = [trial.load(n).get("right_answer") for n in trial.tasks()]
