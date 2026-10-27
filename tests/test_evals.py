@@ -106,6 +106,46 @@ class TaskTest(unittest.TestCase):
                 checks = dict(trial.grade(task, folder))
                 self.assertTrue(checks["the red line says none is open"])
 
+    def regraded(self, name, branch, files):
+        """Grade a task's reference answer after an agent's own wording of some files replaces it."""
+        task = trial.load(name)
+        folder = Path(self.folder.name) / f"{name}-{abs(hash(str(files)))}"
+        trial.make(task, folder)
+        trial.apply(task, folder, answer(task, "reference"))
+        checkout = trial.Trial(task, folder).branch(branch)
+        for path, edit in files.items():
+            target = checkout / path
+            target.write_text(edit(target.read_text() if target.exists() else ""))
+        trial.git(checkout, "add", "-A")
+        trial.git(checkout, "commit", "-q", "--allow-empty", "-m", "An agent's own wording")
+        trial.git(checkout, "push", "-q", "origin", branch)
+        return dict(trial.grade(task, folder))
+
+    def test_a_step_with_extra_attributes_is_still_read(self):
+        # An Opus builder added data-state to each step's state; the first grader read none of them.
+        checks = self.regraded("12-status-from-the-repo", "build/issue-12", {
+            "index.html": lambda page: page.replace('<span class="step-state done">', '<span class="step-state done" data-state="done">')})
+        self.assertTrue(all(ok for name, ok in checks.items() if name.startswith("step ")), checks)
+
+    def test_a_docstring_that_mentions_the_count_does_not_pin_it(self):
+        # Two Opus builders parsed the count in their tests and named "four rounds" only in docstrings.
+        test = '''"""The record's count of the shell's review rounds."""
+
+import unittest
+
+
+def count_before(text, noun):
+    """The number a claim puts in front of `noun`, e.g. 'four rounds of review' -> 4."""
+    return 4
+
+
+class RecordTest(unittest.TestCase):
+    def test_the_count_matches_the_prs_reviews(self):
+        self.assertEqual(count_before("", "rounds"), 4)
+'''
+        checks = self.regraded("22-count-its-own-review-rounds", "build/issue-26", {"tests/test_count.py": lambda _: test})
+        self.assertTrue(checks["no test pins the record's wording"])
+
     def test_some_tasks_want_a_stop_a_refusal_or_an_approval(self):
         # One-sided evals make one-sided agents: a role that sends everything back must not score well.
         wanted = [trial.load(n).get("right_answer") for n in trial.tasks()]

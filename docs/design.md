@@ -234,6 +234,10 @@ of this (see Sources).
   issue owns. One run report goes on the brief. Two builders is the default because builders and
   reviewers all run on Opus, so four at once spends the week's Opus allowance four times as fast,
   and pacing to the weekly limit is not built yet. Not yet run on a real product.
+  Agents running at once share one machine: on 27 Oct 2026 eval trials run side by side
+  overwrote each other's `/tmp/index.html.bak`, and one QA reviewed another trial's checkout
+  through `/tmp/qa-pr8`. So the builder, QA and the code and security reviewers keep scratch
+  files in their worktree or a fresh `mktemp -d` and serve on a free port.
 - **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
   the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
   its own worktree and posting its own comment; when the code reviewer says the diff touches
@@ -243,6 +247,10 @@ of this (see Sources).
   holdouts, so the holdout guard now trusts `founding-agents:qa`. The split's cost: two Opus
   reviewers each round where there was one, and the reviewer was already the largest cost in five
   of six website builds; the optimiser's numbers say whether it pays.
+  A QA must-fix is something it can show going wrong: the product doing the wrong thing for
+  someone, or missing what its issue asks. A test the issue did not ask for is a Nit, and how
+  tests are written is code review's; found on 27 Oct 2026, when QA sent back a correct page in
+  two of three eval trials for a test the issue never asked for.
 - **The optimiser and the librarian run as weekly routines that propose, never change.** Built on
   27 Oct 2026, the same way as ops watch's daily routine: each one's instructions are a file
   `setup` copies into the product (`.github/optimiser/routine.md`, `.github/librarian/routine.md`)
@@ -351,6 +359,12 @@ of this (see Sources).
   the product's conventions, a link checker, an accessibility checker and a real browser at phone
   and desktop widths, all run from `check.sh`, and writes custom tests only for the product's own
   rules and facts. The reviewer sends back a hand-written check where a standard tool would do.
+  The first eval run (below) found the code reviewer turning a CSS linter down as an undecided
+  dependency, since its instructions said "a dependency that ships" where the workflows say ships
+  to users; it asked for better regexes instead, which is #4's stall. A check tool run from
+  `check.sh` ships to no one, and this decision already says checks use them, so the reviewer's
+  and builder's instructions now say adding one is never a one-way door, and the reviewer names
+  the tool and the rule.
 - **The hook trusts only `founding-agents:integrator`.** Hooks see a plugin agent's name with the
   plugin prefix, both when a session starts with `--agent` and when the agent runs as a subagent; a
   session with no agent reports none. Tested on 25 Oct 2026 with `tests/e2e_guard.sh`: the builder
@@ -413,6 +427,18 @@ of this (see Sources).
   runs (standard tools, the review split), so they need harder tasks before they say much. The
   builder on Sonnet passed all fifteen of its trials, as Opus did, at $0.22 a trial against $0.78;
   three builder tasks are too few to move it back, so harder builder tasks come before that choice.
+  The second run, the same day, tested the fixes those failures led to (below, under standard
+  tools, the review split and parallel builders) and four harder builder tasks: the token rule,
+  a gutter measured in a real browser, a count of the PR's own review rounds, and links only to
+  the repo's public pages. It also found the trials were not independent: agents wrote fixed
+  scratch paths such as `/tmp/index.html.bak`, so trials running at once overwrote each other.
+  Each trial now has its own `TMPDIR`, trials that share an issue or PR number never run at once,
+  and each records any fixed `/tmp` path or port it used. 103 trials, $63.98: the code reviewer
+  passed all 21, task 01 included; QA 11 of 12, its one miss a judgement call on the fixture's
+  wording; the builder on Opus all 35, and on Sonnet 27 of 35, failing the rendered gutter and
+  the token linter four times in five each, at $0.32 a trial against $0.98. The model choice
+  went to the founder (#41). A third of trials still used a fixed `/tmp` name, mostly a
+  note holding the path of their own `mktemp -d` folder.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
