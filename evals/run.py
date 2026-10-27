@@ -116,13 +116,65 @@ def environment(folder):
     """The trial's environment: the gh stand-in first on PATH, an empty GitHub login, and never an API key."""
     env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
     env.update({"PATH": f"{EVALS / 'bin'}:{env.get('PATH', '')}", "EVAL_GH_STATE": str(folder / "github.json"),
-                "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1"})
+                "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1", "TMPDIR": str(folder / "tmp")})
     return env
+
+
+def numbers(task):
+    """The issue and PR numbers a task's trials work on. Agents name scratch paths after them
+    (`/tmp/qa-pr8`), so two trials that share one must not run at once (seen on 27 Oct 2026)."""
+    github = task["github"]
+    return {item["number"] for item in github["issues"] + github["prs"]}
+
+
+def schedule(jobs, parallel, run):
+    """Run jobs `parallel` at a time, never two whose tasks share an issue or PR number, and yield
+    each result as it finishes. Jobs are taken in turn across tasks, so one task's trials spread out."""
+    pending, running = list(jobs), {}
+    with ThreadPoolExecutor(parallel) as pool:
+        while pending or running:
+            busy = set().union(*(numbers(job[0]) for job in running.values()))
+            for job in list(pending):
+                if len(running) >= parallel:
+                    break
+                if not numbers(job[0]) & busy:
+                    pending.remove(job)
+                    running[pool.submit(run, *job)] = job
+                    busy |= numbers(job[0])
+            done = next(as_completed(running))
+            del running[done]
+            yield done.result()
 
 
 def session_log(session_id):
     found = list((Path.home() / ".claude" / "projects").glob(f"*/{session_id}.jsonl"))
     return found[0] if found else None
+
+
+FIXED = re.compile(r"(?<![\w$}/.-])/tmp/[\w.-]+|http\.server\s+(?!0\b)\d{2,5}\b")
+
+
+def shared(log):
+    """Fixed /tmp paths and fixed ports the trial's agent used: places another run could also use."""
+    if not log:
+        return []
+    found = set()
+    for record in summarise_records(log):
+        found |= set(FIXED.findall(record))
+    # A mktemp template, or the random name mktemp made from it, is the agent's own.
+    return sorted(f for f in found if not re.search(r"XXX|[-.][A-Za-z0-9]{6,}$|^/tmp/\.+$", f))
+
+
+def summarise_records(log):
+    for line in open(log, encoding="utf-8"):
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        if record.get("type") == "assistant":
+            for part in (record.get("message") or {}).get("content") or []:
+                if isinstance(part, dict) and part.get("type") == "tool_use":
+                    yield json.dumps(part.get("input"))
 
 
 def usage(session_id):
@@ -135,6 +187,7 @@ def usage(session_id):
 
 def run_trial(task, call, model, folder):
     trial.make(task, folder)
+    (folder / "tmp").mkdir()
     started = time.time()
     try:
         done = subprocess.run(command(call, model), cwd=folder / "work", env=environment(folder),
@@ -158,6 +211,7 @@ def run_trial(task, call, model, folder):
     return {"task": task["name"], "role": task["role"], "model": model, "kind": task["kind"],
             "passed": all(ok for _, ok in checks), "checks": checks, "minutes": (time.time() - started) / 60,
             "session": result.get("session_id", ""), "folder": str(folder), "extracted": extracted,
+            "shared": shared(session_log(result.get("session_id")) if result.get("session_id") else None),
             **add(usage(result.get("session_id")), extra)}
 
 
@@ -193,13 +247,13 @@ def percent(part, whole):
 def markdown(results, trials):
     groups = summary(results)
     total = sum(r["cost"] for r in results)
-    lines = [f"**Eval run** · {len({r['task'] for r in results})} tasks · {trials} trials each · "
+    lines = [f"**Eval run** · {len({r['task'] for r in results})} tasks · {len(results)} trials · "
              f"${total:.2f} at API prices", "",
-             f"| Agent | Model | Tasks | Pass rate | pass^{trials} | Regression | Capability | Input, new | Input, cached | Output | Cost | Cost per trial |",
-             "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+             "| Agent | Model | Tasks | Trials each | Pass rate | pass^k | Regression | Capability | Input, new | Input, cached | Output | Cost | Cost per trial |",
+             "|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for (role, model), g in sorted(groups.items()):
         kind = lambda k: percent(*g["kinds"][k]) if g["kinds"][k][1] else "–"
-        lines.append(f"| {role} | {model} | {g['tasks']} | {percent(g['passed'], g['trials'])} | "
+        lines.append(f"| {role} | {model} | {g['tasks']} | {g['trials'] // g['tasks']} | {percent(g['passed'], g['trials'])} | "
                      f"{percent(g['all_passed'], g['tasks'])} | {kind('regression')} | {kind('capability')} | "
                      f"{tokens(g['new'])} | {tokens(g['cached'])} | {tokens(g['out'])} | ${g['cost']:.2f} | "
                      f"${g['cost'] / g['trials']:.2f} |")
@@ -208,7 +262,7 @@ def markdown(results, trials):
         all_tasks[(r["task"], r["model"])].append(r)
     passed = sum(r["passed"] for r in results)
     every = sum(all(t["passed"] for t in ts) for ts in all_tasks.values())
-    lines.append(f"| **All** | | {len(all_tasks)} | {percent(passed, len(results))} | {percent(every, len(all_tasks))} | | | "
+    lines.append(f"| **All** | | {len(all_tasks)} | | {percent(passed, len(results))} | {percent(every, len(all_tasks))} | | | "
                  f"{tokens(sum(r['new'] for r in results))} | {tokens(sum(r['cached'] for r in results))} | "
                  f"{tokens(sum(r['out'] for r in results))} | **${total:.2f}** | ${total / max(len(results), 1):.2f} |")
     lines += ["", "| Task | Agent | Model | Kind | Trials | What failed | Cost |", "|---|---|---|---|---|---|---|"]
@@ -221,8 +275,16 @@ def markdown(results, trials):
     if extracted:
         lines += ["", f"In {extracted} of {len(results)} trials the agent's reply had no usable JSON block, so Haiku "
                       "read the result from its final report."]
-    lines += ["", f"Pass rate is the share of trials that passed every check; pass^{trials} is the share of tasks "
-                  f"where all {trials} trials passed. Regression tasks are ones the team got right on the website "
+    used = [r for r in results if r.get("shared")]
+    if used:
+        common = defaultdict(int)
+        for r in used:
+            for place in r["shared"]:
+                common[place] += 1
+        top = ", ".join(f"`{p}`" for p, _ in sorted(common.items(), key=lambda kv: -kv[1])[:5])
+        lines += ["", f"{len(used)} of {len(results)} trials used a fixed /tmp path or port another run could also use: {top}."]
+    lines += ["", "Pass rate is the share of trials that passed every check; pass^k is the share of tasks "
+                  "where all k trials passed. Regression tasks are ones the team got right on the website "
                   "and should stay near 100%; capability tasks are ones it got wrong. Cost is API-equivalent at "
                   "list prices, from `run-report`; on a Pro or Max plan the run uses the weekly limit instead."]
     return "\n".join(lines)
@@ -233,7 +295,8 @@ def main(argv=None):
     parser.add_argument("--task", action="append", default=[], help="a task's name or number prefix; repeat for more")
     parser.add_argument("--role", action="append", default=[], help="only this agent's tasks, e.g. builder or build-check")
     parser.add_argument("--trials", type=int, default=3)
-    parser.add_argument("--model", action="append", default=[], help="role=model, to run a role on another model")
+    parser.add_argument("--model", action="append", default=[], help="role=model, to run a role on another model; repeat to run it on several")
+    parser.add_argument("--trials-for", action="append", default=[], help="role=n, to give one role more trials, e.g. for a model comparison")
     parser.add_argument("--parallel", type=int, default=4, help="trials at once")
     parser.add_argument("--out", type=Path, help="where results go (default evals/runs/<time>)")
     parser.add_argument("--keep", action="store_true", help="keep each trial's folder for reading afterwards")
@@ -246,6 +309,7 @@ def main(argv=None):
         results = json.loads(args.regrade.read_text())
         for r in results:
             checks = trial.grade(trial.load(r["task"]), r["folder"])
+            r["shared"] = shared(r.get("log"))
             failed_run = [c for c in r["checks"] if c[0].startswith("the agent finished")]
             r["checks"], r["passed"] = failed_run + checks, not failed_run and all(ok for _, ok in checks)
         args.regrade.write_text(json.dumps(results, indent=2))
@@ -260,13 +324,18 @@ def main(argv=None):
 
     names = [n for n in trial.tasks() if (not args.task or any(n.startswith(t) for t in args.task))]
     tasks = [t for t in map(trial.load, names) if not args.role or t["role"] in args.role]
-    overrides = dict(m.split("=", 1) for m in args.model)
+    models = defaultdict(list)
+    for m in args.model:
+        role, model = m.split("=", 1)
+        models[role].append(model)
+    counts = {role: int(n) for role, n in (t.split("=", 1) for t in args.trials_for)}
     planned = []
     for task in tasks:
         call = capture(task)
-        planned.append((task, call, overrides.get(task["role"], call["model"])))
+        for model in models.get(task["role"]) or [call["model"]]:
+            planned.append((task, call, model, counts.get(task["role"], args.trials)))
     if args.dry_run:
-        for task, call, model in planned:
+        for task, call, model, _ in planned:
             print(f"{task['name']}: {call['agentType'] or 'workflow step'} on {model}, from {task['step']['workflow']}'s "
                   f"'{call['label']}'\n  {call['prompt'][:200]!r}")
         return 0
@@ -277,16 +346,14 @@ def main(argv=None):
     out.mkdir(parents=True, exist_ok=True)
     scratch = Path(tempfile.mkdtemp(prefix="founding-agents-evals-"))
     jobs = [(task, call, model, scratch / f"{task['name']}-{model}-{i + 1}")
-            for task, call, model in planned for i in range(args.trials)]
+            for i in range(max(n for *_, n in planned)) for task, call, model, n in planned if i < n]
     print(f"Running {len(jobs)} trials, {args.parallel} at a time, in {scratch}", file=sys.stderr)
     results = []
-    with ThreadPoolExecutor(args.parallel) as pool:
-        for done in as_completed([pool.submit(run_trial, *job) for job in jobs]):
-            result = done.result()
-            results.append(result)
-            print(f"{'pass' if result['passed'] else 'FAIL'}  {result['task']} on {result['model']}  "
-                  f"${result['cost']:.2f}  {result['minutes']:.0f} min", file=sys.stderr)
-            (out / "results.json").write_text(json.dumps(results, indent=2))
+    for result in schedule(jobs, args.parallel, run_trial):
+        results.append(result)
+        print(f"{'pass' if result['passed'] else 'FAIL'}  {result['task']} on {result['model']}  "
+              f"${result['cost']:.2f}  {result['minutes']:.0f} min", file=sys.stderr)
+        (out / "results.json").write_text(json.dumps(results, indent=2))
     report = markdown(results, args.trials)
     (out / "report.md").write_text(report + "\n")
     print(report)

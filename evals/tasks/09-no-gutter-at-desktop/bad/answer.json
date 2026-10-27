@@ -13,7 +13,7 @@
   "posted": [
     {
       "kind": "pr comment",
-      "number": 8,
+      "number": 30,
       "body": "**QA: Approve**\n\n- Nit: rendering: I could not render the page at 390 px and 1440 px; the CSS has no fixed widths."
     }
   ]

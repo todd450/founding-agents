@@ -6,6 +6,8 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -36,8 +38,8 @@ class TaskTest(unittest.TestCase):
         trial.apply(task, folder, answer(task, kind))
         return trial.grade(task, folder)
 
-    def test_there_are_ten_to_twenty_tasks(self):
-        self.assertTrue(10 <= len(trial.tasks()) <= 20, trial.tasks())
+    def test_there_are_at_least_ten_tasks(self):
+        self.assertGreaterEqual(len(trial.tasks()), 10, trial.tasks())
 
     def test_every_task_names_its_role_kind_and_origin(self):
         roles = {p.stem for p in (EVALS.parent / "agents").glob("*.md")} | {"build-check"}
@@ -48,10 +50,13 @@ class TaskTest(unittest.TestCase):
                 self.assertIn(task["kind"], ("regression", "capability"))
                 self.assertTrue(task["origin"] and task["class"] and task["summary"])
                 self.assertIn(task["step"]["workflow"], ("build", "plan", "propose"))
+                self.assertTrue(set(task.get("needs", [])) <= {"npm", "chrome"})
 
     def test_each_reference_answer_passes_its_grader(self):
         for name in trial.tasks():
             with self.subTest(name):
+                if trial.missing(trial.load(name)):
+                    self.skipTest(f"{name} needs {trial.missing(trial.load(name))}")
                 checks = self.graded(name, "reference")
                 self.assertTrue(checks)
                 self.assertEqual([c for c, ok in checks if not ok], [])
@@ -59,6 +64,8 @@ class TaskTest(unittest.TestCase):
     def test_each_known_bad_answer_fails_its_grader(self):
         for name in trial.tasks():
             with self.subTest(name):
+                if trial.missing(trial.load(name)):
+                    self.skipTest(f"{name} needs {trial.missing(trial.load(name))}")
                 self.assertTrue([c for c, ok in self.graded(name, "bad") if not ok])
 
     def test_each_pr_under_review_passes_its_own_checks(self):
@@ -98,6 +105,46 @@ class TaskTest(unittest.TestCase):
                 trial.git(checkout, "push", "-q", "origin", "build/issue-12")
                 checks = dict(trial.grade(task, folder))
                 self.assertTrue(checks["the red line says none is open"])
+
+    def regraded(self, name, branch, files):
+        """Grade a task's reference answer after an agent's own wording of some files replaces it."""
+        task = trial.load(name)
+        folder = Path(self.folder.name) / f"{name}-{abs(hash(str(files)))}"
+        trial.make(task, folder)
+        trial.apply(task, folder, answer(task, "reference"))
+        checkout = trial.Trial(task, folder).branch(branch)
+        for path, edit in files.items():
+            target = checkout / path
+            target.write_text(edit(target.read_text() if target.exists() else ""))
+        trial.git(checkout, "add", "-A")
+        trial.git(checkout, "commit", "-q", "--allow-empty", "-m", "An agent's own wording")
+        trial.git(checkout, "push", "-q", "origin", branch)
+        return dict(trial.grade(task, folder))
+
+    def test_a_step_with_extra_attributes_is_still_read(self):
+        # An Opus builder added data-state to each step's state; the first grader read none of them.
+        checks = self.regraded("12-status-from-the-repo", "build/issue-12", {
+            "index.html": lambda page: page.replace('<span class="step-state done">', '<span class="step-state done" data-state="done">')})
+        self.assertTrue(all(ok for name, ok in checks.items() if name.startswith("step ")), checks)
+
+    def test_a_docstring_that_mentions_the_count_does_not_pin_it(self):
+        # Two Opus builders parsed the count in their tests and named "four rounds" only in docstrings.
+        test = '''"""The record's count of the shell's review rounds."""
+
+import unittest
+
+
+def count_before(text, noun):
+    """The number a claim puts in front of `noun`, e.g. 'four rounds of review' -> 4."""
+    return 4
+
+
+class RecordTest(unittest.TestCase):
+    def test_the_count_matches_the_prs_reviews(self):
+        self.assertEqual(count_before("", "rounds"), 4)
+'''
+        checks = self.regraded("22-count-its-own-review-rounds", "build/issue-26", {"tests/test_count.py": lambda _: test})
+        self.assertTrue(checks["no test pins the record's wording"])
 
     def test_some_tasks_want_a_stop_a_refusal_or_an_approval(self):
         # One-sided evals make one-sided agents: a role that sends everything back must not score well.
@@ -153,6 +200,10 @@ class ResultTest(unittest.TestCase):
         self.assertIn("```json", run.prompt({**call, "agentType": "founding-agents:qa"}))
         self.assertEqual(run.prompt({**call, "agentType": None}), "Review.")
 
+    def test_flags_fixed_scratch_paths_and_ports_but_not_private_ones(self):
+        used = "cp index.html /tmp/index.html.bak; d=$(mktemp -d); cd $TMPDIR/x; python3 -m http.server 8777; python3 -m http.server 0"
+        self.assertEqual(run.FIXED.findall(used), ["/tmp/index.html.bak", "http.server 8777"])
+
     def test_pass_rate_counts_trials_and_pass_k_counts_tasks_whose_every_trial_passed(self):
         def result(name, passed):
             return {"task": name, "role": "qa", "model": "opus", "kind": "regression", "passed": passed,
@@ -162,7 +213,28 @@ class ResultTest(unittest.TestCase):
         group = run.summary(results)[("qa", "opus")]
         self.assertEqual((group["passed"], group["trials"]), (5, 6))
         self.assertEqual((group["all_passed"], group["tasks"]), (1, 2))
-        self.assertIn("| qa | opus | 2 | 83% | 50% |", run.markdown(results, 3))
+        self.assertIn("| qa | opus | 2 | 3 | 83% | 50% |", run.markdown(results, 3))
+
+
+class ScheduleTest(unittest.TestCase):
+    def test_trials_that_share_an_issue_or_pr_number_never_run_at_once(self):
+        def task(name, *numbers):
+            return {"name": name, "github": {"issues": [{"number": n} for n in numbers], "prs": []}}
+        a, b, c = task("a", 5, 8), task("b", 8), task("c", 12)
+        running, clashes, lock = [], [], threading.Lock()
+
+        def trial_of(task, i):
+            with lock:
+                clashes.extend((other["name"], task["name"]) for other in running if run.numbers(other) & run.numbers(task))
+                running.append(task)
+            time.sleep(0.05)
+            with lock:
+                running.remove(task)
+            return task["name"], i
+
+        done = list(run.schedule([(a, 1), (a, 2), (b, 1), (c, 1), (c, 2)], 4, trial_of))
+        self.assertEqual(sorted(done), [("a", 1), ("a", 2), ("b", 1), ("c", 1), ("c", 2)])
+        self.assertEqual(clashes, [])
 
 
 class GhStandInTest(unittest.TestCase):
