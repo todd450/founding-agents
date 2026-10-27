@@ -258,6 +258,19 @@ of this (see Sources).
   holdouts, so the holdout guard now trusts `founding-agents:qa`. The split's cost: two Opus
   reviewers each round where there was one, and the reviewer was already the largest cost in five
   of six website builds; the optimiser's numbers say whether it pays.
+- **Reviews weigh who can reach a finding, and the integrator merges on checks CI already ran.**
+  Decided by the founder on 27 Oct 2026, to speed up `build` after the website's #27 took six
+  review rounds and about $36. Most of those rounds chased ever-subtler ways to slip a bad link into
+  facts only the founder can write: the public key is read-only and every change to the snapshot
+  is reviewed. The reviewers now say who can put a bad value where it hurts: anyone on the
+  internet, a user, or only someone the team trusts. A finding only a trusted writer can reach,
+  where review would see it, is at most low, so a Nit; it is must-fix when a reader, a user or an
+  outside service can reach it, or when it lets a trusted writer harm readers unseen. Ordinary
+  slips in kept data (empty, too long, a typo) stay must-fix. The integrator still tests the merge,
+  not the branch, but when `main` has not moved since the PR's last push, the PR's green required
+  checks already tested exactly what the merge will be, so it merges on them instead of rerunning
+  `check.sh`, its install and its browser tests. When `main` has moved, it brings the PR up to
+  date with `gh pr update-branch`, which needs no force-push, and waits for the checks again.
 - **`build` starts each reviewer as soon as it is known to be needed, and the builder does not wait
   for CI.** Decided on 27 Oct 2026, after the first multi-issue build on the website (brief #14)
   took 23 minutes from check to merge for its smallest issue, #26. Its session logs show where the

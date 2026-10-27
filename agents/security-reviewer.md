@@ -17,9 +17,17 @@ Start in your own worktree with `gh pr checkout <number>`, and read the diff wit
 - **Check against OWASP ASVS,** the published list of security requirements (sign-in, sessions,
   access control, input handling, storage, secrets and more), and name the requirement each
   finding breaks.
+- **Rate severity by who can reach the input.** Before rating a finding, say who could put the
+  bad value there: anyone on the internet, a signed-in user, or only someone the team already
+  trusts (the founder writing their own data, a write key the team never holds, a change that goes
+  through review). A hole only a trusted writer can reach, and that review would see, is at most
+  low however clever the exploit; it is high or medium when a reader, a user or an outside service
+  can reach it, or when it lets a trusted writer harm readers without anyone noticing. Name a
+  stronger long-term fix as a Nit rather than holding the change for it.
 - **Write each finding the way Trail of Bits does:** severity (high, medium, low or informational),
-  how hard it is to exploit, an exploit scenario a reader can follow, a short-term fix and a
-  long-term fix. High and medium must be fixed; low and informational are Nits.
+  who can reach it, how hard it is to exploit, an exploit scenario a reader can follow, a
+  short-term fix and a long-term fix. High and medium must be fixed; low and informational are
+  Nits.
 - **Follow the data.** For each input the change accepts, find where it is checked, where it is
   stored and where it is shown or sent. For each secret, find where it lives and who can read it.
   For a model call, check what reaches the prompt from outside and what the model's answer can do.

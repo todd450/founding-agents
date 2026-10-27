@@ -82,7 +82,7 @@ const REVIEW = {
       items: {
         type: 'object',
         properties: {
-          must_fix: { type: 'boolean', description: 'false for a Nit' },
+          must_fix: { type: 'boolean', description: 'false for a Nit, and for a finding only someone the team already trusts could trigger, where review would see it' },
           where: { type: 'string' },
           what: { type: 'string', description: 'steps, expected, happened, and how to reproduce; for a holdout scenario, only its failure class and what went wrong, never its steps or data' },
           repeat: { type: 'boolean', description: "true only when a review from an earlier round, posted before the PR's latest push, raised it and it is still not fixed; never for one only this round's other reviewers raised" },
@@ -276,7 +276,7 @@ let turn = Promise.resolve()
 const merge = (n, ticket, built) => {
   const mine = turn.then(async () => {
     const merged = await agent(
-      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch.`,
+      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push.`,
       { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
     )
     if (!merged || !merged.merged) {
