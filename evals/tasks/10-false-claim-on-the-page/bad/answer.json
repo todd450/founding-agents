@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "approve",
+    "findings": [
+      {
+        "must_fix": false,
+        "where": "index.html: the record",
+        "what": "No step test asserts a link; drop 'and a link'.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 11,
+      "body": "**QA: Approve**\n\n- Nit: index.html: the record: No step test asserts a link; drop 'and a link'."
+    }
+  ]
+}

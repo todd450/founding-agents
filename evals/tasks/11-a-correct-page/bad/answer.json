@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "index.html",
+        "what": "I could not check the page at 1440 px.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 8,
+      "body": "**QA: Changes needed**\n\n- index.html: I could not check the page at 1440 px."
+    }
+  ]
+}

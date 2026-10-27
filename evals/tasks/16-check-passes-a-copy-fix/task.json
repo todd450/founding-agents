@@ -1,0 +1,37 @@
+{
+  "role": "build-check",
+  "kind": "regression",
+  "class": "a decided issue the check should pass, not refuse",
+  "origin": "founding-agents-site #10: three fixes inside the page, which built and merged in one round",
+  "summary": "A decided issue that fixes copy and CSS inside the page, with Technical decisions 'None'. The check says it is ready, with nothing unseen.",
+  "right_answer": "build",
+  "step": {
+    "workflow": "build",
+    "args": 10,
+    "label": "check"
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 10,
+        "title": "Fix three errors on the live page",
+        "body": "1. Step 4 says it is running; `docs/status.md` says it is done.\n2. At 1440 px the band's head runs into step 1: give it a gutter.\n3. The record says the page shell took three rounds of review; it took four.\n\nA test for each fix that fails without it.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy, CSS and tests inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": []
+  }
+}

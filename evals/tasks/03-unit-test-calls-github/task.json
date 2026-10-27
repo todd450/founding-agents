@@ -1,0 +1,55 @@
+{
+  "role": "code-reviewer",
+  "kind": "capability",
+  "class": "a unit test that makes a network call",
+  "origin": "founding-agents-site #5 (PR #8): the reviewer called it 'worth a sentence of thought, not necessarily a change', saw it skip on a rate limit, and approved",
+  "summary": "The PR's test asks GitHub's API whether a red issue is open, and skips when it cannot; the right review makes that a must-fix.",
+  "right_answer": "send back",
+  "step": {
+    "workflow": "build",
+    "args": 5,
+    "label": "code review",
+    "pr": 8
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-5",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Test the status band"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 5,
+        "title": "Site 2 of 3: tests for the status band",
+        "body": "Tests for the band: every step is present with a state and a date, and the red line agrees with the repo when the page was written.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: tests inside the existing page and checks.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 8,
+        "title": "Test the status band",
+        "body": "Adds tests that every step names its date and that the red line agrees with the repo's open red issues.\n\nCloses #5",
+        "headRefName": "build/issue-5",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": []
+      }
+    ]
+  }
+}
