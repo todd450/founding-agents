@@ -94,12 +94,15 @@ def tokens(n):
     return f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n / 1e3:.0f}K"
 
 
-def table(rows, title):
+def table(rows, title, budget=None):
     stamps = [s for row in rows.values() for s in row["stamps"]]
     total = sum(row["cost"] for row in rows.values())
     lines = [f"**Run report** · {title} · {minutes(stamps):.0f} min · ${total:.2f} at API prices", "",
              "| Role | Model | Time | Calls | Input, new | Input, cached | Output | Cost |",
              "|---|---|---|---|---|---|---|---|"]
+    if budget is not None and total > budget:
+        lines[1:1] = ["", f"**Over budget:** ${total:.2f} against ${budget:.2f} for one run. Look at which role "
+                          "took it before the next run of this kind."]
     for (role, model), row in sorted(rows.items(), key=lambda kv: -kv[1]["cost"]):
         lines.append(f"| {role} | {model} | {minutes(row['stamps']):.0f} min | {row['calls']} | "
                      f"{tokens(row['new'])} | {tokens(row['cached'])} | {tokens(row['out'])} | ${row['cost']:.2f} |")
@@ -140,6 +143,7 @@ def main(argv=None):
     parser.add_argument("--issue", type=int, help="the issue it ran on")
     parser.add_argument("--session", type=Path, help="a session log to report on instead of finding one")
     parser.add_argument("--post", action="store_true", help="comment the report on the issue")
+    parser.add_argument("--budget", type=float, help="dollars one run should stay under; the report flags a run over it")
     args = parser.parse_args(argv)
 
     if args.session:
@@ -155,7 +159,7 @@ def main(argv=None):
             return 1
 
     title = f"`{args.workflow}` #{args.issue}" if args.workflow else session.stem
-    report = table(summarise(session), title)
+    report = table(summarise(session), title, args.budget)
     print(report)
     if args.post:
         if not args.issue:

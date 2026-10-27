@@ -17,6 +17,9 @@ if (!issue) throw new Error('Name the decided brief to plan, e.g. /founding-agen
 // What counts as a technical one-way door; build.js, propose.js and plan.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
+// Dollars at API prices one run should stay under; the run report flags a run over it.
+const BUDGET = 5
+
 const BRIEF = {
   type: 'object',
   properties: {
@@ -82,7 +85,7 @@ const REPORTED = {
 const report = async result => {
   phase('Report')
   const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow plan --issue ${issue} --post\`. Return the comment's URL, or why it was not posted.`,
+    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow plan --issue ${issue} --budget ${BUDGET} --post\`. Return the comment's URL, or why it was not posted.`,
     { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
   )
   return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted' }

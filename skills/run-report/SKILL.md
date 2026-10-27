@@ -12,6 +12,8 @@ Run from the product repo's folder:
 - Use `--workflow propose` for a propose run. For an idea in words, `--issue` is the issue the product
   lead opened.
 - Use `--workflow plan` for a plan run, with the brief it planned as `--issue`.
+- `--budget <dollars>` flags a run that cost more, above the table. The workflows pass their own
+  budget.
 - Leave out `--post` to print the table only; `--session <path to a .jsonl>` reports on one session
   log directly.
 

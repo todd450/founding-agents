@@ -65,7 +65,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_a_no_go_skips_the_designer_and_still_reaches_the_founder(self):
         run = run_workflow("propose", {"product lead": [NO_GO], "queue": [POSTED]}, 7)
-        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "queue item", "run report"])
+        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "queue item", "tidy worktrees", "run report"])
         item = self.queue_item(run)
         self.assertIn("recommends **no-go**", item)
         self.assertIn("close the issue", item)
@@ -74,7 +74,7 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_an_overruled_no_go_gets_mockups_and_keeps_the_honest_recommendation(self):
         run = run_workflow("propose", {"product lead": [{**NO_GO, "overruled": True}], "designer": [DESIGN],
                                        "queue": [POSTED]}, 7)
-        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "designer", "queue item", "run report"])
+        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "designer", "queue item", "tidy worktrees", "run report"])
         item = self.queue_item(run)
         self.assertIn("recommends **no-go**", item)
         self.assertIn("You overruled the no-go", item)
@@ -89,7 +89,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_the_report_goes_on_the_issue_the_product_lead_shaped(self):
         run = run_workflow("propose", {"product lead": [GO], "designer": [DESIGN], "queue": [POSTED]}, "a pricing page")
-        self.assertIn("--workflow propose --issue 7 --post", run["calls"][-1]["prompt"])
+        self.assertIn("--workflow propose --issue 7 --budget 5 --post", run["calls"][-1]["prompt"])
 
     def test_the_queue_item_lists_each_technical_decision_for_the_founder(self):
         door = {"decision": "How the site is built", "options": ["plain HTML", "a static site generator"],
@@ -113,7 +113,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_a_brief_with_nothing_on_screen_skips_the_designer_and_asks_only_the_decisions(self):
         run = run_workflow("propose", {"product lead": [BUILT], "queue": [POSTED]}, 7)
-        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "queue item", "run report"])
+        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "queue item", "tidy worktrees", "run report"])
         item = self.queue_item(run)
         self.assertIn("**D1. How the site deploys:** GitHub Pages / Netlify", item)
         self.assertIn("reply with your choice for each technical decision (D1) and any notes, then add the `decided` label", item)

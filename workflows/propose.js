@@ -78,6 +78,15 @@ const POSTED = {
   required: ['comment_url'],
 }
 
+// Dollars at API prices one run should stay under; the run report flags a run over it.
+const BUDGET = 5
+
+const TIDIED = {
+  type: 'object',
+  properties: { removed: { type: 'integer' }, kept: { type: 'array', items: { type: 'string' }, description: 'each kept worktree and why' } },
+  required: ['removed', 'kept'],
+}
+
 const REPORTED = {
   type: 'object',
   properties: {
@@ -87,14 +96,19 @@ const REPORTED = {
   required: ['comment_url', 'reason'],
 }
 
-// A run that got past its first step posts its time, tokens and cost on the issue, stalled runs too.
+// A run that got past its first step removes the worktrees whose work is on GitHub, then posts its
+// time, tokens and cost on the issue, stalled runs too.
 const report = async result => {
   phase('Report')
+  const tidied = await agent(
+    'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
+    { label: 'tidy worktrees', phase: 'Report', model: 'haiku', effort: 'low', schema: TIDIED },
+  )
   const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${brief.issue}: from this repo's folder, run its script with \`--workflow propose --issue ${brief.issue} --post\`. Return the comment's URL, or why it was not posted.`,
+    `Use the run-report skill to post this run's report on issue #${brief.issue}: from this repo's folder, run its script with \`--workflow propose --issue ${brief.issue} --budget ${BUDGET} --post\`. Return the comment's URL, or why it was not posted.`,
     { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
   )
-  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted' }
+  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted', worktrees_kept: tidied ? tidied.kept : [] }
 }
 
 phase('Brief')
