@@ -44,6 +44,16 @@ class RoutineTest(unittest.TestCase):
             self.assertIn("At most three", text)
             self.assertIn("Never push", text)
 
+    def test_the_librarian_reads_the_findings_build_saw_come_back_first(self):
+        text = (SETUP / "librarian" / "routine.md").read_text()
+        self.assertIn("labels=librarian&state=open", text)
+        self.assertLess(text.index("## Repeated findings, first"), text.index("## Incidents"))
+        self.assertIn("Repeated finding on PR #<n>", text)
+
+    def test_the_librarian_asks_for_failure_messages_that_say_how_to_fix(self):
+        self.assertIn("failure message says how to fix the problem",
+                      (SETUP / "librarian" / "routine.md").read_text())
+
     def test_runs_its_checks_then_the_products_own(self):
         for check in ("Scheduled checks ran", "`main` passes", "Merged changes are live", "Spend",
                       ".github/ops-watch/watch.md", "disabled_inactivity"):
