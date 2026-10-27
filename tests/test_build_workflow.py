@@ -263,6 +263,12 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
         self.assertFalse([label for label in self.labels(run) if label.startswith("security")])
 
+    def test_the_check_is_told_an_open_pr_never_makes_the_issue_unready(self):
+        # On the website's #27 the check read an open PR as "already being built" and skipped it, so
+        # the six issues that build after it never started.
+        prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
+        self.assertIn("An open PR is never a reason to stop", prompt)
+
     def test_an_open_pr_for_the_issue_is_continued_not_started_again(self):
         run = self.run_workflow({"check": [{**READY, "open_pr": 9}], "builder": [{**PR, "pr_number": 9}],
                                  "qa": [APPROVE], "integrator": [MERGED]})
