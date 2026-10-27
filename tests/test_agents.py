@@ -4,7 +4,8 @@ import re
 import unittest
 from pathlib import Path
 
-AGENTS = sorted((Path(__file__).resolve().parent.parent / "agents").glob("*.md"))
+ROOT = Path(__file__).resolve().parent.parent
+AGENTS = sorted((ROOT / "agents").glob("*.md"))
 MODELS = {"opus", "sonnet", "haiku"}
 
 
@@ -28,6 +29,12 @@ class AgentFileTest(unittest.TestCase):
     def test_only_the_builder_and_the_designer_can_write_files(self):
         writers = {path.stem for path in AGENTS if "Write" in frontmatter(path).get("tools", "")}
         self.assertEqual(writers, {"builder", "designer"})
+
+    def test_every_agent_a_workflow_runs_has_an_agent_file(self):
+        names = {path.stem for path in AGENTS}
+        for script in (ROOT / "workflows").glob("*.js"):
+            for name in re.findall(r"agentType: 'founding-agents:([a-z-]+)'", script.read_text()):
+                self.assertIn(name, names, f"{script.name} runs {name}, which has no agent file")
 
 
 
