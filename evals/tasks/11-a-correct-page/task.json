@@ -7,9 +7,9 @@
   "right_answer": "approve",
   "step": {
     "workflow": "build",
-    "args": 5,
+    "args": 31,
     "label": "qa",
-    "pr": 8
+    "pr": 32
   },
   "commits": [
     {
@@ -21,7 +21,7 @@
       "message": "The site so far"
     },
     {
-      "branch": "build/issue-5",
+      "branch": "build/issue-31",
       "dirs": [
         "@band-pr",
         "pr"
@@ -33,7 +33,7 @@
     "repo": "todd450/founding-agents-site",
     "issues": [
       {
-        "number": 5,
+        "number": 31,
         "title": "Site 2 of 3: the status band",
         "body": "A band under the header showing where the team is: each build step with its state and date, and a line saying whether a red issue is open. Take every fact from `docs/status.md`; where the mockup's facts have moved on, use the current ones there. On a wide screen the head sits in a column beside the four steps.\n\nTests: every step is present with a state and a date.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: markup and CSS inside the existing page.",
         "labels": [
@@ -44,10 +44,10 @@
     ],
     "prs": [
       {
-        "number": 8,
+        "number": 32,
         "title": "Site 2 of 3: the status band",
-        "body": "Adds the status band: four steps with their state and date, the red line, and a column layout from 860 px.\n\nCloses #5",
-        "headRefName": "build/issue-5",
+        "body": "Adds the status band: four steps with their state and date, the red line, and a column layout from 860 px.\n\nCloses #31",
+        "headRefName": "build/issue-31",
         "baseRefName": "main",
         "state": "OPEN",
         "comments": []
