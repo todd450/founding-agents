@@ -1,17 +1,17 @@
 export const meta = {
   name: 'build',
-  description: "Build one decided issue, or every issue the architect cut from a decided brief with two to four builders at once: each builder in its own worktree, the reviewer, then the integrator merges one at a time",
+  description: "Build one decided issue, or every issue the architect cut from a decided brief with two to four builders at once: each builder in its own worktree, QA and code review (and security review when it is needed), then the integrator merges one at a time",
   whenToUse: 'When the founder asks to build a decided issue or a planned brief in the current product repo, e.g. /founding-agents:build 12, or /founding-agents:build 7 3 for brief #7 with three builders at once',
   phases: [
     { title: 'Check', detail: 'the issue is decided, settles no technical decision the founder has not seen, and no red issue is open', model: 'sonnet' },
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
-    { title: 'Review', detail: 'edge-case QA and code review on the PR', model: 'opus' },
+    { title: 'Review', detail: 'edge-case QA and code review side by side, and a security review when the change needs one', model: 'opus' },
     { title: 'Merge', detail: 'the integrator tests the merge and merges', model: 'sonnet' },
     { title: 'Report', detail: "the run's time, tokens and cost, posted on the issue", model: 'haiku' },
   ],
 }
 
-// A change the reviewer sends back this many times goes to the founder instead of round four, and
+// A change the reviewers send back this many times goes to the founder instead of round four, and
 // sooner if the builder fails to fix the same finding twice.
 const ROUNDS = 3
 // Dollars at API prices one run should stay under; the run report flags a run over it.
@@ -78,7 +78,7 @@ const REVIEW = {
         properties: {
           must_fix: { type: 'boolean', description: 'false for a Nit' },
           where: { type: 'string' },
-          what: { type: 'string', description: 'steps, expected, happened, and how to reproduce' },
+          what: { type: 'string', description: 'steps, expected, happened, and how to reproduce; for a holdout scenario, only its failure class and what went wrong, never its steps or data' },
           repeat: { type: 'boolean', description: 'true when an earlier review on this PR raised it and it is still not fixed' },
         },
         required: ['must_fix', 'where', 'what', 'repeat'],
@@ -86,6 +86,11 @@ const REVIEW = {
     },
   },
   required: ['verdict', 'findings'],
+}
+const CODE_REVIEW = {
+  ...REVIEW,
+  properties: { ...REVIEW.properties, security: { type: 'boolean', description: 'true when the diff touches routes, sign-in, permissions, stored data, secrets, input from outside, or calls to a model' } },
+  required: [...REVIEW.required, 'security'],
 }
 const MERGED = {
   type: 'object',
@@ -141,7 +146,33 @@ Return ready, which is false when anything above fails or anything is unseen, an
   { label: `check #${n}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
 )
 
-// Builder and reviewer, up to ROUNDS times. Returns the approved PR, or why it stopped.
+// Edge-case QA and code review side by side, then a security review when the code reviewer says the
+// diff needs one. Each posts its own comment on the PR; the change is approved only when all approve.
+const reviews = async (n, ticket, built, again) => {
+  const brief = `PR #${built.pr_number} in ${ticket.repo}, which builds issue #${n}: ${ticket.title}
+
+${ticket.body}${decided(ticket)}
+
+${again ? 'Earlier reviews on this PR are in its comments. Mark each finding an earlier review raised that is still not fixed as a repeat.\n\n' : ''}Post your review on the PR, then return the verdict and every finding.`
+  const [qa, code] = await parallel([
+    () => agent(`Test ${brief}`, { label: `qa #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:qa', model: 'opus', schema: REVIEW }),
+    () => agent(`Review ${brief}`, { label: `code review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:code-reviewer', model: 'opus', schema: CODE_REVIEW }),
+  ])
+  if (!qa || !code) return null
+  const all = [['QA', qa], ['Code review', code]]
+  if (code.security) {
+    const security = await agent(`Check the security of ${brief}`,
+      { label: `security review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:security-reviewer', model: 'opus', schema: REVIEW })
+    if (!security) return null
+    all.push(['Security', security])
+  }
+  return {
+    verdict: all.every(([, r]) => r.verdict === 'approve') ? 'approve' : 'changes',
+    findings: all.flatMap(([who, r]) => r.findings.map(f => ({ ...f, where: `${who}: ${f.where}` }))),
+  }
+}
+
+// Builder and reviewers, up to ROUNDS times. Returns the approved PR, or why it stopped.
 const develop = async (n, ticket) => {
   let built = null
   let review = null
@@ -159,7 +190,7 @@ Continue it rather than starting again. Check out its branch in your worktree wi
 ${ticket.body}${decided(ticket)}
 
 Work on a branch named \`build/issue-${n}\`. Open the PR against the default branch, and end its description with "Closes #${n}".`
-      : `The reviewer sent PR #${built.pr_number} for issue #${n} back. Check out its branch in your worktree with \`gh pr checkout ${built.pr_number}\`, fix every finding that is not a Nit, rerun the whole suite, and push to the same branch. Do not open a new PR.
+      : `The reviewers sent PR #${built.pr_number} for issue #${n} back. Check out its branch in your worktree with \`gh pr checkout ${built.pr_number}\`, fix every finding that is not a Nit, rerun the whole suite, and push to the same branch. Do not open a new PR.
 
 Findings:
 ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`).join('\n')}`
@@ -170,23 +201,16 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
     if (!result || !result.pr_number) {
       return { issue: n, status: 'stopped in build', reason: result ? result.stopped_because : 'the builder returned nothing', pr: built && built.pr_url }
     }
-    built = result
+    built = { ...result, round }
 
-    review = await agent(
-      `Review PR #${built.pr_number} in ${ticket.repo}, which builds issue #${n}: ${ticket.title}
-
-${ticket.body}${decided(ticket)}
-
-${round > 1 || resume ? 'Earlier reviews on this PR are in its comments. Mark each finding an earlier review raised that is still not fixed as a repeat.\n\n' : ''}Post your review on the PR, then return the verdict and every finding.`,
-      { label: `reviewer #${n}, round ${round}`, phase: 'Review', agentType: 'founding-agents:reviewer', model: 'opus', schema: REVIEW },
-    )
-    if (!review) return { issue: n, status: 'stopped in review', reason: 'the reviewer returned nothing', pr: built.pr_url }
+    review = await reviews(n, ticket, built, round > 1 || resume)
+    if (!review) return { issue: n, status: 'stopped in review', reason: 'a reviewer returned nothing', pr: built.pr_url }
     if (review.verdict === 'approve') return { issue: n, status: 'approved', built }
     const stuck = review.findings.filter(f => f.must_fix && f.repeat)
     if ((round > 1 || resume) && stuck.length) {
       return { issue: n, status: 'the same finding came back unfixed; the founder decides', pr: built.pr_url, findings: stuck }
     }
-    log(`#${n}, round ${round}: the reviewer sent PR #${built.pr_number} back with ${review.findings.filter(f => f.must_fix).length} finding(s) to fix`)
+    log(`#${n}, round ${round}: the reviewers sent PR #${built.pr_number} back with ${review.findings.filter(f => f.must_fix).length} finding(s) to fix`)
   }
   return { issue: n, status: `sent back ${ROUNDS} times; the founder decides`, pr: built.pr_url, findings: review.findings }
 }
@@ -196,7 +220,7 @@ let turn = Promise.resolve()
 const merge = (n, ticket, built) => {
   const mine = turn.then(async () => {
     const merged = await agent(
-      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and the reviewer approved it in a comment on the PR. Follow your instructions: test the merge, not the branch.`,
+      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch.`,
       { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
     )
     if (!merged || !merged.merged) {

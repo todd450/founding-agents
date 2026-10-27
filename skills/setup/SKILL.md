@@ -1,13 +1,13 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, or to install or update CI or ops watch's nightly site check. Installs CI and ops watch through PRs, and turns on branch protection that requires CI's check after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
-This version covers CI, branch protection and ops watch's site check. The other routines, labels
-and fixtures arrive with the build steps that use them (`docs/design.md` in the Founding Agents
-repo, "Build order").
+This version covers CI, branch protection, ops watch's site check and daily routine, the holdout
+scenarios, the product's `CLAUDE.md` and fixtures, and the labels. The other routines arrive with
+the roles that run them (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
 
@@ -70,20 +70,78 @@ Rerun the same steps whenever the plugin's copy in `ops_watch/` changes; the dry
 files differ. The scheduled run stops if the repo sees no activity for 60 days, which GitHub does to
 every scheduled workflow in a public repo; ops watch cannot raise red about its own silence.
 
+## Ops watch's daily routine
+
+The checks that need judgement run as a daily routine in the cloud, on the founder's plan: that
+every scheduled check still runs (ops watch's site check cannot report its own silence), that
+`main` passes, that changes merged in the last day are live, and the week's spend against a
+budget, then the product's own checks such as backups. A red opens one `red` issue per check and
+the next green run closes it. Routines do not load plugins, so the instructions live in the
+product: `.github/ops-watch/routine.md`, which setup keeps current, and the product's own
+`.github/ops-watch/watch.md`.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py ops-routine` shows the two files.
+2. **Fill in `watch.md` with the founder:** the product's address, a weekly budget if they want
+   one, and a check for each thing the product has that can quietly fail (backups, production
+   errors, a release). Leave out what it does not have.
+3. **Apply on a branch.** Rerun with `--apply`, commit, open a PR, and wait for the merge.
+4. **Ask for a clear yes** to create the routine, since it runs every day on the founder's plan.
+5. **Create it** with the `schedule` skill: a daily task on this repo, at an odd minute such as
+   7:23, on Haiku (or the cheapest model the model selector offers; say which), with the prompt
+   "Follow .github/ops-watch/routine.md in this repo." It needs the founder's GitHub connection
+   for the repo, from the Claude GitHub App or `/web-setup`.
+6. **Run it once now** and read its last lines: one per check, green, red or not run. A check that
+   could not run is a setup problem to fix, not a red.
+
+Rerun step 1 whenever the plugin's copy changes; the routine reads the file, so it needs no
+change itself.
+
+## Holdout scenarios
+
+Edge-case scenarios the builders never see, so a change that passes every visible test still has
+to handle each failure class. They live in a private `<product>-holdouts` repo, cloned to
+`~/.founding-agents/holdouts/<owner>/<name>`, outside every product folder and worktree. Only
+edge-case QA reads them; the plugin's `guard_holdouts` hook blocks every other agent.
+
+1. **Dry run.** `python3 <this skill's directory>/holdouts.py` says whether the repo and its clone
+   exist and what it would do.
+2. **Ask for a clear yes.** Creating a repo on GitHub needs the founder's approval each time.
+3. **Apply.** Rerun with `--apply`. It creates the repo if missing, clones it (or pulls an existing
+   clone), and seeds a README with the scenario format and one folder per failure class.
+4. **Tell the founder** the scenarios are theirs to write: a few per class that matter for this
+   product, in the format the README gives. QA adds more where a change touches a class
+   with none. Write them in the founder's own session, never through an agent, so no builder's
+   context ever holds them.
+
+Rerunning it on another machine clones the same repo there.
+
+## The map and the fixtures
+
+Every product gets a short `CLAUDE.md`, the map every session loads, and a `fixtures/` folder for
+the visible edge-case scenarios builders write their tests from.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py basics` shows the two starter
+   files. A product that already has either keeps its own; for an existing `CLAUDE.md`, suggest to
+   the founder what the starter adds, rather than changing it.
+2. **Fill in the starter `CLAUDE.md` with the founder:** one paragraph on what the product is and
+   who it is for, and the product's own rules with the check that holds each. Keep it short; a
+   rule worth keeping becomes a check, not a paragraph.
+3. **Apply on a branch.** Rerun with `--apply`, commit, and open a PR.
+
 ## Labels
 
-`build` takes only issues labelled `decided`, the founder's yes. Create the queue's labels once,
-skipping any that exist:
+`build` takes only issues labelled `decided`, the founder's yes; `needs-founder` is the decision
+queue; an open `red` issue stops merges. Create them once, skipping any that exist:
 
 ```
 gh label create needs-founder --color FBCA04 --description "Waiting on the founder's decision"
 gh label create decided --color 0E8A16 --description "The founder said yes; ready to build"
+gh label create red --color B60205 --description "A scheduled check failed; nothing merges until it is fixed"
 ```
-
-Ops watch creates `red` itself the first time a check fails.
 
 ## Needs
 
-The plugin's merge guard (`hooks/guard_main.py`) needs `python3` on the machine. It blocks every
-agent but the integrator from pushing to `main` or merging; this branch protection is the hard gate
-behind it.
+The plugin's hooks need `python3` on the machine. The merge guard (`hooks/guard_main.py`) blocks
+every agent but the integrator from pushing to `main` or merging; branch protection is the hard
+gate behind it. The holdout guard (`hooks/guard_holdouts.py`) blocks every agent but QA
+from the holdout scenarios.

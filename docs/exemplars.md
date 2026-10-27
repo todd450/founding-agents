@@ -27,7 +27,8 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
 
-The starting five's combined reviewer takes both the edge-case QA and the code reviewer sections.
+The starting five's combined reviewer took both the edge-case QA and the code reviewer sections
+until 27 Oct 2026, when they became two agents.
 
 ## Product lead — Basecamp's *Shape Up*
 
@@ -91,8 +92,8 @@ Sources: Kent Beck, *Test-Driven Development: By Example* (Addison-Wesley, 2002)
 ## Edge-case QA — Elisabeth Hendrickson
 
 The failure checklist names classes of failure. Hendrickson's heuristics generate the cases inside
-each class, and her exploratory testing drives the real app instead of reading the code. Until the
-team splits QA from code review, the practices are in [agents/reviewer.md](../agents/reviewer.md).
+each class, and her exploratory testing drives the real app instead of reading the code. The
+practices are in [agents/qa.md](../agents/qa.md).
 
 Sources: Elisabeth Hendrickson, [*Explore It!*](https://pragprog.com/titles/ehxta/explore-it/)
 (Pragmatic Bookshelf, 2013), and her Test Heuristics Cheat Sheet (with James Lyndsay and Dale
@@ -101,19 +102,17 @@ Emery).
 ## Code reviewer — Google's code review guide
 
 Google's guide gives the reviewer a standard to approve against and words for what must be fixed
-and what may be skipped. The practices are in [agents/reviewer.md](../agents/reviewer.md), with
-edge-case QA's.
+and what may be skipped. The practices are in [agents/code-reviewer.md](../agents/code-reviewer.md).
 
 Sources: Google, [The standard of code review](https://google.github.io/eng-practices/review/reviewer/standard.html)
 and [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html).
 
 ## Security reviewer — Trail of Bits, against OWASP ASVS
 
-- **Check against OWASP ASVS,** a published list of security requirements (sign-in, sessions,
-  access control, input handling, storage and more), and name the requirement each finding breaks.
-- **Write each finding the way Trail of Bits does:** severity, how hard it is to exploit, an exploit
-  scenario a reader can follow, a short-term fix and a long-term fix.
-- **Say what was not reviewed.** Findings are never a complete list.
+ASVS turns "is it secure" into a list of requirements a finding can name, and Trail of Bits'
+report format makes each finding something the builder can act on: how bad, how likely, how it
+happens and how to fix it now and for good. The practices are in
+[agents/security-reviewer.md](../agents/security-reviewer.md).
 
 Sources: Trail of Bits, [Anatomy of a report](https://www.trailofbits.com/anatomy-of-a-report/);
 OWASP, [Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/).
