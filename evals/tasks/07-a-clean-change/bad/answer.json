@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "index.html:66",
+        "what": "Add a test that the footer links to docs/status.md.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 16,
+      "body": "**Code review: Changes needed**\n\n- index.html:66: Add a test that the footer links to docs/status.md."
+    }
+  ]
+}

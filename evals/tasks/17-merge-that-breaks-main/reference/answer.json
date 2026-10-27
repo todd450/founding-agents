@@ -1,0 +1,14 @@
+{
+  "output": {
+    "merged": false,
+    "merge_commit": "",
+    "reason": "Rebased on main, the token test fails: .note uses var(--ink-muted), which main renamed to --muted."
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 20,
+      "body": "Not merged: rebased onto main, tests/test_tokens.py fails because .note uses var(--ink-muted), which main has renamed to --muted. Use var(--muted)."
+    }
+  ]
+}
