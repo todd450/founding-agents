@@ -10,7 +10,7 @@ SETUP = Path(__file__).resolve().parent.parent / "skills" / "setup"
 sys.path.insert(0, str(SETUP))
 sys.path.insert(0, str(SETUP / "ops_watch"))
 from check_site import TITLE, Response, broken_links, deploy_problems, report_issue  # noqa: E402
-from install_ops_watch import FILES, install, plan  # noqa: E402
+from install_kit import KITS, install, plan  # noqa: E402
 
 ROOT = "https://owner.github.io/site/"
 
@@ -158,11 +158,35 @@ class InstallTest(unittest.TestCase):
     def test_writes_the_workflow_and_the_check_then_finds_them_up_to_date(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            self.assertEqual({state for _, _, state in plan(root)}, {"new"})
-            install(root, plan(root))
-            for target in FILES.values():
+            self.assertEqual({state for _, _, state in plan(root, "ops-watch")}, {"new"})
+            install(root, plan(root, "ops-watch"))
+            for _, target, _ in KITS["ops-watch"]:
                 self.assertTrue((root / target).exists())
-            self.assertEqual({state for _, _, state in plan(root)}, {"already up to date"})
+            self.assertEqual({state for _, _, state in plan(root, "ops-watch")}, {"already up to date"})
+
+    def test_ci_writes_the_workflow_and_a_starter_check_script_that_can_run(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            install(root, plan(root, "ci"))
+            self.assertIn("sh ./check.sh", (root / ".github/workflows/ci.yml").read_text())
+            self.assertTrue((root / "check.sh").stat().st_mode & 0o111)
+
+    def test_ci_never_replaces_the_products_own_check_script(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / "check.sh").write_text("npx html-validate index.html\n")
+            install(root, plan(root, "ci"))
+            self.assertEqual((root / "check.sh").read_text(), "npx html-validate index.html\n")
+            self.assertIn((Path("check.sh"), "kept: the product's own"),
+                          [(target, state) for _, target, state in plan(root, "ci")])
+
+    def test_ci_replaces_an_outdated_copy_of_its_own_workflow(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            (root / ".github/workflows").mkdir(parents=True)
+            (root / ".github/workflows/ci.yml").write_text("name: old\n")
+            install(root, plan(root, "ci"))
+            self.assertIn("name: ci", (root / ".github/workflows/ci.yml").read_text())
 
 
 if __name__ == "__main__":
