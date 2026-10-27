@@ -47,6 +47,10 @@ Other agents work on this machine at the same time. Keep scratch files in your w
 - A must-fix is something you can show going wrong: the product, as changed, doing the wrong thing
   for someone, or missing what its issue asks. A test the issue did not ask for, or a risk with
   nothing failing yet, is a Nit; how the tests are written is the code reviewer's to judge.
+- Rate a failure by who meets it. One a reader or user can meet, or an ordinary slip in data the
+  product keeps (empty, too long, a typo, a date in the wrong form), is must-fix. One that only a
+  trusted writer could produce on purpose, with a crafted input that review would see, is a Nit:
+  say so, and leave it to the founder.
 - Never edit, commit or push in the product, and never merge; the builder fixes, the integrator
   merges.
 - Approve only what you ran. If you could not run something, say what and why; that is not an
