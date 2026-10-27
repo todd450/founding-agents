@@ -64,6 +64,12 @@ class SummariseTest(unittest.TestCase):
         self.assertIn("`build` #10 · 20 min", report)
         self.assertIn("| builder | opus | 10 min | 2 |", report)
         self.assertIn("API-equivalent", report)
+        self.assertNotIn("Over budget", report)
+
+    def test_a_run_over_its_budget_is_flagged_above_the_table(self):
+        report = table(summarise(self.session), "`build` #10", budget=0.01)
+        self.assertIn("**Over budget:**", report)
+        self.assertLess(report.index("Over budget"), report.index("| Role |"))
 
 
 class FindSessionTest(unittest.TestCase):

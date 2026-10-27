@@ -70,7 +70,7 @@ class PlanWorkflowTest(unittest.TestCase):
     def test_a_run_past_its_check_posts_its_report_on_the_brief(self):
         report = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][-1]
         self.assertEqual((report["label"], report["model"]), ("run report", "haiku"))
-        self.assertIn("--workflow plan --issue 7 --post", report["prompt"])
+        self.assertIn("--workflow plan --issue 7 --budget 5 --post", report["prompt"])
 
     def test_takes_the_brief_as_a_number_a_string_or_an_object(self):
         for args in (7, "#7", {"issue": 7}):

@@ -145,6 +145,18 @@ of this (see Sources).
   it on the same PR, the reviewer approved with nits only, and the integrator merged it. The
   builder's and reviewer's worktrees stay behind once they hold commits, so they pile up under
   `.claude/worktrees/` until something removes them.
+- **`build` continues an open PR, stops on a finding it failed to fix twice, and tidies up.**
+  Decided on 26 Oct 2026, from the website's runs. Its first step finds an open PR on
+  `build/issue-<n>` or one that closes the issue, and the builder continues it from its reviews
+  instead of starting again; #4 and #6 needed their issues edited by hand to do that. The reviewer
+  marks each must-fix that an earlier review raised and is still unfixed as a repeat, and one
+  repeat after a builder's fix ends the run for the founder, before a third round: the stalls on #4
+  and #6 were the same findings coming back, at 43% of the website's spend. New findings still get
+  the three rounds. Every run after its first step then runs the `tidy-worktrees` skill, which
+  removes a workflow agent's worktree (`wf_...`) only when it has no uncommitted change and its
+  commit is on a branch at origin. A session's own worktree in the same folder is never touched.
+  Runs go one at a time, so a running run's worktree is never in the way; parallel builders will
+  need this to wait for every run to end.
 - **`propose` in its first version: brief, mockups, one queue item.** It runs as
   `/founding-agents:propose <issue or idea>`. The product lead writes the brief into the issue (a new
   one for an idea in words) and recommends go or no-go. On a go, the designer storyboards the journey
@@ -263,8 +275,10 @@ of this (see Sources).
   the plan itself bills the weekly limit. A run that stalls posts too, because stalls are where the
   cost goes: of the seven website runs, about $37 in all, the two that stalled were 43%. The
   reviewer was the largest cost in five of the six builds. Until the optimiser exists these
-  reports are the measure of tokens per merged change; the budget, and ops watch's red on spend,
-  wait for it.
+  reports are the measure of tokens per merged change. Each workflow passes a budget of $5 a run,
+  above the website's typical build and below its stalls, and the report flags a run over it above
+  the table. Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
+  spend waits for the optimiser.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, reviewer and builders, Sonnet 5.5 for the
   integrator and Haiku 5.5 for ops watch and the workflows' small steps.
@@ -369,8 +383,8 @@ private, since the founder is the only user for now. A website bends the order i
    send-back, with a stale step status and a layout gap the reviewer missed; #6 was sent back
    three times on Sonnet and merged in one round once the builder moved to Opus; #10, which fixed
    the errors found by reading the live page after #6, merged in one round. Two gaps showed:
-   `build` cannot continue an open PR unless its issue says so, and nothing cut a decided brief
-   into build issues; the architect's `plan` now does.
+   `build` could not continue an open PR unless its issue said so (fixed on 26 Oct 2026, above),
+   and nothing cut a decided brief into build issues; the architect's `plan` now does.
 4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
    completes the starting five. Done on 26 Oct 2026 on the website: on its brief the product lead
    recommended go on a smaller test-bed site and rewrote the brief to match, the designer pushed
