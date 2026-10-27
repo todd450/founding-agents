@@ -270,8 +270,38 @@ of this (see Sources).
   again, fixes for what a merge broke, runs that stopped for the founder), asks which check would
   have stopped each, and files at most three guards or prunes. Every proposal is a `needs-founder`
   issue, so a guard or a saving is built through `build` like any change, after the founder's
-  `decided`. Both run on Sonnet: they judge, but weekly and on a small amount of reading. Not yet
-  run on a real product.
+  `decided`. Both run on Sonnet: they judge, but weekly and on a small amount of reading. First
+  run on the website on 27 Oct 2026, each in about a minute. The optimiser opened issues through
+  `gh api`, which settles that a routine can write: it posted the week's numbers (one merged
+  change at $6.19, 16% of the week's cost on a `propose` run waiting for the founder) and proposed
+  one saving, a size budget for the page in `check.sh`. The librarian filed nothing, correctly:
+  the changes sent back three times and the errors found after merge were already guarded by the
+  standard checks and browser tests that came after them. Both found `search/` blocked and listed
+  issues instead, which their instructions now say.
+- **A finding `build` saw come back unfixed becomes a lesson.** Decided on 27 Oct 2026, when the
+  founder asked which of Anthropic's, OpenAI's and Ramp's practices to adopt. `build` already
+  stopped when a must-fix came back after the builder's fix, but the stop fixed nothing for the next
+  change, and stalls of that kind were 43% of the website's spend. Now the same stop also opens an
+  issue titled `Repeated finding on PR #<n>`, labelled `librarian`, naming each finding and the
+  PR and asking for a test, a lint rule, a hook or a skill. OpenAI's Codex guidance runs a
+  retrospective when an agent makes the same mistake twice, and Anthropic's "Getting started with
+  loops" says to encode a fix into the system for every later run (principle 7). The script writes
+  the issue, not a model, so each has the same shape; one already open for that PR gets a comment
+  instead of a twin. Agents post with the founder's login, so the label, not the author, marks it.
+  The librarian reads these issues before the week's other incidents and files each guard as a
+  `Lesson:` proposal like any other, so the founder still decides what is built. Every guard's
+  failure message says how to fix the problem, not only what failed, since the builder that trips
+  it acts on that message alone (OpenAI's harness-engineering post).
+- **Run reports say whether `build` ended in a merge, and `run-report --runs` gives the share.**
+  Decided the same day. Ramp calls the share of agent sessions that end in a merged PR the most
+  important number it tracks. Each `build` report now says `**Outcome:** merged` or
+  `**Outcome:** stopped`, and `report.py --runs` reads every report on the repo through REST and
+  gives the share of runs that merged without the founder, that merged only after an earlier run on
+  the issue stopped, and that stopped. A merged run closes its issue, so a second run on an issue
+  means the founder stepped in after the first; that is how "without the founder" is counted, since
+  nothing records a founder's edit to an issue between runs. A brief's run counts as merged only
+  when every issue cut from it merged. Reports from before outcomes were recorded are left out, and
+  the optimiser gives the same shares in its weekly numbers.
 - **The researcher prepares and makes sense of conversations; the founder has them.** Built on
   27 Oct 2026, at the founder's request and before any product has users, so it waits for one. It
   is an agent the founder calls on demand, not a workflow step: research has no fixed place in a
@@ -309,8 +339,15 @@ of this (see Sources).
   GitHub proxy blocks GraphQL, so `gh issue` and `gh pr` fail and every call is `gh api` over
   REST, which a test holds; and a routine can only be created by `/schedule` or the web, so
   `setup` creates it through the `schedule` skill after the founder's yes. Whether Haiku can be
-  picked as a routine's model is not documented; `setup` falls back to the cheapest offered. Not
-  yet run on a real product.
+  picked as a routine's model is not documented; `setup` falls back to the cheapest offered.
+  First run on the website on 27 Oct 2026, on Haiku, which routines accept: scheduled checks and
+  `main` were green, and the live-site check could not run, since the cloud's network refused
+  `github.io` with a 403. So the routine no longer fetches the site: it reads what GitHub Pages
+  serves (`pages/builds/latest`) and checks each merge is in that commit, reading the served
+  files there. The cloud's GitHub proxy also serves only the routine's own repo, so `search/`
+  gets a 403 too; a test now holds every routine's calls to `repos/<owner>/<repo>/`. A routine
+  created through the API gets every claude.ai connector the founder has unless they are
+  cleared, so `setup` creates each with none.
 - **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook reads
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
@@ -506,6 +543,7 @@ One number per cost in the first table, and one for the founder's attention:
 | Many writers, one branch | merges not made by the integrator | be zero |
 | Red lights left red | age of the oldest open `red` issue | be hours, not days |
 | The founder's attention | items in the decision queue each day | fit one sitting |
+| The founder's attention | share of `build` runs that merge without the founder (`run-report --runs`) | rise |
 
 ## Sources
 
@@ -534,5 +572,8 @@ One number per cost in the first table, and one for the founder's attention:
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
   [claude-code-merge-queue](https://github.com/funador/claude-code-merge-queue)
+- Learning from runs — Anthropic, [Getting started with loops](https://claude.com/blog/getting-started-with-loops);
+  Ramp, [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent)
+  (read 27 Oct 2026)
 - Holdout scenarios — [StrongDM Software Factory](https://rywalker.com/research/strongdm-factory)
   (a third-party write-up, Sep 2026)

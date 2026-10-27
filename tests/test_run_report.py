@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "run-report"))
-from report import cost, find_session, project_logs, summarise, table  # noqa: E402
+from report import build_runs, cost, find_session, project_logs, runs_table, summarise, table  # noqa: E402
 
 
 def call(message_id, model, stamp, **usage):
@@ -70,6 +70,49 @@ class SummariseTest(unittest.TestCase):
         report = table(summarise(self.session), "`build` #10", budget=0.01)
         self.assertIn("**Over budget:**", report)
         self.assertLess(report.index("Over budget"), report.index("| Role |"))
+
+
+    def test_the_outcome_is_recorded_above_the_table(self):
+        report = table(summarise(self.session), "`build` #10", budget=0.01, outcome="stopped")
+        self.assertIn("**Outcome:** stopped for the founder", report)
+        self.assertLess(report.index("Outcome"), report.index("Over budget"))
+        self.assertNotIn("Outcome", table(summarise(self.session), "`build` #10"))
+
+
+def report_on(issue, stamp, outcome=None):
+    body = f"**Run report** · `build` #{issue} · 20 min · $3.00 at API prices\n\n"
+    if outcome:
+        body += f"**Outcome:** {outcome}\n\n"
+    return {"created_at": stamp, "body": body + "| Role | Model |"}
+
+
+class BuildRunsTest(unittest.TestCase):
+    """Ramp's measure: the share of runs that end in a merge without a person stepping in."""
+
+    def test_a_merge_counts_as_without_the_founder_only_on_the_first_run_on_its_issue(self):
+        counts = build_runs([
+            report_on(4, "2026-10-26T12:00:00Z", "merged"),
+            report_on(4, "2026-10-26T10:00:00Z", "stopped for the founder"),
+            report_on(5, "2026-10-26T11:00:00Z", "merged"),
+            report_on(6, "2026-10-26T13:00:00Z", "merged"),
+        ])
+        self.assertEqual(counts, {"merged alone": 2, "merged after a stop": 1, "stopped": 1, "unrecorded": 0})
+
+    def test_reports_from_before_outcomes_are_left_out_but_still_mark_their_issue(self):
+        counts = build_runs([report_on(4, "2026-10-25T10:00:00Z"), report_on(4, "2026-10-26T10:00:00Z", "merged"),
+                             {"created_at": "2026-10-26T11:00:00Z", "body": "**Run report** · `propose` #8 · 5 min"}])
+        self.assertEqual(counts, {"merged alone": 0, "merged after a stop": 1, "stopped": 0, "unrecorded": 1})
+
+    def test_the_table_gives_each_share(self):
+        text = runs_table({"merged alone": 2, "merged after a stop": 1, "stopped": 1, "unrecorded": 3}, "2026-10-20")
+        self.assertIn("**Build runs** since 2026-10-20 · 4 with a recorded outcome", text)
+        self.assertIn("| Merged without the founder | 2 | 50% |", text)
+        self.assertIn("| Stopped for the founder | 1 | 25% |", text)
+        self.assertIn("3 report(s) from before outcomes were recorded are left out", text)
+
+    def test_no_runs_says_so_rather_than_dividing_by_zero(self):
+        self.assertIn("none with a recorded outcome yet",
+                      runs_table({"merged alone": 0, "merged after a stop": 0, "stopped": 0, "unrecorded": 0}))
 
 
 class FindSessionTest(unittest.TestCase):
