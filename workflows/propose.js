@@ -146,7 +146,7 @@ if (design) {
 if (brief.decisions.length) {
   lines.push('### Technical decisions', '', 'Each one is costly to reverse once it is built in, so each is yours to decide:', '')
   brief.decisions.forEach((d, i) => lines.push(
-    `- **D${i + 1}. ${d.decision}:** ${d.options.join(' / ')}. Recommended: **${d.recommend}**, because ${d.why} Reversing it later: ${d.reverse}`,
+    `- **D${i + 1}. ${d.decision}:** ${d.options.join(' / ')}. Recommended: **${d.recommend}**. ${d.why} Reversing it later: ${d.reverse}`,
   ))
   lines.push('')
 } else {
