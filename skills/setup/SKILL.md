@@ -1,12 +1,12 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the optimiser's or librarian's weekly routine, the researcher's weekly check-back, or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the optimiser's or librarian's weekly routine, the check-backs on shipped briefs, or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
 This version covers CI, branch protection, ops watch's site check and daily routine, the
-optimiser's and the librarian's weekly routines, the researcher's weekly check-back, the holdout
+optimiser's and the librarian's weekly routines, the check-backs on shipped briefs, the holdout
 scenarios, the product's `CLAUDE.md`
 and fixtures, and the labels (`docs/design.md` in the Founding Agents repo, "Build order").
 
@@ -81,10 +81,22 @@ the next green run closes it. Routines do not load plugins, so the instructions 
 product: `.github/ops-watch/routine.md`, which setup keeps current, and the product's own
 `.github/ops-watch/watch.md`.
 
-1. **Dry run.** `python3 <this skill's directory>/install_kit.py ops-routine` shows the two files.
+The same run checks back on shipped briefs. Two weeks after a brief's last issue closes (or as
+long as the brief says), it posts on the brief what "how we'll know" said, what actually happened
+and a verdict: worked, didn't, or can't tell yet. A "didn't" opens a `needs-founder` item asking
+whether to keep, change or remove what was built; it is never red, since it must not stop merges.
+`.github/ops-watch/check_back.py`, which setup keeps current, finds what is due, posts every
+check-back in the same shape and counts the share of shipped briefs that worked; the routine
+only reads the evidence and judges.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py ops-routine` shows the three
+   files.
 2. **Fill in `watch.md` with the founder:** the product's address, a weekly budget if they want
    one, and a check for each thing the product has that can quietly fail (backups, production
-   errors, a release). Leave out what it does not have.
+   errors, a release). Then the one metric and any other evidence of use, and where in the repo to
+   read them: the routine reaches only this repo, so a number kept elsewhere counts once the
+   founder copies it in. With none yet, every check-back says "can't tell yet", which is the honest
+   answer. Leave out what the product does not have.
 3. **Apply on a branch.** Rerun with `--apply`, commit, open a PR, and wait for the merge.
 4. **Ask for a clear yes** to create the routine, since it runs every day on the founder's plan.
 5. **Create it** with the `schedule` skill: a daily task on this repo, at an odd minute such as
@@ -94,8 +106,8 @@ product: `.github/ops-watch/routine.md`, which setup keeps current, and the prod
    gets every claude.ai connector the founder has (mail, drive and the rest) unless they are
    cleared, and ops watch needs none of them. It needs the founder's GitHub connection for the
    repo, from the Claude GitHub App or `/web-setup`.
-6. **Run it once now** and read its last lines: one per check, green, red or not run. A check that
-   could not run is a setup problem to fix, not a red.
+6. **Run it once now** and read its last lines: one per check, green, red or not run, then any
+   check-backs and the score. A check that could not run is a setup problem to fix, not a red.
 
 Rerun step 1 whenever the plugin's copy changes; the routine reads the file, so it needs no
 change itself.
@@ -120,31 +132,6 @@ adds `decided` to the ones to build. Neither changes the product itself.
    the tools `Bash`, `Read`, `Glob` and `Grep` only, and no connectors, as for ops watch.
 5. **Run each once now** and read its last lines. A measure it could not take is a setup problem
    to fix.
-
-## The researcher's weekly check-back
-
-Every brief says how we'll know it worked. Once a week the researcher checks each brief that
-shipped two weeks ago or more (or as long as the brief says): it posts on the brief what "how
-we'll know" said, what actually happened and a verdict (worked, didn't, or can't tell yet), and a
-"didn't" opens a `needs-founder` item asking whether to keep, change or remove what was built. A
-script, `.github/researcher/check_back.py`, finds what is due, posts every check-back in the same
-shape and counts the share of shipped briefs that worked; the routine only reads the evidence and
-judges.
-
-1. **Dry run.** `python3 <this skill's directory>/install_kit.py researcher` shows the three files:
-   the routine and the script, which setup keeps current, and the product's own
-   `.github/researcher/evidence.md`.
-2. **Fill in `evidence.md` with the founder:** the product's one metric and where to read it, and
-   any analytics or other signs of use. The routine reaches only this repo, so a number kept
-   elsewhere counts only once the founder copies it in. A product with none yet leaves it blank;
-   every check-back then says "can't tell yet", which is the honest answer.
-3. **Apply on a branch.** Rerun with `--apply`, commit, open a PR, and wait for the merge.
-4. **Ask for a clear yes** to create the routine, since it runs every week on the founder's plan.
-5. **Create it** with the `schedule` skill: a weekly task on this repo, early on a Monday at an odd
-   minute, a few hours from the optimiser and the librarian, on Sonnet, with the prompt "Follow
-   .github/researcher/routine.md in this repo." Use the cloud environment, the tools `Bash`,
-   `Read`, `Glob` and `Grep` only, and no connectors, as for ops watch.
-6. **Run it once now** and read its last lines. Nothing due is the usual first answer.
 
 ## Holdout scenarios
 

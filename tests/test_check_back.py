@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SETUP = Path(__file__).resolve().parent.parent / "skills" / "setup"
-sys.path.insert(0, str(SETUP / "researcher"))
+sys.path.insert(0, str(SETUP / "ops_watch"))
 from check_back import MARK, main, pages, promise, score, survey, window  # noqa: E402
 
 REPO = "owner/product"
