@@ -260,6 +260,30 @@ of this (see Sources).
   the changes sent back three times and the errors found after merge were already guarded by the
   standard checks and browser tests that came after them. Both found `search/` blocked and listed
   issues instead, which their instructions now say.
+- **A finding `build` saw come back unfixed becomes a lesson.** Decided on 27 Oct 2026, when the
+  founder asked which of Anthropic's, OpenAI's and Ramp's practices to adopt. `build` already
+  stopped when a must-fix came back after the builder's fix, but the stop fixed nothing for the next
+  change, and stalls of that kind were 43% of the website's spend. Now the same stop also opens an
+  issue titled `Repeated finding on PR #<n>`, labelled `librarian`, naming each finding and the
+  PR and asking for a test, a lint rule, a hook or a skill. OpenAI's Codex guidance runs a
+  retrospective when an agent makes the same mistake twice, and Anthropic's "Getting started with
+  loops" says to encode a fix into the system for every later run (principle 7). The script writes
+  the issue, not a model, so each has the same shape; one already open for that PR gets a comment
+  instead of a twin. Agents post with the founder's login, so the label, not the author, marks it.
+  The librarian reads these issues before the week's other incidents and files each guard as a
+  `Lesson:` proposal like any other, so the founder still decides what is built. Every guard's
+  failure message says how to fix the problem, not only what failed, since the builder that trips
+  it acts on that message alone (OpenAI's harness-engineering post).
+- **Run reports say whether `build` ended in a merge, and `run-report --runs` gives the share.**
+  Decided the same day. Ramp calls the share of agent sessions that end in a merged PR the most
+  important number it tracks. Each `build` report now says `**Outcome:** merged` or
+  `**Outcome:** stopped`, and `report.py --runs` reads every report on the repo through REST and
+  gives the share of runs that merged without the founder, that merged only after an earlier run on
+  the issue stopped, and that stopped. A merged run closes its issue, so a second run on an issue
+  means the founder stepped in after the first; that is how "without the founder" is counted, since
+  nothing records a founder's edit to an issue between runs. A brief's run counts as merged only
+  when every issue cut from it merged. Reports from before outcomes were recorded are left out, and
+  the optimiser gives the same shares in its weekly numbers.
 - **The researcher prepares and makes sense of conversations; the founder has them.** Built on
   27 Oct 2026, at the founder's request and before any product has users, so it waits for one. It
   is an agent the founder calls on demand, not a workflow step: research has no fixed place in a
@@ -501,6 +525,7 @@ One number per cost in the first table, and one for the founder's attention:
 | Many writers, one branch | merges not made by the integrator | be zero |
 | Red lights left red | age of the oldest open `red` issue | be hours, not days |
 | The founder's attention | items in the decision queue each day | fit one sitting |
+| The founder's attention | share of `build` runs that merge without the founder (`run-report --runs`) | rise |
 
 ## Sources
 
@@ -529,5 +554,8 @@ One number per cost in the first table, and one for the founder's attention:
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
   [claude-code-merge-queue](https://github.com/funador/claude-code-merge-queue)
+- Learning from runs — Anthropic, [Getting started with loops](https://claude.com/blog/getting-started-with-loops);
+  Ramp, [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent)
+  (read 27 Oct 2026)
 - Holdout scenarios — [StrongDM Software Factory](https://rywalker.com/research/strongdm-factory)
   (a third-party write-up, Sep 2026)

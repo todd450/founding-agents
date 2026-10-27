@@ -30,7 +30,9 @@ gets a 403, and so does fetching the live site.
    merged when its issue is closed by a merged pull request. Give, for this week and the week
    before: merged changes, cost per merged change, and cost by role and by model. Cost is
    API-equivalent at list prices; on a Pro or Max plan it measures a share of the weekly limit, not
-   a bill.
+   a bill. Give too the share of `build` runs that merged without the founder and the share that
+   stopped: each `build` report says `**Outcome:** merged` or `**Outcome:** stopped`, and a merged
+   run counts as without the founder only when it was the first `build` report on its issue.
 2. **Where the cost went without a merge.** Runs whose issue is still open, runs sent back three
    times, runs that stalled. Their share of the week's cost.
 3. **What every session loads.** The length of `CLAUDE.md` and of anything it pulls in. Every line
