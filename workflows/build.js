@@ -30,6 +30,11 @@ const builders = Math.min(MAX_BUILDERS, Math.max(1, Number(named[1]) || BUILDERS
 // What counts as a technical one-way door; build.js, propose.js and plan.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
+// What a change touches when it needs a security review. The check reads it from the issue so the
+// security reviewer starts beside QA and code review; the code reviewer reads it from the diff, for
+// a change that turns out to touch them when the issue did not say so.
+const SECURITY = 'routes, sign-in, permissions, stored data, secrets, input from outside, calls to a model, or a dependency that ships to users'
+
 const decided = t => t.decision ? `\n\nThe founder decided: ${t.decision}\nThe change builds what they picked; the mockups show the design, not code to copy.` : ''
 
 const TICKET = {
@@ -43,6 +48,7 @@ const TICKET = {
     decision: { type: 'string', description: "the founder's pick and notes from the comments, with the mockup branch if there is one; empty if none" },
     unseen: { type: 'array', items: { type: 'string' }, description: 'each technical one-way door the issue settles that the founder has not seen; empty if none' },
     open_pr: { type: 'integer', description: 'the open PR that already builds this issue; 0 if none' },
+    security: { type: 'boolean', description: `true when what the issue asks for touches ${SECURITY}` },
     parts: {
       type: 'array',
       description: 'when this is a brief, each open issue the architect cut from it; empty otherwise',
@@ -56,7 +62,7 @@ const TICKET = {
       },
     },
   },
-  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen', 'open_pr', 'parts'],
+  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen', 'open_pr', 'security', 'parts'],
 }
 const BUILT = {
   type: 'object',
@@ -89,7 +95,7 @@ const REVIEW = {
 }
 const CODE_REVIEW = {
   ...REVIEW,
-  properties: { ...REVIEW.properties, security: { type: 'boolean', description: 'true when the diff touches routes, sign-in, permissions, stored data, secrets, input from outside, or calls to a model' } },
+  properties: { ...REVIEW.properties, security: { type: 'boolean', description: `true when the diff touches ${SECURITY}` } },
   required: [...REVIEW.required, 'security'],
 }
 const MERGED = {
@@ -152,30 +158,38 @@ const check = n => agent(
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${n} is that issue. A red scheduled check stops other work until it is fixed.
 - Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` or \`plan\` queue item on this issue or on the brief it is part of, with the founder's choice; the \`decided\` label on the issue or its brief is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
 - \`gh pr list --state open --json number,headRefName,body\`: an open PR on the branch \`build/issue-${n}\`, or one whose description closes #${n}, already builds it. Return its number as open_pr, or 0.
+- Return security true when what the issue asks for touches ${SECURITY}, so its security review starts beside the other reviews; false when it plainly touches none of them, such as copy, layout or a test.
 Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments on the issue, or on the brief it is part of, hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-<the issue or brief the mockups were made for>\`) as the decision.`,
   { label: `check #${n}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
 )
 
-// Edge-case QA and code review side by side, then a security review when the code reviewer says the
-// diff needs one. Each posts its own comment on the PR; the change is approved only when all approve.
+// Edge-case QA and code review side by side, with the security review beside them when the check
+// says the issue needs one, or straight after code review when the code reviewer finds the diff
+// needs one. Each posts its own comment on the PR; the change is approved only when all approve.
 const reviews = async (n, ticket, built, again) => {
   const brief = `PR #${built.pr_number} in ${ticket.repo}, which builds issue #${n}: ${ticket.title}
 
 ${ticket.body}${decided(ticket)}
 
 ${again ? 'Earlier reviews on this PR are in its comments. Mark each finding an earlier review raised that is still not fixed as a repeat.\n\n' : ''}Post your review on the PR, then return the verdict and every finding.`
-  const [qa, code] = await parallel([
-    () => agent(`Test ${brief}`, { label: `qa #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:qa', model: 'opus', schema: REVIEW }),
-    () => agent(`Review ${brief}`, { label: `code review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:code-reviewer', model: 'opus', schema: CODE_REVIEW }),
-  ])
-  if (!qa || !code) return null
-  const all = [['QA', qa], ['Code review', code]]
-  if (code.security) {
-    const security = await agent(`Check the security of ${brief}`,
-      { label: `security review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:security-reviewer', model: 'opus', schema: REVIEW })
-    if (!security) return null
-    all.push(['Security', security])
+  const secure = () => agent(`Check the security of ${brief}`,
+    { label: `security review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:security-reviewer', model: 'opus', schema: REVIEW })
+  // A diff that needs a security review the issue did not ask for gets one as soon as code review
+  // says so, without waiting for QA to finish.
+  const codeThenSecurity = async () => {
+    const code = await agent(`Review ${brief}`, { label: `code review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:code-reviewer', model: 'opus', schema: CODE_REVIEW })
+    return { code, security: code && code.security && !ticket.security ? await secure() : null }
   }
+  const [qa, reviewed, early] = await parallel([
+    () => agent(`Test ${brief}`, { label: `qa #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:qa', model: 'opus', schema: REVIEW }),
+    codeThenSecurity,
+    ...(ticket.security ? [secure] : []),
+  ])
+  if (!qa || !reviewed || !reviewed.code) return null
+  const security = ticket.security ? early : reviewed.security
+  if ((ticket.security || reviewed.code.security) && !security) return null
+  const all = [['QA', qa], ['Code review', reviewed.code]]
+  if (security) all.push(['Security', security])
   return {
     verdict: all.every(([, r]) => r.verdict === 'approve') ? 'approve' : 'changes',
     findings: all.flatMap(([who, r]) => r.findings.map(f => ({ ...f, where: `${who}: ${f.where}` }))),
