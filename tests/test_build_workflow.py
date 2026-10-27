@@ -25,16 +25,18 @@ class BuildWorkflowTest(unittest.TestCase):
     def test_an_issue_that_is_not_ready_starts_nothing(self):
         run = self.run_workflow({"check": [{**READY, "ready": False, "reason": "a red issue is open"}]})
         self.assertEqual(run["result"], {"issue": 12, "status": "not started", "reason": "a red issue is open"})
+        self.assertNotIn("run report", self.labels(run))
         self.assertEqual(self.labels(run), ["check #12"])
 
     def test_an_approved_change_goes_to_the_integrator(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
         self.assertEqual(run["result"]["status"], "merged")
-        self.assertEqual(self.labels(run), ["check #12", "builder, round 1", "reviewer, round 1", "integrator, PR #4"])
+        self.assertEqual(self.labels(run), ["check #12", "builder, round 1", "reviewer, round 1", "integrator, PR #4",
+                                            "run report"])
 
     def test_each_role_runs_as_its_plugin_agent_and_the_builder_in_a_worktree(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
-        builder, reviewer, integrator = run["calls"][1:]
+        builder, reviewer, integrator = run["calls"][1:4]
         self.assertEqual((builder["agentType"], builder["isolation"], builder["model"]),
                          ("founding-agents:builder", "worktree", "opus"))
         self.assertEqual((reviewer["agentType"], reviewer["model"]), ("founding-agents:reviewer", "opus"))
@@ -52,6 +54,18 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [ticket], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
         for call in run["calls"][1:3]:
             self.assertIn("The founder decided: B, with a shorter headline", call["prompt"])
+
+    def test_a_finished_run_posts_its_report_on_the_issue(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED],
+                                 "run report": [{"comment_url": "https://github.com/o/r/issues/12#c1", "reason": ""}]})
+        report = run["calls"][-1]
+        self.assertEqual((report["label"], report["model"]), ("run report", "haiku"))
+        self.assertIn("--workflow build --issue 12 --post", report["prompt"])
+        self.assertEqual(run["result"]["report"], "https://github.com/o/r/issues/12#c1")
+
+    def test_a_stalled_run_still_posts_its_report(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "reviewer": [CHANGES] * 3})
+        self.assertEqual(self.labels(run)[-1], "run report")
 
     def test_findings_go_back_to_the_builder_on_the_same_pr(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "reviewer": [CHANGES, APPROVE],

@@ -6,6 +6,7 @@ export const meta = {
     { title: 'Brief', detail: 'the product lead writes the brief and recommends', model: 'opus' },
     { title: 'Design', detail: 'the designer storyboards and mocks up two or three options', model: 'opus' },
     { title: 'Queue', detail: 'one needs-founder item with the brief, the options and their costs', model: 'haiku' },
+    { title: 'Report', detail: "the run's time, tokens and cost, posted on the issue", model: 'haiku' },
   ],
 }
 
@@ -58,6 +59,25 @@ const POSTED = {
   required: ['comment_url'],
 }
 
+const REPORTED = {
+  type: 'object',
+  properties: {
+    comment_url: { type: 'string', description: 'the posted comment; empty when it was not posted' },
+    reason: { type: 'string', description: 'why it was not posted; empty when it was' },
+  },
+  required: ['comment_url', 'reason'],
+}
+
+// A run that got past its first step posts its time, tokens and cost on the issue, stalled runs too.
+const report = async result => {
+  phase('Report')
+  const posted = await agent(
+    `Use the run-report skill to post this run's report on issue #${brief.issue}: from this repo's folder, run its script with \`--workflow propose --issue ${brief.issue} --post\`. Return the comment's URL, or why it was not posted.`,
+    { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
+  )
+  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted' }
+}
+
 phase('Brief')
 const brief = await agent(
   issue
@@ -77,7 +97,7 @@ if (brief.recommend === 'go' || brief.overruled) {
   )
   if (!design) throw new Error('The designer returned nothing')
   if (design.stopped_because || design.options.length < 2) {
-    return { issue: brief.issue, status: 'stopped in design', reason: design.stopped_because || 'fewer than two options' }
+    return await report({ issue: brief.issue, status: 'stopped in design', reason: design.stopped_because || 'fewer than two options' })
   }
 }
 
@@ -116,9 +136,9 @@ const posted = await agent(
 ${item}`,
   { label: 'queue item', phase: 'Queue', model: 'haiku', effort: 'low', schema: POSTED },
 )
-return {
+return await report({
   issue: brief.issue,
   recommend: brief.recommend,
   options: design ? design.options.map(o => o.letter) : [],
   queue_item: posted ? posted.comment_url : 'not posted',
-}
+})
