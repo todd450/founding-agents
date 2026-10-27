@@ -88,8 +88,11 @@ product: `.github/ops-watch/routine.md`, which setup keeps current, and the prod
 4. **Ask for a clear yes** to create the routine, since it runs every day on the founder's plan.
 5. **Create it** with the `schedule` skill: a daily task on this repo, at an odd minute such as
    7:23, on Haiku (or the cheapest model the model selector offers; say which), with the prompt
-   "Follow .github/ops-watch/routine.md in this repo." It needs the founder's GitHub connection
-   for the repo, from the Claude GitHub App or `/web-setup`.
+   "Follow .github/ops-watch/routine.md in this repo." Use the cloud environment, the tools
+   `Bash`, `Read`, `Glob` and `Grep` only, and no connectors: a routine created through the API
+   gets every claude.ai connector the founder has (mail, drive and the rest) unless they are
+   cleared, and ops watch needs none of them. It needs the founder's GitHub connection for the
+   repo, from the Claude GitHub App or `/web-setup`.
 6. **Run it once now** and read its last lines: one per check, green, red or not run. A check that
    could not run is a setup problem to fix, not a red.
 
@@ -112,7 +115,8 @@ adds `decided` to the ones to build. Neither changes the product itself.
    plan.
 4. **Create them** with the `schedule` skill: weekly tasks on this repo, early on a Monday at odd
    minutes a few hours apart, on Sonnet, with the prompts "Follow .github/optimiser/routine.md in
-   this repo." and "Follow .github/librarian/routine.md in this repo."
+   this repo." and "Follow .github/librarian/routine.md in this repo." Use the cloud environment,
+   the tools `Bash`, `Read`, `Glob` and `Grep` only, and no connectors, as for ops watch.
 5. **Run each once now** and read its last lines. A measure it could not take is a setup problem
    to fix.
 
