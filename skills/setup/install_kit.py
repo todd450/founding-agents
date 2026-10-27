@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Install one of setup's kits in a product repo: `ci` or `ops-watch`. Prints the plan by default;
+"""Install one of setup's kits in a product repo: `basics`, `ci` or `ops-watch`. Prints the plan by default;
 writes nothing without --apply.
 
 Kits are copied, not referenced, because a product's workflow cannot read the private plugin repo.
 Rerunning brings the product's copies of setup's own files up to date. A starter file, such as
-`check.sh`, is written only when the product has none: the product owns it from then on.
+`check.sh` or `CLAUDE.md`, is written only when the product has none: the product owns it from then on.
 """
 
 import argparse
@@ -15,6 +15,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 # Each kit: (source, where it goes in the product, whether setup keeps it current).
 KITS = {
+    "basics": [
+        (HERE / "basics" / "CLAUDE.md", Path("CLAUDE.md"), False),
+        (HERE / "basics" / "fixtures" / "README.md", Path("fixtures/README.md"), False),
+    ],
     "ci": [
         (HERE / "ci" / "ci.yml", Path(".github/workflows/ci.yml"), True),
         (HERE / "ci" / "check.sh", Path("check.sh"), False),

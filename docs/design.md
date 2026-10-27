@@ -112,6 +112,13 @@ of this (see Sources).
   unchanged: on 26 Oct 2026 the website's install at 0.1.0 still lacked `build` and `propose`
   after both had merged. A merged change that adds or alters an agent, skill, hook or workflow
   bumps `.claude-plugin/plugin.json`; a docs-only change does not.
+- **`setup` writes starters the product then owns.** Added on 27 Oct 2026: the `basics` kit gives a
+  product a short `CLAUDE.md` (what it is, `./check.sh`, where decisions live, its own rules) and a
+  `fixtures/` folder whose README names the same failure classes as the holdouts, which a test
+  keeps in step. Like `check.sh`, neither is ever replaced once the product has one; a long
+  `CLAUDE.md` is what the first product had to cut from 4,392 lines (principle 7). `setup` also
+  creates the `red` label, so `build` and the integrator can check for red before ops watch first
+  raises it. The routines arrive with the roles that run them.
 - **Tickets: GitHub Issues.** PRs and merges already live there, and `gh` reaches all of it.
   Markdown ticket files would put every builder on the same files (principle 5); Linear adds
   another login.
