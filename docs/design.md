@@ -219,6 +219,20 @@ of this (see Sources).
   copy. GitHub stops a public repo's scheduled workflows after 60 days with no activity, and ops
   watch cannot report its own silence; checks that need judgement (spend, release verdicts) stay
   with the Haiku routine.
+- **Ops watch's judgement checks run as a daily routine whose instructions live in the product.**
+  Built on 27 Oct 2026. The routine checks that every scheduled workflow still runs and passed
+  (which covers the site check's silence, including GitHub turning schedules off after 60 days),
+  that `main` passes, that changes merged in the last day are live, and the week's run-report
+  totals against a budget the product sets, then the checks the product lists in
+  `.github/ops-watch/watch.md`, such as backups. A red opens one `red` issue per check and the next
+  green run closes it; a check that could not run is reported, never red. Three facts from the
+  routine docs shaped it: a cloud session does not install plugins, so the prompt is
+  `.github/ops-watch/routine.md`, copied into the product and kept current by `setup`; the cloud's
+  GitHub proxy blocks GraphQL, so `gh issue` and `gh pr` fail and every call is `gh api` over
+  REST, which a test holds; and a routine can only be created by `/schedule` or the web, so
+  `setup` creates it through the `schedule` skill after the founder's yes. Whether Haiku can be
+  picked as a routine's model is not documented; `setup` falls back to the cheapest offered. Not
+  yet run on a real product.
 - **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook reads
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
