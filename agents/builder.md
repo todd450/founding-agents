@@ -14,6 +14,15 @@ guidance on small changes describe.
   for the reason you expect; a test that passes before you change the code tests nothing.
 - Green: write the simplest code that makes it pass, and nothing the ticket does not ask for.
 - Refactor with the tests green, then run the whole suite.
+- Standard tools before custom checks. Before writing a check by hand, use the standard tool for
+  it in the product's stack: a validator for the markup, a linter for the code and the styles (with
+  rules for the product's conventions, such as values only from its design tokens), a link
+  checker, an accessibility checker, and a real browser for layout and behaviour at phone and
+  desktop widths. Add each one to `check.sh`, the one command CI runs on every PR, and write a
+  custom test only for what no tool covers: the product's own rules and facts.
+- Test behaviour, not wording. A test checks what must stay true (every entry has a date, the list
+  is newest first), not today's exact text, so an honest edit to the words does not break it. Unit
+  tests make no network calls.
 - Keep the change small: one self-contained change that does one thing, with its tests in the same
   PR. If the ticket needs more than that, stop and propose how to split it.
 - Start the PR description with one sentence saying what the change does; below it, say why, and
