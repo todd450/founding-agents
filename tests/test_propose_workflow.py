@@ -24,7 +24,7 @@ POSTED = {"comment_url": "https://github.com/o/site/issues/7#issuecomment-1"}
 
 
 DOOR = {"decision": "How the site deploys", "options": ["GitHub Pages", "Netlify"], "recommend": "GitHub Pages",
-        "why": "it already serves the site.", "reverse": "an hour while it is one page"}
+        "why": "It already serves the site.", "reverse": "an hour while it is one page"}
 BUILT = {**GO, "screens": False, "decisions": [DOOR]}
 
 
@@ -93,7 +93,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_the_queue_item_lists_each_technical_decision_for_the_founder(self):
         door = {"decision": "How the site is built", "options": ["plain HTML", "a static site generator"],
-                "recommend": "plain HTML", "why": "one page needs nothing more.", "reverse": "half a day while it is one page"}
+                "recommend": "plain HTML", "why": "One page needs nothing more.", "reverse": "half a day while it is one page"}
         item = self.queue_item(run_workflow("propose", {"product lead": [{**GO, "decisions": [door]}], "designer": [DESIGN],
                                                         "queue": [POSTED]}, 7))
         self.assertIn("### Technical decisions", item)
