@@ -89,7 +89,7 @@ screen, one design-token source that generates every copy.
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
-  `run-report`).
+  `run-report`, `compare-changes`).
 - **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`.
 - **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
@@ -261,6 +261,15 @@ of this (see Sources).
   above the website's typical build and below its stalls, and the report flags a run over it above
   the table. Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
   spend waits for the optimiser.
+- **Whether the plugin pays is measured against changes made without it.** Asked for by the founder
+  on 27 Oct 2026: the measures below judge the team on its own, and say nothing about whether a
+  plain Claude session would have done as well. The `compare-changes` skill reads merged PRs and
+  compares the two groups on cost, time to merge and fixes needed within two weeks. A PR from
+  `build`'s branch counts as with the plugin; any other change needs a `with-plugin` or
+  `without-plugin` label, since nothing else on GitHub tells them apart. Cost is the run reports on
+  the PR and the issues it closes, so a plain session counts only once its own report is posted on
+  its PR. A fix later is a merged PR within two weeks that changed one of the same files and is
+  labelled or titled as a fix: a guess, so the table names each one for the founder to check.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, reviewer and builders, Sonnet 5.5 for the
   integrator and Haiku 5.5 for ops watch and the workflows' small steps.
@@ -387,6 +396,9 @@ One number per cost in the first table, and one for the founder's attention:
 | Many writers, one branch | merges not made by the integrator | be zero |
 | Red lights left red | age of the oldest open `red` issue | be hours, not days |
 | The founder's attention | items in the decision queue each day | fit one sitting |
+
+Whether the team beats a plain Claude session on the same kind of change is the `compare-changes`
+skill's table: cost, time to merge and fixes within two weeks, with the plugin and without it.
 
 ## Sources
 
