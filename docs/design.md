@@ -136,7 +136,7 @@ of this (see Sources).
   and the PR, not the builder's summary, since it reviews the diff and the running product. Each
   send-back reaches the same builder role on the same PR with the findings; after three, the run
   stops and the PR waits for the founder instead of looping. Every step names its model. Left for
-  later: the holdout scenarios, and pacing to the weekly limit, both described below. Tested on
+  later: pacing to the weekly limit, described below; the holdout scenarios followed on 27 Oct. Tested on
   25 Oct 2026 with `claude -p "/founding-agents:build 1"` on a throwaway repo: the builder opened
   the PR, the reviewer drove about 30 inputs and sent it back with one must-fix, the builder fixed
   it on the same PR, the reviewer approved with nits only, and the integrator merged it. The
@@ -314,6 +314,18 @@ of this (see Sources).
   it is best-effort, since a builder's shell can reach any file on the machine. When a holdout
   fails, QA sends back the failure class and what went wrong, not the scenario. A scenario a
   builder has seen moves into the visible fixtures, and a new holdout replaces it.
+- **Holdouts in practice.** Built on 27 Oct 2026. The repo is `<product>-holdouts`, cloned to
+  `~/.founding-agents/holdouts/<owner>/<name>`, a path every machine can work out from the
+  product's name, so nothing in the product points to it. It holds one Markdown file per scenario
+  (setup, steps, expected) in a folder per failure class. The hook (`guard_holdouts.py`) blocks
+  every agent but `founding-agents:reviewer` from any tool call naming that folder or a
+  `-holdouts` repo; the founder's own session, which has no agent, passes, because it creates the
+  repo and writes the scenarios. The founder writes the first ones there, never through an agent,
+  so no builder's context ever held them; the reviewer adds one or two wherever a change touches a
+  class that has none. A failing holdout is a must-fix finding naming only its class and what
+  went wrong, and `build` asks for nothing more in the findings it hands the builder. Moving a
+  seen scenario into the visible fixtures is left to the founder until the librarian exists. Not
+  yet run on a real product.
 - **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
   parts of this, but they churn (Compound Engineering renamed its commands; GSD's original repo was
   archived) and their auto-triggered skills would compete with these roles. Ideas are copied with
@@ -359,7 +371,7 @@ private, since the founder is the only user for now. A website bends the order i
 3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
    holdouts), and the integrator. Run it on three to five real issues. Done on 26 Oct 2026 on the
-   website, without holdouts, which are still to build: four issues cut by hand from the decided
+   website, without holdouts, which were built on 27 Oct 2026 and have not run there yet: four issues cut by hand from the decided
    brief went through `build` to merge. #4 was sent back three times on a test the issue asked
    for that needed a CSS linter, and merged once the founder narrowed it; #5 merged after one
    send-back, with a stale step status and a layout gap the reviewer missed; #6 was sent back

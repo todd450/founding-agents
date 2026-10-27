@@ -1,12 +1,12 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, or to install or update CI or ops watch's nightly site check. Installs CI and ops watch through PRs, and turns on branch protection that requires CI's check after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, or to set up the holdout scenarios. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
-This version covers CI, branch protection and ops watch's site check. The other routines, labels
-and fixtures arrive with the build steps that use them (`docs/design.md` in the Founding Agents
+This version covers CI, branch protection, ops watch's site check and the holdout scenarios. The
+other routines, labels and fixtures arrive with the build steps that use them (`docs/design.md` in the Founding Agents
 repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
@@ -70,6 +70,25 @@ Rerun the same steps whenever the plugin's copy in `ops_watch/` changes; the dry
 files differ. The scheduled run stops if the repo sees no activity for 60 days, which GitHub does to
 every scheduled workflow in a public repo; ops watch cannot raise red about its own silence.
 
+## Holdout scenarios
+
+Edge-case scenarios the builders never see, so a change that passes every visible test still has
+to handle each failure class. They live in a private `<product>-holdouts` repo, cloned to
+`~/.founding-agents/holdouts/<owner>/<name>`, outside every product folder and worktree. Only the
+reviewer reads them; the plugin's `guard_holdouts` hook blocks every other agent.
+
+1. **Dry run.** `python3 <this skill's directory>/holdouts.py` says whether the repo and its clone
+   exist and what it would do.
+2. **Ask for a clear yes.** Creating a repo on GitHub needs the founder's approval each time.
+3. **Apply.** Rerun with `--apply`. It creates the repo if missing, clones it (or pulls an existing
+   clone), and seeds a README with the scenario format and one folder per failure class.
+4. **Tell the founder** the scenarios are theirs to write: a few per class that matter for this
+   product, in the format the README gives. The reviewer adds more where a change touches a class
+   with none. Write them in the founder's own session, never through an agent, so no builder's
+   context ever holds them.
+
+Rerunning it on another machine clones the same repo there.
+
 ## Labels
 
 `build` takes only issues labelled `decided`, the founder's yes. Create the queue's labels once,
@@ -84,6 +103,7 @@ Ops watch creates `red` itself the first time a check fails.
 
 ## Needs
 
-The plugin's merge guard (`hooks/guard_main.py`) needs `python3` on the machine. It blocks every
-agent but the integrator from pushing to `main` or merging; this branch protection is the hard gate
-behind it.
+The plugin's hooks need `python3` on the machine. The merge guard (`hooks/guard_main.py`) blocks
+every agent but the integrator from pushing to `main` or merging; branch protection is the hard
+gate behind it. The holdout guard (`hooks/guard_holdouts.py`) blocks every agent but the reviewer
+from the holdout scenarios.
