@@ -288,7 +288,18 @@ of this (see Sources).
   repo's admins see, and its issue and the queue item carry only a summary that does not reveal
   it; the fix's PR still shows the change, so publishing the advisory after the merge is the
   founder's call. The finders run on Opus, since they judge. The test auditor is a role the team
-  table did not have; its exemplars are the founder's to change.
+  table did not have; its exemplars are the founder's to change. Tested on 27 Oct 2026 with a codebase
+  sweep of the website (`claude -p` with this plugin): in 16 minutes and $2.60 the optimiser found
+  nothing slow (8 KB gzipped, no script) and instead five checks the repo claims and nothing
+  enforces, three of them proved by doctored copies that passed every check, filed as #19 to #23
+  with queue item #24. Three things changed from it. The script read the clock for the queue
+  item's date, which a workflow may not do, and crashed after filing; a test now keeps every
+  workflow off the clock and random numbers. #19 repeated the weekly optimiser's open proposal #18,
+  so a sweep now leaves out open `Optimiser:` proposals. And every finding named a technical
+  decision, mostly where a helper lives or which list a check reads, which would have had the
+  founder reply on five issues before any `decided`; the finder is now told those are the
+  builder's. The run's last step could not remove worktrees: headless auto mode refuses
+  `git worktree remove --force`, so a build run's worktrees stay until removed by hand.
 - **Red lights: ops watch opens a `red` issue, and the integrator merges nothing while one is
   open.** A routine cannot push to a phone itself, but an issue notifies through GitHub, and
   blocking merges is what makes principle 9 hold.

@@ -53,6 +53,11 @@ class SweepWorkflowTest(unittest.TestCase):
         self.assertIn("reproduces the exploit, fails before the fix",
                       self.call(run_workflow("sweep", replies(), "security"), "security-reviewer")["prompt"])
 
+    def test_the_finder_is_told_most_fixes_settle_no_technical_decision(self):
+        prompt = self.call(run_workflow("sweep", replies(), "codebase"), "optimiser")["prompt"]
+        self.assertIn("Most fixes settle none", prompt)
+        self.assertIn("an option you advise against does not make the choice a one-way door", prompt)
+
     def test_an_unknown_kind_is_an_error(self):
         self.assertIn("Name what to sweep", run_workflow("sweep", replies(), "speed")["error"])
 
