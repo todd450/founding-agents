@@ -1,0 +1,7 @@
+{
+  "output": {
+    "pr_number": 0,
+    "pr_url": "",
+    "stopped_because": "Keeping visitors' email addresses needs somewhere to store them: a database or an outside form or mailing service. That is a technical one-way decision the issue does not name as the founder's, so I stopped instead of choosing one."
+  }
+}

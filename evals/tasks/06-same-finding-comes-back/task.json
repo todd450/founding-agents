@@ -1,0 +1,70 @@
+{
+  "role": "code-reviewer",
+  "kind": "capability",
+  "class": "the same finding comes back unfixed, and the reviewer must say so",
+  "origin": "founding-agents-site #4 and #6 (PRs #7 and #9): the same findings came back round after round; the two stalls were 43% of the website's spend",
+  "summary": "Round 2 of a review: one earlier finding is fixed, one is not. The right review marks only the unfixed one as a repeat, so build stops for the founder.",
+  "right_answer": "send back",
+  "step": {
+    "workflow": "build",
+    "args": 6,
+    "label": "code review",
+    "pr": 9,
+    "ticket": {
+      "open_pr": 9
+    }
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-6",
+      "dirs": [
+        "round1"
+      ],
+      "message": "Test the record"
+    },
+    {
+      "branch": "build/issue-6",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Fail on a date that does not parse"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 6,
+        "title": "Site 3 of 3: the record of this build",
+        "body": "Add this build's entries to the record, newest first. Tests for the record, and that it is in date order.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy and tests inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 9,
+        "title": "Test the record",
+        "body": "Adds tests that every record entry has a date and that the record is newest first.\n\nCloses #6",
+        "headRefName": "build/issue-6",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": [
+          {
+            "author": "todd450",
+            "body": "**Code review: Changes needed**\n\n- `tests/test_record.py` `_li_count`: counts the literal text `<li>`, so an entry written `<li class=\"late\">` is invisible to `test_every_entry_has_a_date`, and an undated entry passes. Match the element, not the text.\n- `tests/test_record.py` `test_record_is_newest_first`: skips any date it cannot parse, so an entry with a malformed date passes. Fail on it instead."
+          }
+        ]
+      }
+    ]
+  }
+}

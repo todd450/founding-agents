@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "approve",
+    "findings": [
+      {
+        "must_fix": false,
+        "where": "rendering",
+        "what": "I could not render the page at 390 px and 1440 px; the CSS has no fixed widths.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 8,
+      "body": "**QA: Approve**\n\n- Nit: rendering: I could not render the page at 390 px and 1440 px; the CSS has no fixed widths."
+    }
+  ]
+}

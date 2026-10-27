@@ -1,0 +1,20 @@
+{
+  "output": {
+    "decisions": [
+      {
+        "decision": "where email addresses are stored, and what sends the note",
+        "options": [
+          "a mailing-list service (Buttondown)",
+          "a form service that emails the founder",
+          "a database of our own"
+        ],
+        "recommend": "a mailing-list service (Buttondown)",
+        "why": "It stores, unsubscribes and sends in one place.",
+        "reverse": "Exporting the list and changing the form."
+      }
+    ],
+    "issues": [],
+    "plan_url": "",
+    "stopped_because": ""
+  }
+}
