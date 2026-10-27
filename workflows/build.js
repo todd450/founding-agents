@@ -21,7 +21,7 @@ const raw = args && typeof args === 'object' ? args.issue : args
 const issue = Number(String(raw ?? '').replace(/[^0-9]/g, ''))
 if (!issue) throw new Error('Name the issue to build, e.g. /founding-agents:build 12')
 
-// What counts as a technical one-way door; build.js and propose.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js and plan.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 const decided = t => t.decision ? `\n\nThe founder decided: ${t.decision}\nThe change builds what they picked; the mockups show the design, not code to copy.` : ''
@@ -113,11 +113,12 @@ phase('Check')
 const ticket = await agent(
   `Check whether issue #${issue} in this repo can be built. Read only; change nothing.
 - \`gh repo view --json nameWithOwner\` gives the repo.
-- \`gh issue view ${issue} --json title,body,state,labels,comments\`: it must be open and labelled \`decided\`.
+- \`gh issue view ${issue} --json title,body,state,labels,comments\`: it must be open, and either labelled \`decided\` or cut by the architect from a decided brief: its body starts "Part of #<n>", and \`gh issue view <n> --json labels,comments\` shows that brief labelled \`decided\`.
+- If its body says "Build after #<m>", each #<m> must be closed.
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${issue} is that issue. A red scheduled check stops other work until it is fixed.
-- Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` queue item on this issue, with the founder's choice; the \`decided\` label is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
+- Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` or \`plan\` queue item on this issue or on the brief it is part of, with the founder's choice; the \`decided\` label on the issue or its brief is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
 - \`gh pr list --state open --json number,headRefName,body\`: an open PR on the branch \`build/issue-${issue}\`, or one whose description closes #${issue}, already builds it. Return its number as open_pr, or 0.
-Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-${issue}\`) as the decision.`,
+Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments on the issue, or on the brief it is part of, hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-<the issue or brief the mockups were made for>\`) as the decision.`,
   { label: `check #${issue}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
 )
 if (!ticket) throw new Error(`Could not read issue #${issue}`)

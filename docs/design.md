@@ -49,11 +49,13 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 
 1. Idea → **product lead** writes the brief → founder decides.
 2. **Designer** mocks it up → founder picks.
-3. **Architect** writes the plan → **builders** build, each in its own worktree.
+3. **Architect** writes the plan and cuts it into build issues → **builders** build, each in its own
+   worktree.
 4. **Edge-case QA** and **code review** run in parallel.
 5. **Integrator** merges and gates production → **ops watch** watches it run.
 
-The founder sees steps 1 and 2 only. Every hand-off is a file, a ticket or a PR, so the next agent
+The founder sees steps 1 and 2, and step 3 only when the plan needs a technical decision the brief
+left open. Every hand-off is a file, a ticket or a PR, so the next agent
 starts with the context it needs.
 
 ## Principles
@@ -90,7 +92,7 @@ screen, one design-token source that generates every copy.
   builders also get their own worktree.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
   `run-report`).
-- **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`.
+- **The per-change pipeline** → three saved workflows in the plugin: `propose`, `plan` and `build`.
 - **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
@@ -119,10 +121,11 @@ of this (see Sources).
   and off by default, and the docs steer sequential work to subagents; this pipeline is sequential.
   Separate sessions messaging each other is the other option, and six of the 31 lessons in a
   published team built that way are about those messages failing.
-- **Two workflows, split where the founder decides.** `propose` runs steps 1 and 2 and ends with one
+- **Workflows split where the founder decides.** `propose` runs steps 1 and 2 and ends with one
   queue item carrying the brief and the mockups, so the founder decides and picks in one sitting.
-  `build` starts from a decided issue and runs steps 3 to 5. A workflow cannot stop mid-run to ask,
-  so the founder's decision has to fall between workflows.
+  `plan` cuts a decided brief into build issues (step 3's plan), and `build` takes one of them, or
+  a decided issue small enough to need no plan, through steps 3 to 5. A workflow cannot stop
+  mid-run to ask, so the founder's decision has to fall between workflows.
 - **Builders get their worktree from the workflow step.** A workflow's `agent()` takes
   `isolation: 'worktree'` (and `agentType` for a named agent); the workflow script reference
   documents both, though the public docs page does not. Tested on 24 Oct 2026: such a step ran in
@@ -193,8 +196,23 @@ of this (see Sources).
   settles one not named in its "Technical decisions" section or in a queue item on it; the builder
   stops rather than choose one, and the reviewer sends back a change that makes one. Agents post
   with the founder's own GitHub login, so a comment's author cannot show who decided: a decision
-  counts as seen when it is named where the founder's `decided` label says yes to it. Until the
-  architect exists, whoever cuts a brief into build issues lists the decisions each one settles.
+  counts as seen when it is named where the founder's `decided` label says yes to it. The architect
+  lists, in each build issue it cuts, the decisions that issue settles.
+- **`plan`: the architect cuts a decided brief into build issues.** Built on 27 Oct 2026, because
+  the website's step 3 found nothing between a decided brief and its build issues; they were cut by
+  hand, and one hand-cut issue carried "no build step or framework" as a rule nobody had decided. It
+  runs as `/founding-agents:plan <brief>`: a Haiku check refuses a brief without `decided` or one
+  already cut, then the architect, on Opus, reads the brief, the founder's answers and the product,
+  and lists the one-way doors the plan needs. If the founder has answered all of them, it opens the
+  build issues in order, each starting "Part of #<brief>", naming the files it owns (no two share
+  one), "Build after #<n>" when it depends on another, and the decisions it settles with the
+  founder's choice, then posts the plan on the brief. If any is unanswered it opens nothing: one
+  script-built queue item lists them, labelled `needs-founder`, and moves the `decided` label off
+  the brief so that adding it again is the founder's yes to the new decisions. The founder does not
+  label each build issue: `build` accepts an issue cut from a decided brief, and waits until every
+  issue it builds after is closed. The founder's attention goes to the decisions, not to approving
+  cuts. Not yet run on a real product; schema review of a builder's change, the architect's other
+  job, is left until a product has a schema.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -366,15 +384,15 @@ private, since the founder is the only user for now. A website bends the order i
    three times on Sonnet and merged in one round once the builder moved to Opus; #10, which fixed
    the errors found by reading the live page after #6, merged in one round. Two gaps showed:
    `build` could not continue an open PR unless its issue said so (fixed on 26 Oct 2026, above),
-   and nothing cuts a decided brief into build issues until the architect exists.
+   and nothing cut a decided brief into build issues; the architect's `plan` now does.
 4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
    completes the starting five. Done on 26 Oct 2026 on the website: on its brief the product lead
    recommended go on a smaller test-bed site and rewrote the brief to match, the designer pushed
    three options at 2, 5 and 7 stars to `propose/issue-1`, and one `needs-founder` queue item
    carried them with their costs.
-5. **Grow on demand:** the architect for schema or shared changes; two to four parallel builders
-   once one is routine; then the security reviewer, optimiser, librarian and researcher as their
-   kind of work appears.
+5. **Grow on demand:** the architect for schema or shared changes (built as `plan` on 27 Oct 2026,
+   not yet run on the website); two to four parallel builders once one is routine; then the
+   security reviewer, optimiser, librarian and researcher as their kind of work appears.
 
 ## How we'll know it works
 
