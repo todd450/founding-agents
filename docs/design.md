@@ -201,7 +201,7 @@ of this (see Sources).
   queue item lists them with options, a recommendation and the cost of reversing, for the founder
   to answer. `build`'s first step, now on Sonnet because it has to judge, refuses an issue that
   settles one not named in its "Technical decisions" section or in a queue item on it; the builder
-  stops rather than choose one, and the reviewer sends back a change that makes one. Agents post
+  stops rather than choose one, and the code reviewer sends back a change that makes one. Agents post
   with the founder's own GitHub login, so a comment's author cannot show who decided: a decision
   counts as seen when it is named where the founder's `decided` label says yes to it. The architect
   lists, in each build issue it cuts, the decisions that issue settles.
@@ -232,6 +232,15 @@ of this (see Sources).
   issue owns. One run report goes on the brief. Two builders is the default because builders and
   reviewers all run on Opus, so four at once spends the week's Opus allowance four times as fast,
   and pacing to the weekly limit is not built yet. Not yet run on a real product.
+- **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
+  the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
+  its own worktree and posting its own comment; when the code reviewer says the diff touches
+  routes, sign-in, permissions, stored data, secrets, outside input or model calls, the security
+  reviewer looks too. The change is approved only when every reviewer approves, and the builder
+  gets all their findings, each marked with who raised it. QA is the only role that reads the
+  holdouts, so the holdout guard now trusts `founding-agents:qa`. The split's cost: two Opus
+  reviewers each round where there was one, and the reviewer was already the largest cost in five
+  of six website builds; the optimiser's numbers say whether it pays.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -313,8 +322,9 @@ of this (see Sources).
   the table. Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
   spend waits for the optimiser.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
-  Opus 5.5 for the product lead, architect, designer, reviewer and builders, Sonnet 5.5 for the
-  integrator and Haiku 5.5 for ops watch and the workflows' small steps.
+  Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
+  builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
+  steps.
 - **Builders run on Opus, an exception to principle 3.** The founder's choice on 26 Oct 2026, after
   the first website builds on Sonnet; on #5 the Sonnet builder was sent back once and still shipped
   a step status the issue had said to check against the repo. The cost is the shared limit:
@@ -369,10 +379,10 @@ of this (see Sources).
   `~/.founding-agents/holdouts/<owner>/<name>`, a path every machine can work out from the
   product's name, so nothing in the product points to it. It holds one Markdown file per scenario
   (setup, steps, expected) in a folder per failure class. The hook (`guard_holdouts.py`) blocks
-  every agent but `founding-agents:reviewer` from any tool call naming that folder or a
+  every agent but `founding-agents:qa` (the reviewer until the split) from any tool call naming that folder or a
   `-holdouts` repo; the founder's own session, which has no agent, passes, because it creates the
   repo and writes the scenarios. The founder writes the first ones there, never through an agent,
-  so no builder's context ever held them; the reviewer adds one or two wherever a change touches a
+  so no builder's context ever held them; QA adds one or two wherever a change touches a
   class that has none. A failing holdout is a must-fix finding naming only its class and what
   went wrong, and `build` asks for nothing more in the findings it hands the builder. Moving a
   seen scenario into the visible fixtures is left to the founder until the librarian exists. Not
@@ -438,7 +448,8 @@ private, since the founder is the only user for now. A website bends the order i
 5. **Grow on demand:** the architect for schema or shared changes (built as `plan` on 27 Oct 2026,
    not yet run on the website); two to four parallel builders once one is routine (built into
    `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser,
-   librarian and researcher as their kind of work appears.
+   librarian and researcher as their kind of work appears. QA and code review became two roles,
+   with the security reviewer beside them, on 27 Oct 2026, not yet run on the website.
 
 ## How we'll know it works
 

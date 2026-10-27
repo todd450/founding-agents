@@ -29,8 +29,9 @@ const agent = async (prompt, opts) => {
   return key ? replies[key].shift() : null
 }
 const body = fs.readFileSync(source, 'utf8').replace('export const meta', 'const meta')
-const run = new Function('args', 'agent', 'phase', 'log', `return (async () => {${body}})()`)
-run(JSON.parse(argsJson), agent, () => {}, () => {})
+const parallel = thunks => Promise.all(thunks.map(thunk => thunk().catch(() => null)))
+const run = new Function('args', 'agent', 'parallel', 'phase', 'log', `return (async () => {${body}})()`)
+run(JSON.parse(argsJson), agent, parallel, () => {}, () => {})
   .then(result => console.log(JSON.stringify({ result, calls, events })))
   .catch(error => console.log(JSON.stringify({ error: error.message, calls, events })))
 """

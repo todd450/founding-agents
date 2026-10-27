@@ -3,7 +3,7 @@
 ~/.founding-agents/holdouts/<owner>/<name> where no product folder or worktree holds it. Prints the
 plan by default; changes nothing without --apply.
 
-Only the reviewer reads the holdouts; the plugin's guard_holdouts hook blocks other agents.
+Only edge-case QA reads the holdouts; the plugin's guard_holdouts hook blocks other agents.
 """
 
 import argparse
@@ -24,7 +24,7 @@ CLASSES = {
 
 README = """# Holdout scenarios
 
-Edge-case scenarios for {repo} that its builders never see. Only the Founding Agents reviewer reads
+Edge-case scenarios for {repo} that its builders never see. Only the Founding Agents QA agent reads
 them, and a plugin hook blocks every other agent. A change that passes every visible fixture and
 fails one of these is what they exist to catch.
 
@@ -47,7 +47,7 @@ Each file:
 <what must be true afterwards>
 ```
 
-When a holdout fails, the reviewer tells the builder its class and what went wrong, never the
+When a holdout fails, QA tells the builder its class and what went wrong, never the
 scenario. A scenario a builder has seen anyway moves to the product's visible `fixtures/`, and a
 new one takes its place here.
 """
@@ -106,7 +106,7 @@ def main(argv=None):
 
     if not exists:
         code, _, err = run("gh", "repo", "create", holdouts, "--private",
-                           "--description", f"Holdout scenarios for {repo}; only the reviewer reads them")
+                           "--description", f"Holdout scenarios for {repo}; only QA reads them")
         if code != 0:
             print(f"Could not create {holdouts}: {err}", file=sys.stderr)
             return 1
