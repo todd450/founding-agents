@@ -171,7 +171,7 @@ Bring at most ${MAX} findings, the most worth fixing first, ranked by what the f
 
 Each finding's pass marks say what the reviewer checks to call its fix done: ${k.marks} Make them specific to the finding.
 
-Name every ${ONE_WAY}, that a fix would settle, such as adding a linter, a dependency or a CI service, with the realistic options, the one you recommend and why, and what reversing it would cost. Most fixes settle none.
+Name every ${ONE_WAY}, that a fix would settle, such as adding a dependency or an outside service, with the realistic options, the one you recommend and why, and what reversing it would cost. Most fixes settle none: where a helper lives, which list a check reads, or how a test is shaped is the builder's to choose and cheap to change, and an option you advise against does not make the choice a one-way door.
 
 Return the findings, what you measured, and what you did not review. Post nothing and file nothing; the workflow files them.`,
   { label: k.agent, phase: 'Find', agentType: `founding-agents:${k.agent}`, isolation: 'worktree', model: 'opus', schema: FOUND },
@@ -190,7 +190,7 @@ const doors = f => f.decisions.length
      ...f.decisions.map((d, i) => `- **D${i + 1}. ${d.decision}:** ${d.options.join(' / ')}. Recommended: **${d.recommend}**. ${d.why} Reversing it later: ${d.reverse}`)]
   : ['### Technical decisions', '', 'None. The fix changes nothing about how the product is built, deployed or stores its data.']
 const marks = f => ['### Pass marks', '', ...f.pass_marks.map(m => `- ${m}`), '',
-                    'The builder meets each one and says how in the PR; the reviewer sends back any it cannot confirm.']
+                    'The builder meets each one and says how in the PR; QA sends back any it cannot confirm.']
 const title = (f, i) => secret ? `Security finding ${String.fromCharCode(65 + i)}: ${f.severity} severity, details in a private advisory` : f.title
 const body = f => (secret
   ? [`**Sweep: security** · found by the ${role}`, '',
@@ -253,7 +253,7 @@ lines.push(`**To decide:** add the \`decided\` label to each issue you want fixe
 const queue = await agent(
   `Open this issue in ${check.repo} exactly as written, with \`gh issue create --repo ${check.repo} --label needs-founder --title <the title> --body-file -\`; create the \`needs-founder\` label first if the repo does not have it. Return its number and URL.
 
-Title: Sweep: ${kind}, ${new Date().toISOString().slice(0, 10)}
+Title: Sweep: ${kind}, <today's date from \`date +%F\`>
 Body:
 ${lines.join('\n')}`,
   { label: 'queue item', phase: 'File', model: 'haiku', effort: 'low', schema: POSTED },
