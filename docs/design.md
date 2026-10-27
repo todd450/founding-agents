@@ -155,7 +155,9 @@ of this (see Sources).
 - **`build` continues an open PR, stops on a finding it failed to fix twice, and tidies up.**
   Decided on 26 Oct 2026, from the website's runs. Its first step finds an open PR on
   `build/issue-<n>` or one that closes the issue, and the builder continues it from its reviews
-  instead of starting again; #4 and #6 needed their issues edited by hand to do that. The reviewer
+  instead of starting again; #4 and #6 needed their issues edited by hand to do that. The check is told an
+  open PR never makes an issue unready: on the website's #27 on 27 Oct, it read PR #35 as "already
+  being built" and skipped it, and the six issues that build after it could not start. The reviewer
   marks each must-fix that an earlier review raised and is still unfixed as a repeat, and one
   repeat after a builder's fix ends the run for the founder, before a third round: the stalls on #4
   and #6 were the same findings coming back, at 43% of the website's spend. New findings still get
