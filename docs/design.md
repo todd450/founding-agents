@@ -48,7 +48,7 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 ## How a change flows
 
 1. Idea → **product lead** writes the brief → founder decides.
-2. **Designer** mocks it up → founder picks.
+2. **Designer** mocks it up → each role recommends, then the team → founder picks.
 3. **Architect** writes the plan → **builders** build, each in its own worktree.
 4. **Edge-case QA** and **code review** run in parallel.
 5. **Integrator** merges and gates production → **ops watch** watches it run.
@@ -77,8 +77,9 @@ From the first product's history, and from what published agent teams reported b
    before it was cut to 337; OpenAI found the same).
 8. **Least privilege per role, and per-action approval** by a checking model instead of prompts.
 9. **A red scheduled check stops other work** until it is fixed.
-10. **Protect the founder's attention.** One decision queue, read once a day; each item carries a
-    recommendation, a picture, and what each option costs.
+10. **Protect the founder's attention.** One decision queue, read once a day; each item carries the
+    team's recommendation and each role's, with why in plain English, a picture, and what each
+    option costs.
 
 Day-one engineering defaults the architect sets for a new product: one front end (no second
 document surface), writes that change only the field that changed, string keys from the first
@@ -176,6 +177,20 @@ of this (see Sources).
   does, and the item asks only go or no-go and each technical decision. Found on 26 Oct 2026 before
   the website's build-and-deploy brief, which would otherwise have sent the designer to mock up a
   choice with no screens.
+- **Each queue item gives every role's recommendation and the team's, each with why in plain
+  English.** Decided by the founder on 27 Oct 2026: they decide better with more to go on, and the
+  item carried only the product lead's go or no-go and the designer's pick, with no reason for the
+  pick. After the designer, the builder, reviewer and integrator each recommend go or no-go, an
+  option and a choice on each technical decision, from what their job knows: the work, what could
+  go wrong for people using it, and the release. Each sees the brief and the choices but not the
+  other roles' picks, so it gives its own view instead of echoing theirs. A team step then weighs
+  every view on its reasons, not by counting votes, and names any role that disagrees and why the
+  team goes the other way. The item leads with the team's recommendation, then each role's in a
+  line, and each technical decision shows the team's choice and each role's under it. The views
+  run on Sonnet at medium effort, since they read a brief and give an opinion; the team step runs
+  on Opus, since it judges. The roles who give a view are one list in `propose`, and a test checks
+  that every agent a workflow names has an agent file, so a change to the roster cannot silently
+  drop a voice. A role that returns nothing is left out, and the item still posts.
 - **Mockups: one HTML page per option on a `propose/issue-<n>` branch, with screenshots in the
   issue.** Decided by the founder on 25 Oct 2026. A page shows real content at real lengths and can
   be opened at any width; the phone and desktop screenshots, taken with headless Chrome by the
