@@ -213,6 +213,18 @@ of this (see Sources).
   issue it builds after is closed. The founder's attention goes to the decisions, not to approving
   cuts. Not yet run on a real product; schema review of a builder's change, the architect's other
   job, is left until a product has a schema.
+- **Parallel builders: `build` on a brief builds its issues two to four at a time.** Built on 27 Oct
+  2026, on top of `plan`. `/founding-agents:build <brief>` sees the issues the architect cut from
+  the brief and builds them with two builders at once by default; `build <brief> 3` asks for three,
+  and four is the most. Each issue gets the same check, builder and reviewer as a single build,
+  starts only once every issue it builds after has merged, and is skipped when one of those did
+  not merge. The integrator merges one PR at a time, in the order they are approved, each tested
+  on top of the one merged before it (principle 6, Rust's bors); a builder that finishes early
+  waits for its turn rather than racing. Parallelism is safe only because the architect gives no
+  two issues the same files (principle 5); the builder stops rather than edit a file another
+  issue owns. One run report goes on the brief. Two builders is the default because builders and
+  reviewers all run on Opus, so four at once spends the week's Opus allowance four times as fast,
+  and pacing to the weekly limit is not built yet. Not yet run on a real product.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -391,8 +403,9 @@ private, since the founder is the only user for now. A website bends the order i
    three options at 2, 5 and 7 stars to `propose/issue-1`, and one `needs-founder` queue item
    carried them with their costs.
 5. **Grow on demand:** the architect for schema or shared changes (built as `plan` on 27 Oct 2026,
-   not yet run on the website); two to four parallel builders once one is routine; then the
-   security reviewer, optimiser, librarian and researcher as their kind of work appears.
+   not yet run on the website); two to four parallel builders once one is routine (built into
+   `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser,
+   librarian and researcher as their kind of work appears.
 
 ## How we'll know it works
 
