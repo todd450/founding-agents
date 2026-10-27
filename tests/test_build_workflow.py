@@ -43,6 +43,12 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("technical one-way door", check["prompt"])
         self.assertIn('"Technical decisions" section', check["prompt"])
 
+    def test_the_check_takes_an_issue_the_architect_cut_from_a_decided_brief(self):
+        prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
+        self.assertIn('its body starts "Part of #<n>"', prompt)
+        self.assertIn('"Build after #<m>", each #<m> must be closed', prompt)
+        self.assertIn("on this issue or on the brief it is part of", prompt)
+
     def test_an_approved_change_goes_to_the_integrator(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})
         self.assertEqual(run["result"]["status"], "merged")
