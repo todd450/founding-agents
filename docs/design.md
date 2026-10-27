@@ -448,7 +448,12 @@ of this (see Sources).
   a step status the issue had said to check against the repo. The cost is the shared limit:
   builder and reviewer now draw on the same Opus allowance, so a heavy day of review can stop
   builds. The optimiser's tokens-per-merged-change, by role and model, is the measure that says
-  whether it pays.
+  whether it pays. Confirmed by the founder on 27 Oct 2026 (#41), with the evals behind it this
+  time: on seven builder tasks from the website's failures, five trials each, Opus passed all 35
+  and Sonnet 27, failing the token linter and the gutter measured in a real browser four times in
+  five each, which are the failures that stalled the website, at $0.32 a trial against Opus's
+  $0.98. The optimiser's alternative, Sonnet first with Opus on a send-back, was left for later:
+  it needs new workflow logic, evaluated before it ships.
 - **On a Pro or Max plan the team paces itself to the weekly limit.** A plan meters a rolling 5-hour
   window and a weekly limit, not dollars, and the weekly limit is the one a team runs into.
   Allowance left at the weekly reset is lost; going past it stops runs or bills usage credits at
