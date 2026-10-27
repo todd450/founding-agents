@@ -7,7 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
-GO = {"repo": "o/site", "issue": 7, "recommend": "go", "reason": "two founders asked for it", "overruled": False}
+GO = {"repo": "o/site", "issue": 7, "recommend": "go", "reason": "two founders asked for it", "overruled": False,
+      "decisions": []}
 NO_GO = {**GO, "recommend": "no-go", "reason": "no evidence anyone wants it yet"}
 
 
@@ -84,6 +85,26 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_the_report_goes_on_the_issue_the_product_lead_shaped(self):
         run = run_workflow("propose", {"product lead": [GO], "designer": [DESIGN], "queue": [POSTED]}, "a pricing page")
         self.assertIn("--workflow propose --issue 7 --post", run["calls"][-1]["prompt"])
+
+    def test_the_queue_item_lists_each_technical_decision_for_the_founder(self):
+        door = {"decision": "How the site is built", "options": ["plain HTML", "a static site generator"],
+                "recommend": "plain HTML", "why": "one page needs nothing more.", "reverse": "half a day while it is one page"}
+        item = self.queue_item(run_workflow("propose", {"product lead": [{**GO, "decisions": [door]}], "designer": [DESIGN],
+                                                        "queue": [POSTED]}, 7))
+        self.assertIn("### Technical decisions", item)
+        self.assertIn("**D1. How the site is built:** plain HTML / a static site generator. Recommended: **plain HTML**", item)
+        self.assertIn("Reversing it later: half a day while it is one page", item)
+        self.assertIn("your choice for each technical decision (D1)", item)
+
+    def test_a_brief_that_settles_no_technical_decision_says_so(self):
+        item = self.queue_item(run_workflow("propose", {"product lead": [GO], "designer": [DESIGN], "queue": [POSTED]}, 7))
+        self.assertIn("**Technical decisions:** none.", item)
+        self.assertNotIn("each technical decision", item)
+
+    def test_the_product_lead_is_asked_to_name_decisions_including_ones_taken_for_granted(self):
+        prompt = run_workflow("propose", {"product lead": [NO_GO], "queue": [POSTED]}, 7)["calls"][0]["prompt"]
+        self.assertIn('"Technical decisions"', prompt)
+        self.assertIn('"a static site"', prompt)
 
     def test_the_queue_item_adds_the_needs_founder_label(self):
         item = self.queue_item(run_workflow("propose", {"product lead": [NO_GO], "queue": [POSTED]}, 7))
