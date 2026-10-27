@@ -9,6 +9,7 @@ the agent returned, posted and pushed. Costs come from the session logs, priced 
     python3 evals/run.py --role builder --trials 5         # one role's tasks
     python3 evals/run.py --task 09 --model qa=sonnet       # one task, on another model
     python3 evals/run.py --dry-run                         # show each task's step; run nothing
+    python3 evals/run.py --report a/results.json b/results.json   # one report from several runs
 """
 
 import argparse
@@ -237,7 +238,25 @@ def main(argv=None):
     parser.add_argument("--out", type=Path, help="where results go (default evals/runs/<time>)")
     parser.add_argument("--keep", action="store_true", help="keep each trial's folder for reading afterwards")
     parser.add_argument("--dry-run", action="store_true", help="show each task's agent, model and prompt; run nothing")
+    parser.add_argument("--regrade", type=Path, help="grade a kept run's trials again, after a grader fix; run nothing")
+    parser.add_argument("--report", nargs="+", type=Path, help="print one report from these runs' results.json; run nothing")
     args = parser.parse_args(argv)
+
+    if args.regrade:
+        results = json.loads(args.regrade.read_text())
+        for r in results:
+            checks = trial.grade(trial.load(r["task"]), r["folder"])
+            failed_run = [c for c in r["checks"] if c[0].startswith("the agent finished")]
+            r["checks"], r["passed"] = failed_run + checks, not failed_run and all(ok for _, ok in checks)
+        args.regrade.write_text(json.dumps(results, indent=2))
+        args.report = [args.regrade]
+    if args.report:
+        results = [r for path in args.report for r in json.loads(path.read_text())]
+        counts = defaultdict(int)
+        for r in results:
+            counts[(r["task"], r["model"])] += 1
+        print(markdown(results, min(counts.values())))
+        return 0
 
     names = [n for n in trial.tasks() if (not args.task or any(n.startswith(t) for t in args.task))]
     tasks = [t for t in map(trial.load, names) if not args.role or t["role"] in args.role]
