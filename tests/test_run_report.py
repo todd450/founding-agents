@@ -81,7 +81,9 @@ class FindSessionTest(unittest.TestCase):
             write(logs / "b.jsonl", prompt("<command-name>/founding-agents:build</command-name><command-args>40</command-args>"))
             write(logs / "c.jsonl", prompt("<command-name>/founding-agents:propose</command-name><command-args>4</command-args>"))
             self.assertEqual(find_session(logs, "build", 4).name, "a.jsonl")
+            write(logs / "d.jsonl", prompt("<command-name>/founding-agents:plan</command-name><command-args>4</command-args>"))
             self.assertEqual(find_session(logs, "propose", 4).name, "c.jsonl")
+            self.assertEqual(find_session(logs, "plan", 4).name, "d.jsonl")
             self.assertIsNone(find_session(logs, "build", 5))
 
     def test_project_logs_are_named_from_the_folder_path(self):
