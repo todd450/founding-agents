@@ -26,6 +26,7 @@ const BRIEF = {
     recommend: { type: 'string', enum: ['go', 'no-go'] },
     reason: { type: 'string', description: 'the recommendation in one sentence' },
     overruled: { type: 'boolean', description: "true when the founder has said in a comment to go ahead despite a no-go" },
+    screens: { type: 'boolean', description: 'true when the brief changes what someone sees or does on a screen; false when it only changes how the product is built, deployed or run' },
     decisions: {
       type: 'array',
       description: 'every technical one-way door the brief settles; empty when it settles none',
@@ -42,7 +43,7 @@ const BRIEF = {
       },
     },
   },
-  required: ['repo', 'issue', 'recommend', 'reason', 'overruled', 'decisions'],
+  required: ['repo', 'issue', 'recommend', 'reason', 'overruled', 'screens', 'decisions'],
 }
 const DESIGN = {
   type: 'object',
@@ -108,8 +109,9 @@ ${text}`,
 )
 if (!brief) throw new Error('The product lead returned nothing')
 
+// A brief with nothing on screen, such as how the product deploys, goes to the founder without mockups.
 let design = null
-if (brief.recommend === 'go' || brief.overruled) {
+if ((brief.recommend === 'go' || brief.overruled) && brief.screens) {
   design = await agent(
     `Mock up issue #${brief.issue} in ${brief.repo}. Read its brief first: the who, the appetite and the no-gos bound the options. Storyboard the journey, then make two or three options at different stars, each an HTML page with phone and desktop screenshots, on the branch \`propose/issue-${brief.issue}\`. Push the branch and return every option with its paths on the branch.`,
     { label: 'designer', phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', schema: DESIGN },
@@ -150,12 +152,14 @@ if (brief.decisions.length) {
 } else {
   lines.push('**Technical decisions:** none. This changes nothing about how the product is built, deployed or stores its data.', '')
 }
-const answerDoors = brief.decisions.length ? `, your choice for each technical decision (${brief.decisions.map((_, i) => `D${i + 1}`).join(', ')})` : ''
-lines.push(
-  design
-    ? `**To decide:** reply with the letter you pick${answerDoors} and any notes, then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
-    : `**To decide:** to overrule the no-go${answerDoors ? ` and settle${answerDoors.slice(1)}` : ''}, say so in a reply and run \`/founding-agents:propose ${brief.issue}\` again for mockups. Otherwise close the issue; nothing is kept for later.`,
-)
+const doors = brief.decisions.length ? `your choice for each technical decision (${brief.decisions.map((_, i) => `D${i + 1}`).join(', ')})` : ''
+const yes = `then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
+let answer
+if (design) answer = `reply with the letter you pick${doors ? `, ${doors}` : ''} and any notes, ${yes}`
+else if (!brief.screens && brief.recommend === 'go') answer = `reply with ${doors ? `${doors} and ` : ''}any notes, ${yes}`
+else if (!brief.screens) answer = `to overrule the no-go, say so in a reply${doors ? ` with ${doors}` : ''}, ${yes}`
+else answer = `to overrule the no-go${doors ? ` and settle ${doors}` : ''}, say so in a reply and run \`/founding-agents:propose ${brief.issue}\` again for mockups. Otherwise close the issue; nothing is kept for later.`
+lines.push(`**To decide:** ${answer}`)
 const item = lines.join('\n')
 
 phase('Queue')
