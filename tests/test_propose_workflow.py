@@ -42,7 +42,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_each_role_runs_as_its_plugin_agent_and_the_designer_in_a_worktree(self):
         run = run_workflow("propose", {"product lead": [GO], "designer": [DESIGN], "queue": [POSTED]}, 7)
-        lead, designer, queue = run["calls"]
+        lead, designer, queue = run["calls"][:3]
         self.assertEqual((lead["agentType"], lead["model"]), ("founding-agents:product-lead", "opus"))
         self.assertEqual((designer["agentType"], designer["isolation"]), ("founding-agents:designer", "worktree"))
         self.assertEqual(queue["model"], "haiku")
@@ -59,7 +59,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_a_no_go_skips_the_designer_and_still_reaches_the_founder(self):
         run = run_workflow("propose", {"product lead": [NO_GO], "queue": [POSTED]}, 7)
-        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "queue item"])
+        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "queue item", "run report"])
         item = self.queue_item(run)
         self.assertIn("recommends **no-go**", item)
         self.assertIn("close the issue", item)
@@ -68,7 +68,7 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_an_overruled_no_go_gets_mockups_and_keeps_the_honest_recommendation(self):
         run = run_workflow("propose", {"product lead": [{**NO_GO, "overruled": True}], "designer": [DESIGN],
                                        "queue": [POSTED]}, 7)
-        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "designer", "queue item"])
+        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "designer", "queue item", "run report"])
         item = self.queue_item(run)
         self.assertIn("recommends **no-go**", item)
         self.assertIn("You overruled the no-go", item)
@@ -80,6 +80,10 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"]["status"], "stopped in design")
         self.assertEqual(run["result"]["reason"], "Chrome is missing")
         self.assertNotIn("queue item", [call["label"] for call in run["calls"]])
+
+    def test_the_report_goes_on_the_issue_the_product_lead_shaped(self):
+        run = run_workflow("propose", {"product lead": [GO], "designer": [DESIGN], "queue": [POSTED]}, "a pricing page")
+        self.assertIn("--workflow propose --issue 7 --post", run["calls"][-1]["prompt"])
 
     def test_the_queue_item_adds_the_needs_founder_label(self):
         item = self.queue_item(run_workflow("propose", {"product lead": [NO_GO], "queue": [POSTED]}, 7))

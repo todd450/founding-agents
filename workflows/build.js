@@ -7,6 +7,7 @@ export const meta = {
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
     { title: 'Review', detail: 'edge-case QA and code review on the PR', model: 'opus' },
     { title: 'Merge', detail: 'the integrator tests the merge and merges', model: 'sonnet' },
+    { title: 'Report', detail: "the run's time, tokens and cost, posted on the issue", model: 'haiku' },
   ],
 }
 
@@ -69,6 +70,25 @@ const MERGED = {
   required: ['merged', 'merge_commit', 'reason'],
 }
 
+const REPORTED = {
+  type: 'object',
+  properties: {
+    comment_url: { type: 'string', description: 'the posted comment; empty when it was not posted' },
+    reason: { type: 'string', description: 'why it was not posted; empty when it was' },
+  },
+  required: ['comment_url', 'reason'],
+}
+
+// A run that got past its first step posts its time, tokens and cost on the issue, stalled runs too.
+const report = async result => {
+  phase('Report')
+  const posted = await agent(
+    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --post\`. Return the comment's URL, or why it was not posted.`,
+    { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
+  )
+  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted' }
+}
+
 phase('Check')
 const ticket = await agent(
   `Check whether issue #${issue} in this repo can be built. Read only; change nothing.
@@ -99,7 +119,7 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
     { label: `builder, round ${round}`, phase: 'Build', agentType: 'founding-agents:builder', isolation: 'worktree', model: 'opus', schema: BUILT },
   )
   if (!result || !result.pr_number) {
-    return { issue, status: 'stopped in build', reason: result ? result.stopped_because : 'the builder returned nothing', pr: built && built.pr_url }
+    return await report({ issue, status: 'stopped in build', reason: result ? result.stopped_because : 'the builder returned nothing', pr: built && built.pr_url })
   }
   built = result
 
@@ -111,13 +131,13 @@ ${ticket.body}${decided(ticket)}
 Post your review on the PR, then return the verdict and every finding.`,
     { label: `reviewer, round ${round}`, phase: 'Review', agentType: 'founding-agents:reviewer', model: 'opus', schema: REVIEW },
   )
-  if (!review) return { issue, status: 'stopped in review', reason: 'the reviewer returned nothing', pr: built.pr_url }
+  if (!review) return await report({ issue, status: 'stopped in review', reason: 'the reviewer returned nothing', pr: built.pr_url })
   if (review.verdict === 'approve') break
   log(`Round ${round}: the reviewer sent PR #${built.pr_number} back with ${review.findings.filter(f => f.must_fix).length} finding(s) to fix`)
 }
 
 if (review.verdict !== 'approve') {
-  return { issue, status: `sent back ${ROUNDS} times; the founder decides`, pr: built.pr_url, findings: review.findings }
+  return await report({ issue, status: `sent back ${ROUNDS} times; the founder decides`, pr: built.pr_url, findings: review.findings })
 }
 
 phase('Merge')
@@ -126,6 +146,6 @@ const merge = await agent(
   { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
 )
 if (!merge || !merge.merged) {
-  return { issue, status: 'not merged', reason: merge ? merge.reason : 'the integrator returned nothing', pr: built.pr_url }
+  return await report({ issue, status: 'not merged', reason: merge ? merge.reason : 'the integrator returned nothing', pr: built.pr_url })
 }
-return { issue, status: 'merged', pr: built.pr_url, merge_commit: merge.merge_commit }
+return await report({ issue, status: 'merged', pr: built.pr_url, merge_commit: merge.merge_commit })
