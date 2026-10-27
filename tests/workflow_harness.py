@@ -20,7 +20,7 @@ const calls = []
 const events = []
 const agent = async (prompt, opts) => {
   calls.push({ label: opts.label, agentType: opts.agentType || null, isolation: opts.isolation || null,
-               model: opts.model || null, prompt })
+               model: opts.model || null, effort: opts.effort || null, schema: opts.schema || null, prompt })
   events.push(`start ${opts.label}`)
   const wait = Object.keys(slow).find(prefix => opts.label.startsWith(prefix))
   if (wait) await new Promise(resolve => setTimeout(resolve, slow[wait]))

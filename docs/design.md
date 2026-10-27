@@ -96,6 +96,8 @@ screen, one design-token source that generates every copy.
 - **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
+- **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` before a version
+  bump that changes an agent, skill, workflow or model.
 - **Hard rules** → a plugin hook (only the integrator pushes to `main` or merges) and GitHub branch
   protection (nothing merges without passing checks).
 
@@ -355,6 +357,29 @@ of this (see Sources).
   above the website's typical build and below its stalls, and the report flags a run over it above
   the table. Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
   spend waits for the optimiser.
+- **Evals test the agents themselves, and a change runs them before its version bump.** Decided by
+  the founder on 27 Oct 2026 (#34), after the team's own recommendation. The tests in `tests/`
+  run the workflows with scripted replies, so they prove the wiring, not the judgement: a change to
+  an agent's instructions or a model choice shipped untested, and the builder moved to Opus, and
+  `propose`'s role views to Sonnet, with no data behind either. So a change that alters an agent,
+  skill or workflow, or a model choice, runs the eval set before its version bump: a change to one
+  agent runs that agent's tasks, and a model change, a workflow change or a release runs all of
+  them. The set follows Anthropic's *Demystifying evals for AI agents*: 19 tasks in `evals/`, each
+  taken from a real website run and testing one failure class, each graded by a script, with a
+  reference answer that passes and a known-bad answer (the website's own mistake where there was
+  one) that fails, which `tests/test_evals.py` holds both ways without a model. Seven want a stop,
+  a refusal or an approval, so a role that sends everything back scores nothing there. Tasks the
+  team got right on the website are regression tasks and should stay near 100%; tasks it got wrong
+  are capability tasks, which start low and show whether a change helps. They run on the founder's
+  machine with `claude -p` on the plan, three trials each: one trial cannot tell a reliable agent
+  from a lucky one, and flakiness is what stalled #4 and #6. Each trial is a throwaway repo with a
+  local `origin`, a stand-in `gh` that serves the task's issue and PR and records what the agent
+  posts, and an empty GitHub login, so nothing reaches GitHub; each step's prompt is taken from the
+  workflow itself, so a prompt edited in `workflows/` is what gets tested. They do not run in CI,
+  which would spend allowance on every push of a draft. A session started with `--agent` gets only
+  its agent file's tools, so it cannot return `--json-schema`'s structured output: an agent step is
+  asked to end its reply with the result as JSON, and Haiku reads it from the reply when that
+  fails. FIRST_RUN
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
@@ -529,5 +554,6 @@ One number per cost in the first table, and one for the founder's attention:
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
   [claude-code-merge-queue](https://github.com/funador/claude-code-merge-queue)
+- Evals — Anthropic, [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) (Jan 2026)
 - Holdout scenarios — [StrongDM Software Factory](https://rywalker.com/research/strongdm-factory)
   (a third-party write-up, Sep 2026)

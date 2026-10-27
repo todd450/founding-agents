@@ -11,7 +11,9 @@ from pathlib import Path
 
 EVALS = Path(__file__).resolve().parent.parent / "evals"
 sys.path.insert(0, str(EVALS))
+import run  # noqa: E402
 import trial  # noqa: E402
+from workflow_harness import HAVE_NODE  # noqa: E402
 
 GH = [sys.executable, str(EVALS / "gh.py")]
 
@@ -84,6 +86,66 @@ class TaskTest(unittest.TestCase):
         # One-sided evals make one-sided agents: a role that sends everything back must not score well.
         wanted = [trial.load(n).get("right_answer") for n in trial.tasks()]
         self.assertGreaterEqual(sum(w in ("stop", "approve", "refuse") for w in wanted), 5)
+
+
+@unittest.skipUnless(HAVE_NODE, "needs node")
+class RunnerTest(unittest.TestCase):
+    def test_each_task_runs_the_prompt_its_workflow_sends_as_that_steps_agent_and_model(self):
+        expected = {"code-reviewer": "founding-agents:code-reviewer", "qa": "founding-agents:qa",
+                    "builder": "founding-agents:builder", "integrator": "founding-agents:integrator",
+                    "product-lead": "founding-agents:product-lead", "architect": "founding-agents:architect",
+                    "build-check": None}
+        for name in trial.tasks():
+            task = trial.load(name)
+            with self.subTest(name):
+                call = run.capture(task)
+                self.assertEqual(call["agentType"], expected[task["role"]])
+                self.assertIn(call["model"], ("opus", "sonnet", "haiku"))
+                self.assertTrue(call["schema"]["required"])
+
+    def test_a_repeat_review_and_a_continued_pr_get_their_second_round_prompts(self):
+        self.assertIn("as a repeat", run.capture(trial.load("06-same-finding-comes-back"))["prompt"])
+        self.assertIn("Continue it rather than starting again", run.capture(trial.load("13-fix-the-pattern-not-the-instance"))["prompt"])
+
+    def test_a_trial_never_bills_an_api_key_or_skips_the_plans_login(self):
+        call = run.capture(trial.load("01-colour-test-as-regexes"))
+        cmd = run.command(call, "opus")
+        self.assertNotIn("--bare", cmd)
+        self.assertEqual(cmd[cmd.index("--plugin-dir") + 1], str(EVALS.parent))
+        os.environ["ANTHROPIC_API_KEY"] = "sk-test"
+        try:
+            env = run.environment(Path("/tmp/t"))
+        finally:
+            del os.environ["ANTHROPIC_API_KEY"]
+        self.assertNotIn("ANTHROPIC_API_KEY", env)
+        self.assertTrue(env["PATH"].startswith(str(EVALS / "bin")))
+        self.assertEqual(env["GH_CONFIG_DIR"], "/tmp/t/gh-config")
+
+
+class ResultTest(unittest.TestCase):
+    SCHEMA = {"required": ["verdict", "findings"]}
+
+    def test_reads_the_last_complete_json_block_in_a_reply(self):
+        reply = 'Draft:\n```json\n{"verdict": "x"}\n```\nFinal:\n```json\n{"verdict": "approve", "findings": []}\n```'
+        self.assertEqual(run.returned(reply, self.SCHEMA), {"verdict": "approve", "findings": []})
+        self.assertIsNone(run.returned('```json\n{"verdict": "approve"}\n```', self.SCHEMA))
+        self.assertIsNone(run.returned("No JSON here.", self.SCHEMA))
+
+    def test_only_an_agent_step_is_asked_for_json_in_its_reply(self):
+        call = {"prompt": "Review.", "schema": self.SCHEMA}
+        self.assertIn("```json", run.prompt({**call, "agentType": "founding-agents:qa"}))
+        self.assertEqual(run.prompt({**call, "agentType": None}), "Review.")
+
+    def test_pass_rate_counts_trials_and_pass_k_counts_tasks_whose_every_trial_passed(self):
+        def result(name, passed):
+            return {"task": name, "role": "qa", "model": "opus", "kind": "regression", "passed": passed,
+                    "cost": 0.5, "new": 1, "cached": 2, "out": 3, "checks": []}
+        results = [result("a", True), result("a", True), result("a", True),
+                   result("b", True), result("b", False), result("b", True)]
+        group = run.summary(results)[("qa", "opus")]
+        self.assertEqual((group["passed"], group["trials"]), (5, 6))
+        self.assertEqual((group["all_passed"], group["tasks"]), (1, 2))
+        self.assertIn("| qa | opus | 2 | 83% | 50% |", run.markdown(results, 3))
 
 
 class GhStandInTest(unittest.TestCase):
