@@ -161,5 +161,5 @@ return await report({
   status: 'planned',
   plan: plan.plan_url,
   issues: plan.issues.map(i => `#${i.number} ${i.title}${i.after.length ? ` (after ${i.after.map(n => `#${n}`).join(', ')})` : ''}`),
-  next: `/founding-agents:build ${plan.issues[0].number}`,
+  next: `/founding-agents:build ${issue}`,
 })
