@@ -42,8 +42,8 @@
     "issues": [
       {
         "number": 6,
-        "title": "Site 3 of 3: the record of this build",
-        "body": "Add this build's entries to the record, newest first. Tests for the record, and that it is in date order.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy and tests inside the existing page.",
+        "title": "Site 3 of 3: tests for the record",
+        "body": "Tests for the record: every entry has a date, and the record is in date order.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy and tests inside the existing page.",
         "labels": [
           "decided"
         ],
