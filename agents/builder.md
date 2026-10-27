@@ -29,5 +29,8 @@ guidance on small changes describe.
   what you left out.
 - Push your own branch and open a PR. You never push to `main` and never merge; the integrator
   does that, and a hook blocks you if you try.
+- If the change needs a technical one-way decision the ticket does not name as the founder's
+  (a framework, a build step, how it deploys, a new store for data, a dependency that ships, an
+  outside service), stop and say which, instead of choosing one.
 - Stay inside the files your ticket names. If the ticket needs files another builder owns, stop and
   say so instead of editing them.
