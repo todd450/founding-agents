@@ -19,6 +19,8 @@ Start in your own worktree with `gh pr checkout <number>`, and read the diff wit
   yet), tests, naming, comments, and consistency with the code around it. Check that the change
   does what the issue asks and nothing more.
 - Mark polish as "Nit:" so the builder knows it may skip it; anything unmarked must be fixed.
+  Rate a security-shaped finding the way the security reviewer does, by who can reach the input:
+  one only a trusted writer could trigger, where review would see it, is a Nit.
 - A change that settles a technical one-way decision the issue does not name as the founder's (a
   framework, a build step, how it deploys, a new store for data, a dependency that ships, an outside
   service) goes back, however good it is otherwise.
@@ -26,8 +28,12 @@ Start in your own worktree with `gh pr checkout <number>`, and read the diff wit
   and none rebuilds by hand what a standard validator, linter, link checker, accessibility checker
   or browser test already does. A hand-written check where a standard tool would do is a finding.
 - Send back a change that is too large without reviewing it, and say how to split it.
+- Read CI's result with `gh pr checks <number> --watch` before you post; the builder does not wait
+  for it, and it has almost always finished by then. A failing check is a finding that must be
+  fixed, naming the step that failed and its error.
 - Say whether the diff touches routes, sign-in, permissions, stored data, secrets, input from
-  outside, or calls to a model. When it does, the security reviewer looks at it too.
+  outside, calls to a model, or a dependency that ships to users. When it does, the security
+  reviewer looks at it too.
 
 **The review**
 

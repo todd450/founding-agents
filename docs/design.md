@@ -32,7 +32,7 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
 | | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
 | Check | **Code reviewer** | every change | correctness and simplification; sees the diff, not the builder's reasoning | read only |
-| | **Security reviewer** | changes to routes, permissions, storage or model calls | findings | read only |
+| | **Security reviewer** | changes to routes, permissions, storage, model calls or shipped dependencies | findings | read only |
 | | **Optimiser** | weekly | page cost, token cost per merged change, dead code, one thing defined in several places | proposes builder tasks |
 | Ship & run | **Integrator** | the only merger | rebase, run checks, gate production, cut releases | `main` and production |
 | | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder | read plus notifications |
@@ -48,7 +48,7 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 ## How a change flows
 
 1. Idea → **product lead** writes the brief → founder decides.
-2. **Designer** mocks it up → founder picks.
+2. **Designer** mocks it up → each role recommends, then the team → founder picks.
 3. **Architect** writes the plan and cuts it into build issues → **builders** build, each in its own
    worktree.
 4. **Edge-case QA** and **code review** run in parallel.
@@ -79,8 +79,9 @@ From the first product's history, and from what published agent teams reported b
    before it was cut to 337; OpenAI found the same).
 8. **Least privilege per role, and per-action approval** by a checking model instead of prompts.
 9. **A red scheduled check stops other work** until it is fixed.
-10. **Protect the founder's attention.** One decision queue, read once a day; each item carries a
-    recommendation, a picture, and what each option costs.
+10. **Protect the founder's attention.** One decision queue, read once a day; each item carries the
+    team's recommendation and each role's, with why in plain English, a picture, and what each
+    option costs.
 
 Day-one engineering defaults the architect sets for a new product: one front end (no second
 document surface), writes that change only the field that changed, string keys from the first
@@ -157,11 +158,19 @@ of this (see Sources).
 - **`build` continues an open PR, stops on a finding it failed to fix twice, and tidies up.**
   Decided on 26 Oct 2026, from the website's runs. Its first step finds an open PR on
   `build/issue-<n>` or one that closes the issue, and the builder continues it from its reviews
-  instead of starting again; #4 and #6 needed their issues edited by hand to do that. The reviewer
+  instead of starting again; #4 and #6 needed their issues edited by hand to do that. The check is told an
+  open PR never makes an issue unready: on the website's #27 on 27 Oct, it read PR #35 as "already
+  being built" and skipped it, and the six issues that build after it could not start. The reviewer
   marks each must-fix that an earlier review raised and is still unfixed as a repeat, and one
   repeat after a builder's fix ends the run for the founder, before a third round: the stalls on #4
   and #6 were the same findings coming back, at 43% of the website's spend. New findings still get
-  the three rounds. Every run after its first step then runs the `tidy-worktrees` skill, which
+  the three rounds. A repeat counts only findings from an earlier round, posted before the
+  builder's latest push, and from the second round reviewers are given the previous round's
+  must-fix list. A Nit an earlier round raised and a reviewer now rates must-fix is a new finding,
+  not a repeat, since the builder was allowed to skip it. Both came from the website's #27 on
+  27 Oct, where each stopped a run as if a fix had failed twice: first a finding code review had
+  raised minutes earlier in the same round, then a link-parsing point the security reviewer had
+  parked as informational twice and re-rated in round 4. Every run after its first step then runs the `tidy-worktrees` skill, which
   removes a workflow agent's worktree (`wf_...`) only when it has no uncommitted change and its
   commit is on a branch at origin. A session's own worktree in the same folder is never touched.
   Runs go one at a time, so a running run's worktree is never in the way; parallel builders will
@@ -188,6 +197,23 @@ of this (see Sources).
   does, and the item asks only go or no-go and each technical decision. Found on 26 Oct 2026 before
   the website's build-and-deploy brief, which would otherwise have sent the designer to mock up a
   choice with no screens.
+- **Each queue item gives every role's recommendation and the team's, each with why in plain
+  English.** Decided by the founder on 27 Oct 2026: they decide better with more to go on, and the
+  item carried only the product lead's go or no-go and the designer's pick, with no reason for the
+  pick. After the designer, every other role (researcher, architect, builder, QA, code reviewer,
+  security reviewer and integrator) recommends go or no-go, an option and a choice on each
+  technical decision, from what its job knows: the evidence, what is already built, the work, what
+  could go wrong for people using it, what it adds to look after, the risk to people's data, and
+  the release. That is seven more calls per run, on Sonnet, so the budget is the thing to watch.
+  Each sees the brief and the choices but not the
+  other roles' picks, so it gives its own view instead of echoing theirs. A team step then weighs
+  every view on its reasons, not by counting votes, and names any role that disagrees and why the
+  team goes the other way. The item leads with the team's recommendation, then each role's in a
+  line, and each technical decision shows the team's choice and each role's under it. The views
+  run on Sonnet at medium effort, since they read a brief and give an opinion; the team step runs
+  on Opus, since it judges. The roles who give a view are one list in `propose`, and a test checks
+  that every agent a workflow names has an agent file, so a change to the roster cannot silently
+  drop a voice. A role that returns nothing is left out, and the item still posts.
 - **Mockups: one HTML page per option on a `propose/issue-<n>` branch, with screenshots in the
   issue.** Decided by the founder on 25 Oct 2026. A page shows real content at real lengths and can
   be opened at any width; the phone and desktop screenshots, taken with headless Chrome by the
@@ -222,6 +248,15 @@ of this (see Sources).
   issue it builds after is closed. The founder's attention goes to the decisions, not to approving
   cuts. Not yet run on a real product; schema review of a builder's change, the architect's other
   job, is left until a product has a schema.
+- **`plan`'s queue item carries every role's choice and the team's.** Done on 27 Oct 2026, after
+  the founder asked for each role's recommendation on every decision put to them. When the
+  architect stops with open decisions, every other role with an agent (product lead, researcher,
+  designer, builder, QA, code reviewer, security reviewer, integrator) chooses on each, on Sonnet,
+  without seeing the others' picks; an Opus step weighs them on their reasons, not by count, and
+  names any role that disagrees. The queue item leads with the team's pick, then the architect's
+  and each role's, each with its own reason as a sentence. It mirrors `propose`'s queue item
+  (#31). The voices cost a run only when the architect has stopped, which on the website was one
+  of two runs.
 - **Parallel builders: `build` on a brief builds its issues two to four at a time.** Built on 27 Oct
   2026, on top of `plan`. `/founding-agents:build <brief>` sees the issues the architect cut from
   the brief and builds them with two builders at once by default; `build <brief> 3` asks for three,
@@ -236,13 +271,51 @@ of this (see Sources).
   and pacing to the weekly limit is not built yet. Not yet run on a real product.
 - **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
   the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
-  its own worktree and posting its own comment; when the code reviewer says the diff touches
-  routes, sign-in, permissions, stored data, secrets, outside input or model calls, the security
-  reviewer looks too. The change is approved only when every reviewer approves, and the builder
+  its own worktree and posting its own comment; when the change touches routes, sign-in,
+  permissions, stored data, secrets, outside input, model calls or a dependency that ships, the
+  security reviewer looks too (when it starts is the next entry). The change is approved only when every reviewer approves, and the builder
   gets all their findings, each marked with who raised it. QA is the only role that reads the
   holdouts, so the holdout guard now trusts `founding-agents:qa`. The split's cost: two Opus
   reviewers each round where there was one, and the reviewer was already the largest cost in five
   of six website builds; the optimiser's numbers say whether it pays.
+- **Reviews weigh who can reach a finding, and the integrator merges on checks CI already ran.**
+  Decided by the founder on 27 Oct 2026, to speed up `build` after the website's #27 took six
+  review rounds and about $36. Most of those rounds chased ever-subtler ways to slip a bad link into
+  facts only the founder can write: the public key is read-only and every change to the snapshot
+  is reviewed. The reviewers now say who can put a bad value where it hurts: anyone on the
+  internet, a user, or only someone the team trusts. A finding only a trusted writer can reach,
+  where review would see it, is at most low, so a Nit; it is must-fix when a reader, a user or an
+  outside service can reach it, or when it lets a trusted writer harm readers unseen. Ordinary
+  slips in kept data (empty, too long, a typo) stay must-fix. The integrator still tests the merge,
+  not the branch, but when `main` has not moved since the PR's last push, the PR's green required
+  checks already tested exactly what the merge will be, so it merges on them instead of rerunning
+  `check.sh`, its install and its browser tests. When `main` has moved, it brings the PR up to
+  date with `gh pr update-branch`, which needs no force-push, and waits for the checks again.
+- **`build` starts each reviewer as soon as it is known to be needed, and the builder does not wait
+  for CI.** Decided on 27 Oct 2026, after the first multi-issue build on the website (brief #14)
+  took 23 minutes from check to merge for its smallest issue, #26. Its session logs show where the
+  time went: check 0.6 min, builder 7.9, QA 7.6 beside code review 3.6, security review 5.7, then
+  the integrator 1.0. The security review started only when QA finished, four minutes after code
+  review had flagged the diff, because it waited for both. Installs were not the cost: in every
+  worktree `npm ci` took under a second from the shared `~/.npm`, Playwright's browsers are shared
+  per user, and the whole `check.sh` ran in 5 to 8 seconds. The model's own work was over 90% of
+  each reviewer's time and three quarters of the builder's; the builder's one long tool call was
+  watching CI, 94 seconds on #26, which nobody asked it to do. In CI, `npm ci` took 3 to 4 seconds and the browser download 7; what varied was
+  `playwright install --with-deps` fetching system fonts and libraries with apt, 13 seconds to 8
+  minutes depending on the mirror.
+  So the check now also says whether the issue touches routes, sign-in, permissions, stored data,
+  secrets, outside input, model calls or a dependency that ships, and when it does the security
+  reviewer runs beside QA and code review. The code reviewer's flag stays as the fallback for a
+  diff that turns out to touch those when the issue did not say so, and that review now starts the
+  moment code review returns rather than when QA does. The builder runs `check.sh`, opens the PR
+  and returns; CI runs while the reviewers work, the code reviewer reads its result and sends back
+  a failing run as a must-fix finding, and the integrator still merges only on green, so no check
+  is skipped and a CI failure still reaches the builder in the same round. On #26 that would have
+  been about 16 minutes instead of 23: the review takes as long as its slowest reviewer (7.6
+  minutes rather than 13.3), and the builder loses its 1.5-minute wait. CI caches for npm and
+  Playwright were left out: they would save under 10 seconds a run, CI now runs while review
+  does, and the slow part, apt, is the product's own `check.sh` choice. A product whose CI wait starts to
+  matter can run its job in Playwright's container image instead, which is its own decision.
 - **The optimiser and the librarian run as weekly routines that propose, never change.** Built on
   27 Oct 2026, the same way as ops watch's daily routine: each one's instructions are a file
   `setup` copies into the product (`.github/optimiser/routine.md`, `.github/librarian/routine.md`)
@@ -310,7 +383,10 @@ of this (see Sources).
   product, because a product's workflow cannot read this private repo; rerunning `setup` updates the
   copy. GitHub stops a public repo's scheduled workflows after 60 days with no activity, and ops
   watch cannot report its own silence; checks that need judgement (spend, release verdicts) stay
-  with the Haiku routine.
+  with the Haiku routine. A product served off Pages, as the website is on Vercel since 27 Oct,
+  sets the repository variable `OPS_WATCH_URL` to its live address: the check then crawls that
+  address and does not ask the Pages API, and a Pages product's check is unchanged. The plugin's
+  copy holds this path so that rerunning `setup`, which replaces the product's copy, keeps it.
 - **Ops watch's judgement checks run as a daily routine whose instructions live in the product.**
   Built on 27 Oct 2026. The routine checks that every scheduled workflow still runs and passed
   (which covers the site check's silence, including GitHub turning schedules off after 60 days),
