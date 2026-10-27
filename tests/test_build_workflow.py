@@ -114,6 +114,14 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("gh pr checkout 4", second)
         self.assertIn("- QA: slug.py:3: empty title crashes", second)
 
+    def test_a_builder_fixing_a_pr_is_asked_to_keep_its_screenshots_current(self):
+        run = self.run_workflow({"check": [{**READY, "open_pr": 9}], "builder": [PR, PR], "qa": [CHANGES, APPROVE],
+                                 "integrator": [MERGED]})
+        prompts = [call["prompt"] for call in run["calls"] if call["label"].startswith("builder")]
+        self.assertEqual(len(prompts), 2)
+        for prompt in prompts:
+            self.assertIn("retake the after screenshots", prompt)
+
     def test_three_send_backs_go_to_the_founder_and_nothing_merges(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "qa": [CHANGES] * 3})
         self.assertIn("the founder decides", run["result"]["status"])
