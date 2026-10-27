@@ -42,7 +42,7 @@ const MAX = 5
 // Dollars at API prices one run should stay under; the run report flags a run over it.
 const BUDGET = 5
 
-// What counts as a technical one-way door; build.js, propose.js and sweep.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js, plan.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 const CHECKED = {
@@ -51,7 +51,7 @@ const CHECKED = {
     repo: { type: 'string', description: 'owner/name' },
     public: { type: 'boolean' },
     red: { type: 'array', items: { type: 'string' }, description: 'each open red issue as "#<number> <title>"' },
-    open: { type: 'array', items: { type: 'string' }, description: 'each open sweep issue as "#<number> <title>"' },
+    open: { type: 'array', items: { type: 'string' }, description: 'each open sweep issue and Optimiser: proposal as "#<number> <title>"' },
   },
   required: ['repo', 'public', 'red', 'open'],
 }
@@ -154,7 +154,7 @@ const check = await agent(
   `Read only; change nothing. Return:
 - the repo and whether it is public, from \`gh repo view --json nameWithOwner,visibility\`;
 - each open \`red\` issue, from \`gh issue list --label red --state open --json number,title\`;
-- each open sweep issue, from \`gh issue list --label sweep --state open --json number,title\`.`,
+- each open sweep issue, from \`gh issue list --label sweep --state open --json number,title\`, and each open issue whose title starts with "Optimiser:", the weekly routine's proposals, from \`gh issue list --search 'in:title Optimiser:' --state open --json number,title\`.`,
   { label: 'check', phase: 'Check', model: 'haiku', effort: 'low', schema: CHECKED },
 )
 if (!check) throw new Error('Could not read the repo')

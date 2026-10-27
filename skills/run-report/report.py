@@ -141,7 +141,7 @@ def find_session(logs, workflow, issue):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--workflow", choices=["build", "propose", "sweep"], help="the workflow the run was")
+    parser.add_argument("--workflow", choices=["build", "plan", "propose", "sweep"], help="the workflow the run was")
     parser.add_argument("--issue", type=int, help="the issue it ran on")
     parser.add_argument("--session", type=Path, help="a session log to report on instead of finding one")
     parser.add_argument("--post", action="store_true", help="comment the report on the issue")

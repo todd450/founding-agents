@@ -8,9 +8,14 @@ decides scope and taste and talks to users; the agents plan, build, check, ship 
 `setup` skill that turns on branch protection and installs ops watch's nightly site check,
 `/founding-agents:propose`, which turns an idea into a brief and mockups for the founder to decide,
 and `/founding-agents:build`, which built the site's page through four decided issues. Step 5,
-growing the team on demand, has begun with `/founding-agents:sweep codebase|tests|security`, which
-runs the optimiser, the test auditor or the security reviewer and puts up to five findings to the
-founder for `build`.
+growing the team on demand, has begun with the architect: `/founding-agents:plan` cuts a decided
+brief into build issues, asking the founder first about any technical decision the brief left
+open, and `/founding-agents:build <brief>` builds them two to four at a time. Every role now
+exists: edge-case QA, code and security review in `build`; ops watch, the optimiser and the
+librarian as routines `setup` creates; and the researcher, called on demand. For a sprint,
+`/founding-agents:sweep codebase|tests|security` runs the optimiser, the test auditor or the
+security reviewer and puts up to five findings to the founder for `build`. None of the newer
+roles has run on the website yet.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.

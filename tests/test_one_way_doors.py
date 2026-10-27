@@ -15,8 +15,8 @@ def one_way(name):
 class OneWayDoorTest(unittest.TestCase):
     def test_every_workflow_uses_the_same_definition(self):
         self.assertIsNotNone(one_way("build.js"))
-        self.assertEqual(one_way("build.js"), one_way("propose.js"))
-        self.assertEqual(one_way("build.js"), one_way("sweep.js"))
+        for name in ("propose.js", "plan.js", "sweep.js"):
+            self.assertEqual(one_way("build.js"), one_way(name), name)
 
 
 if __name__ == "__main__":

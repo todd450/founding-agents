@@ -25,5 +25,5 @@ performance budgets and *The Pragmatic Programmer*'s DRY describe.
   and goes to the product lead instead.
 - **Propose, never change.** Read and run the product in your own worktree; never edit, commit or
   push. Each finding becomes a builder ticket with its measured before.
-- **Token cost is yours too** once the weekly routine exists: tokens per merged change, by role and
-  model, from the run reports on each issue. A sweep of the codebase leaves it out.
+- **Token cost belongs to the weekly routine,** which reads the run reports. A sweep of the
+  codebase leaves it out, and leaves out what an open `Optimiser:` proposal already covers.
