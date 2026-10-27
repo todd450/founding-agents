@@ -1,0 +1,25 @@
+{
+  "output": {
+    "merged": true,
+    "merge_commit": "abc1234",
+    "reason": ""
+  },
+  "posted": [
+    {
+      "kind": "pr merge",
+      "number": 20,
+      "args": [
+        "--squash"
+      ]
+    }
+  ],
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Say how long a change takes (#20)"
+    }
+  ]
+}

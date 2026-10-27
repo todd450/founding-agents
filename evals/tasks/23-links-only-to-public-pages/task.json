@@ -1,0 +1,39 @@
+{
+  "role": "builder",
+  "kind": "capability",
+  "class": "an allow-list written as a deny-list, with holes found one round at a time",
+  "origin": "founding-agents-site #4 (PR #7): the link test let '/about' through for two rounds, and a substring guard broke on the repo's rename",
+  "summary": "Links may go only to the repo's public pages or to the page itself. Six links that escape must each fail the check; two that are fine must pass.",
+  "right_answer": "build",
+  "needs": [],
+  "step": {
+    "workflow": "build",
+    "args": 28,
+    "label": "builder"
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site",
+        "no-link-test"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 28,
+        "title": "Check that links go only to this repo's public pages",
+        "body": "Every link on the page goes to this repo's public pages on GitHub (`github.com/todd450/founding-agents-site`: its code, issues and PRs) or to a place on this page. Nothing points at the private plugin repo, which answers 404 to the nightly link check and opens a `red` issue, or anywhere else. Add a check for it, run from `check.sh`.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`tests/`, `check.sh`\n\n## Technical decisions\nNone: a check inside the existing checks.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": []
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "output": {
+    "pr_number": 29,
+    "pr_url": "https://github.com/todd450/founding-agents-site/pull/29",
+    "stopped_because": ""
+  },
+  "posted": [
+    {
+      "kind": "pr create",
+      "number": 29,
+      "title": "Check that links go only to this repo's public pages",
+      "body": "Check that links go only to this repo's public pages.\n\nCloses #28",
+      "headRefName": "build/issue-28",
+      "baseRefName": "main",
+      "comments": [],
+      "state": "OPEN"
+    }
+  ],
+  "commits": [
+    {
+      "branch": "build/issue-28",
+      "dirs": [
+        "substring"
+      ],
+      "message": "Check that links go only to this repo's public pages"
+    }
+  ]
+}

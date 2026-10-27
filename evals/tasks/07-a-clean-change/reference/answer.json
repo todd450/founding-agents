@@ -1,0 +1,13 @@
+{
+  "output": {
+    "verdict": "approve",
+    "findings": []
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 16,
+      "body": "**Code review: Approve**\n"
+    }
+  ]
+}

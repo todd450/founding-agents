@@ -1,0 +1,13 @@
+{
+  "output": {
+    "ready": true,
+    "reason": "",
+    "repo": "todd450/founding-agents-site",
+    "title": "Move the site to Astro and Vercel",
+    "body": "",
+    "decision": "",
+    "unseen": [],
+    "open_pr": 0,
+    "parts": []
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "output": {
+    "pr_number": 13,
+    "pr_url": "https://github.com/todd450/founding-agents-site/pull/13",
+    "stopped_because": ""
+  },
+  "posted": [
+    {
+      "kind": "pr create",
+      "number": 13,
+      "title": "Bring the status band up to date",
+      "body": "Takes every fact in the band from docs/status.md, with tests that check it there.\n\nCloses #12",
+      "headRefName": "build/issue-12",
+      "baseRefName": "main",
+      "comments": [],
+      "state": "OPEN"
+    }
+  ],
+  "commits": [
+    {
+      "branch": "build/issue-12",
+      "dirs": [
+        "presence-only"
+      ],
+      "message": "Bring the band up to date"
+    }
+  ]
+}
