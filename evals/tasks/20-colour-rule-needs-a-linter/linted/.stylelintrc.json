@@ -1,0 +1,14 @@
+{
+  "customSyntax": "postcss-html",
+  "plugins": ["stylelint-declaration-strict-value"],
+  "rules": {
+    "color-no-hex": true,
+    "color-named": "never",
+    "function-disallowed-list": ["rgb", "rgba", "hsl", "hsla", "hwb", "lab", "lch", "oklab", "oklch", "color"],
+    "property-disallowed-list": ["font"],
+    "scale-unlimited/declaration-strict-value": [
+      ["/color$/", "fill", "stroke", "font-family"],
+      { "ignoreValues": ["inherit", "transparent", "currentColor", "none"] }
+    ]
+  }
+}
