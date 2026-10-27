@@ -6,6 +6,8 @@ import os
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 import unittest
 from pathlib import Path
 
@@ -158,6 +160,10 @@ class ResultTest(unittest.TestCase):
         self.assertIn("```json", run.prompt({**call, "agentType": "founding-agents:qa"}))
         self.assertEqual(run.prompt({**call, "agentType": None}), "Review.")
 
+    def test_flags_fixed_scratch_paths_and_ports_but_not_private_ones(self):
+        used = "cp index.html /tmp/index.html.bak; d=$(mktemp -d); cd $TMPDIR/x; python3 -m http.server 8777; python3 -m http.server 0"
+        self.assertEqual(run.FIXED.findall(used), ["/tmp/index.html.bak", "http.server 8777"])
+
     def test_pass_rate_counts_trials_and_pass_k_counts_tasks_whose_every_trial_passed(self):
         def result(name, passed):
             return {"task": name, "role": "qa", "model": "opus", "kind": "regression", "passed": passed,
@@ -167,7 +173,28 @@ class ResultTest(unittest.TestCase):
         group = run.summary(results)[("qa", "opus")]
         self.assertEqual((group["passed"], group["trials"]), (5, 6))
         self.assertEqual((group["all_passed"], group["tasks"]), (1, 2))
-        self.assertIn("| qa | opus | 2 | 83% | 50% |", run.markdown(results, 3))
+        self.assertIn("| qa | opus | 2 | 3 | 83% | 50% |", run.markdown(results, 3))
+
+
+class ScheduleTest(unittest.TestCase):
+    def test_trials_that_share_an_issue_or_pr_number_never_run_at_once(self):
+        def task(name, *numbers):
+            return {"name": name, "github": {"issues": [{"number": n} for n in numbers], "prs": []}}
+        a, b, c = task("a", 5, 8), task("b", 8), task("c", 12)
+        running, clashes, lock = [], [], threading.Lock()
+
+        def trial_of(task, i):
+            with lock:
+                clashes.extend((other["name"], task["name"]) for other in running if run.numbers(other) & run.numbers(task))
+                running.append(task)
+            time.sleep(0.05)
+            with lock:
+                running.remove(task)
+            return task["name"], i
+
+        done = list(run.schedule([(a, 1), (a, 2), (b, 1), (c, 1), (c, 2)], 4, trial_of))
+        self.assertEqual(sorted(done), [("a", 1), ("a", 2), ("b", 1), ("c", 1), ("c", 2)])
+        self.assertEqual(clashes, [])
 
 
 class GhStandInTest(unittest.TestCase):
