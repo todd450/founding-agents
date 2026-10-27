@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "approve",
+    "findings": [
+      {
+        "must_fix": false,
+        "where": "tests/test_status.py:16",
+        "what": "Nit: the live API call is worth a sentence of thought, not necessarily a change.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 8,
+      "body": "**Code review: Approve**\n\n- Nit: tests/test_status.py:16: Nit: the live API call is worth a sentence of thought, not necessarily a change."
+    }
+  ]
+}

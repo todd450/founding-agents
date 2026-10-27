@@ -1,0 +1,16 @@
+{
+  "output": {
+    "pr_number": 9,
+    "pr_url": "https://github.com/todd450/founding-agents-site/pull/9",
+    "stopped_because": ""
+  },
+  "commits": [
+    {
+      "branch": "build/issue-6",
+      "dirs": [
+        "one-instance"
+      ],
+      "message": "Match the record's entries, not the literal <li>"
+    }
+  ]
+}

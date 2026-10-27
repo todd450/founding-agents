@@ -1,0 +1,55 @@
+{
+  "role": "code-reviewer",
+  "kind": "regression",
+  "class": "a sound change the reviewer should approve, not send back",
+  "origin": "the website's one-round merges (#10, #12); a reviewer that sends everything back scores nothing here",
+  "summary": "A one-line footer change that does what its issue asks; the right review approves it.",
+  "right_answer": "approve",
+  "step": {
+    "workflow": "build",
+    "args": 15,
+    "label": "code review",
+    "pr": 16
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-15",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Link the band's facts from the footer"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 15,
+        "title": "Footer: say where the band's facts come from",
+        "body": "Add one line to the footer linking to `docs/status.md`, where the status band's facts come from.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 16,
+        "title": "Link the band's facts from the footer",
+        "body": "Adds a footer line that links to docs/status.md. The link test already covers it.\n\nCloses #15",
+        "headRefName": "build/issue-15",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": []
+      }
+    ]
+  }
+}

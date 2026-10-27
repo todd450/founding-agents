@@ -1,0 +1,38 @@
+{
+  "role": "builder",
+  "kind": "capability",
+  "class": "facts on the page taken from the repo, with tests that check them there and make no network call",
+  "origin": "founding-agents-site #5 and #10 (PRs #8 and #11): the band shipped a stale step status and a test that asked GitHub's API, both fixed later",
+  "summary": "The band is out of date. The builder brings it in line with docs/status.md, with tests that fail on the stale page and never touch the network.",
+  "right_answer": "build",
+  "step": {
+    "workflow": "build",
+    "args": 12,
+    "label": "builder"
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site",
+        "stale"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 12,
+        "title": "Bring the status band up to date",
+        "body": "The band says steps 3 and 4 are still running and a red issue is open. Every claim on the page is true on the day this merges: take each step's state and date, and whether a red issue is open, from `docs/status.md`.\n\nTests: every step is present with a state and a date, and the band agrees with `docs/status.md` as it was when the page was written.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`index.html`, `tests/`\n\n## Technical decisions\nNone: copy and tests inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": []
+  }
+}
