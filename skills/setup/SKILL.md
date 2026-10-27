@@ -1,13 +1,13 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
-This version covers CI, branch protection, ops watch's site check, the holdout scenarios, the
-product's `CLAUDE.md` and fixtures, and the labels. The routines arrive with the roles that run
-them (`docs/design.md` in the Founding Agents repo, "Build order").
+This version covers CI, branch protection, ops watch's site check and daily routine, the holdout
+scenarios, the product's `CLAUDE.md` and fixtures, and the labels. The other routines arrive with
+the roles that run them (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
 
@@ -69,6 +69,32 @@ way, and fails only when the check itself cannot run.
 Rerun the same steps whenever the plugin's copy in `ops_watch/` changes; the dry run says which
 files differ. The scheduled run stops if the repo sees no activity for 60 days, which GitHub does to
 every scheduled workflow in a public repo; ops watch cannot raise red about its own silence.
+
+## Ops watch's daily routine
+
+The checks that need judgement run as a daily routine in the cloud, on the founder's plan: that
+every scheduled check still runs (ops watch's site check cannot report its own silence), that
+`main` passes, that changes merged in the last day are live, and the week's spend against a
+budget, then the product's own checks such as backups. A red opens one `red` issue per check and
+the next green run closes it. Routines do not load plugins, so the instructions live in the
+product: `.github/ops-watch/routine.md`, which setup keeps current, and the product's own
+`.github/ops-watch/watch.md`.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py ops-routine` shows the two files.
+2. **Fill in `watch.md` with the founder:** the product's address, a weekly budget if they want
+   one, and a check for each thing the product has that can quietly fail (backups, production
+   errors, a release). Leave out what it does not have.
+3. **Apply on a branch.** Rerun with `--apply`, commit, open a PR, and wait for the merge.
+4. **Ask for a clear yes** to create the routine, since it runs every day on the founder's plan.
+5. **Create it** with the `schedule` skill: a daily task on this repo, at an odd minute such as
+   7:23, on Haiku (or the cheapest model the model selector offers; say which), with the prompt
+   "Follow .github/ops-watch/routine.md in this repo." It needs the founder's GitHub connection
+   for the repo, from the Claude GitHub App or `/web-setup`.
+6. **Run it once now** and read its last lines: one per check, green, red or not run. A check that
+   could not run is a setup problem to fix, not a red.
+
+Rerun step 1 whenever the plugin's copy changes; the routine reads the file, so it needs no
+change itself.
 
 ## Holdout scenarios
 
