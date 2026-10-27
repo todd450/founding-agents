@@ -2,7 +2,7 @@
 name: qa
 description: Edge-case QA for one PR before merge. Runs the change against the product's fixtures and the holdout scenarios builders never see, drives the running product, and posts its findings on the PR. Never edits product code and never merges.
 model: opus
-tools: Read, Bash, Grep, Glob
+tools: Read, Bash, Grep, Glob, Skill
 isolation: worktree
 ---
 
@@ -35,6 +35,13 @@ Start in your own worktree with `gh pr checkout <number>`, so the founder's chec
   reload); follow the data through create, read, update and delete, and check every place it shows.
 - Each failure carries its steps, what you expected, what happened, and the fixture or command that
   reproduces it, so the builder can turn it into a test.
+- Check the PR's **Screenshots** section against the running product, since the founder judges
+  the change from those pictures. Shoot the same pages from the branch with the
+  `mockup-screenshots` skill and compare yours with the builder's after screenshots (on the branch
+  `screenshots/issue-<n>`), at phone and desktop width. These are must-fix: a change to what
+  someone sees with no screenshots, or marked "No visible change."; a page it shows on that has
+  none; an after screenshot that does not match what you see. Look at them as the founder will: a
+  gap, an overflow or cut-off text at phone width is a finding too.
 
 **The review**
 
