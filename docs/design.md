@@ -32,7 +32,7 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
 | | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
 | Check | **Code reviewer** | every change | correctness and simplification; sees the diff, not the builder's reasoning | read only |
-| | **Security reviewer** | changes to routes, permissions, storage or model calls | findings | read only |
+| | **Security reviewer** | changes to routes, permissions, storage, model calls or shipped dependencies | findings | read only |
 | | **Optimiser** | weekly | page cost, token cost per merged change, dead code, one thing defined in several places | proposes builder tasks |
 | Ship & run | **Integrator** | the only merger | rebase, run checks, gate production, cut releases | `main` and production |
 | | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder | read plus notifications |
@@ -234,13 +234,38 @@ of this (see Sources).
   and pacing to the weekly limit is not built yet. Not yet run on a real product.
 - **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
   the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
-  its own worktree and posting its own comment; when the code reviewer says the diff touches
-  routes, sign-in, permissions, stored data, secrets, outside input or model calls, the security
-  reviewer looks too. The change is approved only when every reviewer approves, and the builder
+  its own worktree and posting its own comment; when the change touches routes, sign-in,
+  permissions, stored data, secrets, outside input, model calls or a dependency that ships, the
+  security reviewer looks too (when it starts is the next entry). The change is approved only when every reviewer approves, and the builder
   gets all their findings, each marked with who raised it. QA is the only role that reads the
   holdouts, so the holdout guard now trusts `founding-agents:qa`. The split's cost: two Opus
   reviewers each round where there was one, and the reviewer was already the largest cost in five
   of six website builds; the optimiser's numbers say whether it pays.
+- **`build` starts each reviewer as soon as it is known to be needed, and the builder does not wait
+  for CI.** Decided on 27 Oct 2026, after the first multi-issue build on the website (brief #14)
+  took 23 minutes from check to merge for its smallest issue, #26. Its session logs show where the
+  time went: check 0.6 min, builder 7.9, QA 7.6 beside code review 3.6, security review 5.7, then
+  the integrator 1.0. The security review started only when QA finished, four minutes after code
+  review had flagged the diff, because it waited for both. Installs were not the cost: in every
+  worktree `npm ci` took under a second from the shared `~/.npm`, Playwright's browsers are shared
+  per user, and the whole `check.sh` ran in 5 to 8 seconds. The model's own work was over 90% of
+  each reviewer's time and three quarters of the builder's; the builder's one long tool call was
+  watching CI, 94 seconds on #26, which nobody asked it to do. In CI, `npm ci` took 3 to 4 seconds and the browser download 7; what varied was
+  `playwright install --with-deps` fetching system fonts and libraries with apt, 13 seconds to 8
+  minutes depending on the mirror.
+  So the check now also says whether the issue touches routes, sign-in, permissions, stored data,
+  secrets, outside input, model calls or a dependency that ships, and when it does the security
+  reviewer runs beside QA and code review. The code reviewer's flag stays as the fallback for a
+  diff that turns out to touch those when the issue did not say so, and that review now starts the
+  moment code review returns rather than when QA does. The builder runs `check.sh`, opens the PR
+  and returns; CI runs while the reviewers work, the code reviewer reads its result and sends back
+  a failing run as a must-fix finding, and the integrator still merges only on green, so no check
+  is skipped and a CI failure still reaches the builder in the same round. On #26 that would have
+  been about 16 minutes instead of 23: the review takes as long as its slowest reviewer (7.6
+  minutes rather than 13.3), and the builder loses its 1.5-minute wait. CI caches for npm and
+  Playwright were left out: they would save under 10 seconds a run, CI now runs while review
+  does, and the slow part, apt, is the product's own `check.sh` choice. A product whose CI wait starts to
+  matter can run its job in Playwright's container image instead, which is its own decision.
 - **The optimiser and the librarian run as weekly routines that propose, never change.** Built on
   27 Oct 2026, the same way as ops watch's daily routine: each one's instructions are a file
   `setup` copies into the product (`.github/optimiser/routine.md`, `.github/librarian/routine.md`)
