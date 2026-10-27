@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "index.html: the record, 26 Oct",
+        "what": "The record says the band's tests check that every step carries a name, a state, a date and a link. tests/test_page.py checks only a state and a date; no test checks a name or a link, so the claim is false on the day this merges.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 11,
+      "body": "**QA: Changes needed**\n\n- index.html: the record, 26 Oct: The record says the band's tests check that every step carries a name, a state, a date and a link. tests/test_page.py checks only a state and a date; no test checks a name or a link, so the claim is false on the day this merges."
+    }
+  ]
+}

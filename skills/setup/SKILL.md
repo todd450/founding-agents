@@ -51,9 +51,11 @@ founder (a paid plan, or making the repo public). Change neither.
 
 ## Ops watch's site check
 
-For a product served by GitHub Pages. A nightly GitHub Actions run checks that the latest Pages
-deploy is green and that every link on the site resolves, the site's own pages and the links they
-make to other sites. A failure opens one `red` issue, which GitHub notifies the founder of; it is
+A nightly GitHub Actions run checks that the deploy is up and that every link on the site resolves,
+the site's own pages and the links they make to other sites. For a product on GitHub Pages it asks
+the Pages API whether the latest deploy is green. A product served elsewhere sets the repository
+variable `OPS_WATCH_URL` to its live address (`gh variable set OPS_WATCH_URL --body <address>`),
+and the check then crawls that address instead of asking Pages. A failure opens one `red` issue, which GitHub notifies the founder of; it is
 kept current while the check stays red and closed by the next green run. The run passes either
 way, and fails only when the check itself cannot run.
 
@@ -155,13 +157,15 @@ the visible edge-case scenarios builders write their tests from.
 ## Labels
 
 `build` takes only issues labelled `decided`, the founder's yes; `needs-founder` is the decision
-queue; an open `red` issue stops merges; `research` holds what users said and did. Create them once, skipping any that exist:
+queue; an open `red` issue stops merges; `research` holds what users said and did; `librarian`
+holds a finding `build` saw come back unfixed, for the librarian to turn into a check. Create them once, skipping any that exist:
 
 ```
 gh label create needs-founder --color FBCA04 --description "Waiting on the founder's decision"
 gh label create decided --color 0E8A16 --description "The founder said yes; ready to build"
 gh label create red --color B60205 --description "A scheduled check failed; nothing merges until it is fixed"
 gh label create research --color 5319E7 --description "A question about users, with the researcher's guide and synthesis"
+gh label create librarian --color 1D76DB --description "A mistake a run made twice, for the librarian to turn into a check"
 ```
 
 ## Needs

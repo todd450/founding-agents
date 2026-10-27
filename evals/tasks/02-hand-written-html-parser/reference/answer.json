@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "tests/test_markup.py:22",
+        "what": "A self-closing void element fails this check: HTMLParser calls handle_endtag for <br/>, so parse('<p>a<br/>b</p>') reports 'br' as mismatched. Use a standard HTML validator (html-validate or the Nu validator) from check.sh instead of a hand-written parser.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 7,
+      "body": "**Code review: Changes needed**\n\n- tests/test_markup.py:22: A self-closing void element fails this check: HTMLParser calls handle_endtag for <br/>, so parse('<p>a<br/>b</p>') reports 'br' as mismatched. Use a standard HTML validator (html-validate or the Nu validator) from check.sh instead of a hand-written parser."
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+{
+  "role": "builder",
+  "kind": "capability",
+  "class": "a fact about the team's own work, counted off by one, and a test that pins the words",
+  "origin": "founding-agents-site #6 and #10 (PRs #9 and #11): the record said 'three rounds' when the review took four, an approving round left out, and the fix pinned the word 'four' in a test",
+  "summary": "The record says the page shell took three rounds of review; PR #7 shows four. The builder counts them from the PR, fixes the record, and pins no wording in a test.",
+  "right_answer": "build",
+  "needs": [],
+  "step": {
+    "workflow": "build",
+    "args": 26,
+    "label": "builder"
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 26,
+        "title": "The record miscounts the shell's review",
+        "body": "The record says the page shell merged after three rounds of review. Count the review rounds on PR #7, the shell's PR, and make the record say what happened.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`index.html`\n\n## Technical decisions\nNone: copy inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 7,
+        "title": "Site 1 of 3: design tokens and the page shell",
+        "body": "Adds the design tokens and the page shell.\n\nCloses #4",
+        "headRefName": "build/issue-4",
+        "baseRefName": "main",
+        "state": "MERGED",
+        "comments": [
+          {
+            "author": "todd450",
+            "body": "**Changes needed**\n\nThe colour test misses rgb() and named colours."
+          },
+          {
+            "author": "todd450",
+            "body": "**Changes needed**\n\nThe tag parser fails on <br/>; the links test lets /about through."
+          },
+          {
+            "author": "todd450",
+            "body": "**Changes needed**\n\nThe second <style> block is not checked."
+          },
+          {
+            "author": "todd450",
+            "body": "**Approve**\n\nEvery finding is fixed; the suite and the page pass at both widths."
+          }
+        ]
+      }
+    ]
+  }
+}
