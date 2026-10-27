@@ -406,8 +406,11 @@ of this (see Sources).
   so no builder's context ever held them; QA adds one or two wherever a change touches a
   class that has none. A failing holdout is a must-fix finding naming only its class and what
   went wrong, and `build` asks for nothing more in the findings it hands the builder. Moving a
-  seen scenario into the visible fixtures is left to the founder until the librarian exists. Not
-  yet run on a real product.
+  seen scenario into the visible fixtures is left to the founder until the librarian exists.
+  Tested on 27 Oct 2026 with `tests/e2e_holdouts.sh` and real sessions: the builder started with
+  `--agent` and the code reviewer as a subagent were blocked, QA both ways and the founder's own
+  session read the scenario, and hooks saw each agent's name with the plugin prefix. Agents with
+  their own worktree need a repo with at least one commit. Not yet run on a real product.
 - **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
   parts of this, but they churn (Compound Engineering renamed its commands; GSD's original repo was
   archived) and their auto-triggered skills would compete with these roles. Ideas are copied with
