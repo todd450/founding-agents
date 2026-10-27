@@ -153,7 +153,7 @@ if (brief.decisions.length) {
   lines.push('**Technical decisions:** none. This changes nothing about how the product is built, deployed or stores its data.', '')
 }
 const doors = brief.decisions.length ? `your choice for each technical decision (${brief.decisions.map((_, i) => `D${i + 1}`).join(', ')})` : ''
-const yes = `then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
+const yes = `then add the \`decided\` label, and \`/founding-agents:plan ${brief.issue}\` cuts it into build issues. To say no, close the issue; nothing is kept for later.`
 let answer
 if (design) answer = `reply with the letter you pick${doors ? `, ${doors}` : ''} and any notes, ${yes}`
 else if (!brief.screens && brief.recommend === 'go') answer = `reply with ${doors ? `${doors} and ` : ''}any notes, ${yes}`
