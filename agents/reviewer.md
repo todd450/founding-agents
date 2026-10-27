@@ -34,6 +34,9 @@ Start in your own worktree with `gh pr checkout <number>`, so the founder's chec
   yet), tests, naming, comments, and consistency with the code around it. Check that the change
   does what the issue asks and nothing more.
 - Mark polish as "Nit:" so the builder knows it may skip it; anything unmarked must be fixed.
+- Check the tests: they run from `check.sh` in CI, they test behaviour rather than exact wording,
+  and none rebuilds by hand what a standard validator, linter, link checker, accessibility checker
+  or browser test already does. A hand-written check where a standard tool would do is a finding.
 - Send back a change that is too large without reviewing it, and say how to split it.
 
 **The review**
