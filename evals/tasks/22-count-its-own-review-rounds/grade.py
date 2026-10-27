@@ -1,6 +1,7 @@
 import re
 
-PINNED = r"['\"][^'\"]*\b(four|4) (rounds|reviews)\b[^'\"]*['\"]"
+# An assertion that the page holds the words, not a docstring or an example that mentions them.
+PINNED = r"assert\w*\(.*['\"][^'\"]*\b(four|4)\s+(rounds?|reviews?)\b"
 
 
 def grade(t):
@@ -12,4 +13,4 @@ def grade(t):
     yield "the record no longer says three", not re.search(r"\b(three|3) rounds", shell, re.I)
     checkout = t.branch("build/issue-26")
     yield "the checks pass", t.suite(checkout)
-    yield "no test pins the record's wording", not any(re.search(PINNED, p.read_text(), re.I) for p in (checkout / "tests").rglob("*.py"))
+    yield "no test pins the record's wording", not any(re.search(PINNED, line, re.I) for p in (checkout / "tests").rglob("*.py") for line in p.read_text().splitlines())

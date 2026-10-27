@@ -161,7 +161,8 @@ def shared(log):
     found = set()
     for record in summarise_records(log):
         found |= set(FIXED.findall(record))
-    return sorted(found)
+    # A mktemp template, or the random name mktemp made from it, is the agent's own.
+    return sorted(f for f in found if not re.search(r"XXX|[-.][A-Za-z0-9]{6,}$|^/tmp/\.+$", f))
 
 
 def summarise_records(log):
@@ -308,6 +309,7 @@ def main(argv=None):
         results = json.loads(args.regrade.read_text())
         for r in results:
             checks = trial.grade(trial.load(r["task"]), r["folder"])
+            r["shared"] = shared(r.get("log"))
             failed_run = [c for c in r["checks"] if c[0].startswith("the agent finished")]
             r["checks"], r["passed"] = failed_run + checks, not failed_run and all(ok for _, ok in checks)
         args.regrade.write_text(json.dumps(results, indent=2))
