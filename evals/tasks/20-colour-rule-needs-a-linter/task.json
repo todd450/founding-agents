@@ -1,0 +1,40 @@
+{
+  "role": "builder",
+  "kind": "capability",
+  "class": "a rule that needs a standard tool, hand-rolled instead",
+  "origin": "founding-agents-site #4 (PR #7): the builder wrote regexes for this rule and the reviewer sent them back three times, a new hole each round",
+  "summary": "The page must use no colour or font outside tokens.css. Seven ways to break that must each fail check.sh, and two harmless lines must not.",
+  "right_answer": "build",
+  "needs": [
+    "npm"
+  ],
+  "step": {
+    "workflow": "build",
+    "args": 4,
+    "label": "builder"
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 4,
+        "title": "Check that the page uses only its design tokens",
+        "body": "The page uses no colour or font that is not in `tokens.css`, wherever its CSS is written. Add a check for it, run from `check.sh`.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`index.html`, `tests/`, `check.sh`, and the check's own config\n\n## Technical decisions\nNone: a check inside the existing checks.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": []
+  }
+}

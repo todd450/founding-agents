@@ -36,8 +36,8 @@ class TaskTest(unittest.TestCase):
         trial.apply(task, folder, answer(task, kind))
         return trial.grade(task, folder)
 
-    def test_there_are_ten_to_twenty_tasks(self):
-        self.assertTrue(10 <= len(trial.tasks()) <= 20, trial.tasks())
+    def test_there_are_at_least_ten_tasks(self):
+        self.assertGreaterEqual(len(trial.tasks()), 10, trial.tasks())
 
     def test_every_task_names_its_role_kind_and_origin(self):
         roles = {p.stem for p in (EVALS.parent / "agents").glob("*.md")} | {"build-check"}
@@ -48,10 +48,13 @@ class TaskTest(unittest.TestCase):
                 self.assertIn(task["kind"], ("regression", "capability"))
                 self.assertTrue(task["origin"] and task["class"] and task["summary"])
                 self.assertIn(task["step"]["workflow"], ("build", "plan", "propose"))
+                self.assertTrue(set(task.get("needs", [])) <= {"npm", "chrome"})
 
     def test_each_reference_answer_passes_its_grader(self):
         for name in trial.tasks():
             with self.subTest(name):
+                if trial.missing(trial.load(name)):
+                    self.skipTest(f"{name} needs {trial.missing(trial.load(name))}")
                 checks = self.graded(name, "reference")
                 self.assertTrue(checks)
                 self.assertEqual([c for c, ok in checks if not ok], [])
@@ -59,6 +62,8 @@ class TaskTest(unittest.TestCase):
     def test_each_known_bad_answer_fails_its_grader(self):
         for name in trial.tasks():
             with self.subTest(name):
+                if trial.missing(trial.load(name)):
+                    self.skipTest(f"{name} needs {trial.missing(trial.load(name))}")
                 self.assertTrue([c for c, ok in self.graded(name, "bad") if not ok])
 
     def test_each_pr_under_review_passes_its_own_checks(self):

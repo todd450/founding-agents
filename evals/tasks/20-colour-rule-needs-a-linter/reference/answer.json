@@ -1,0 +1,28 @@
+{
+  "output": {
+    "pr_number": 5,
+    "pr_url": "https://github.com/todd450/founding-agents-site/pull/5",
+    "stopped_because": ""
+  },
+  "posted": [
+    {
+      "kind": "pr create",
+      "number": 5,
+      "title": "Lint the page's CSS against its design tokens",
+      "body": "Lint the page's CSS against its design tokens.\n\nCloses #4",
+      "headRefName": "build/issue-4",
+      "baseRefName": "main",
+      "comments": [],
+      "state": "OPEN"
+    }
+  ],
+  "commits": [
+    {
+      "branch": "build/issue-4",
+      "dirs": [
+        "linted"
+      ],
+      "message": "Lint the page's CSS against its design tokens"
+    }
+  ]
+}
