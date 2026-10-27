@@ -88,7 +88,8 @@ screen, one design-token source that generates every copy.
 
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
-- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`).
+- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
+  `run-report`).
 - **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`.
 - **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
@@ -203,6 +204,16 @@ of this (see Sources).
   measures it. The optimiser tracks tokens per merged change, by role and model, and what they cost:
   a share of the weekly limit on a Pro or Max plan, dollars on an API key. It proposes cuts as
   builder tasks; ops watch raises red when spend passes the budget.
+- **Every run reports its time, tokens and cost on its issue.** Decided by the founder on 26 Oct
+  2026. `build` and `propose` end with a Haiku step that runs the `run-report` skill, which reads
+  Claude Code's session logs for the run and its agents, counts each model call once, and posts one
+  table: each role and model's time, calls, new and cached input, output and cost, then the total.
+  Cost is at API list prices, so on a plan it is API-equivalent: it compares runs and roles, while
+  the plan itself bills the weekly limit. A run that stalls posts too, because stalls are where the
+  cost goes: of the seven website runs, about $37 in all, the two that stalled were 43%. The
+  reviewer was the largest cost in five of the six builds. Until the optimiser exists these
+  reports are the measure of tokens per merged change; the budget, and ops watch's red on spend,
+  wait for it.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, reviewer and builders, Sonnet 5.5 for the
   integrator and Haiku 5.5 for ops watch and the workflows' small steps.
@@ -267,7 +278,7 @@ of this (see Sources).
 
 - **Each change's share of the week:** on a plan the budget is a share of the weekly limit, not
   dollars, and Anthropic publishes no numbers for the limits. Set it after measuring the first ten
-  changes with `/usage`; the optimiser owns it once it exists.
+  changes from their run reports; the optimiser owns it once it exists.
 - **Can a routine run `build` overnight, and know how much of the week is left?** Running decided
   issues while the founder is away would use allowance that otherwise expires, but nothing
   documented shows a routine starting a plugin workflow or reading the plan's remaining limit.
