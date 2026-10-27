@@ -15,6 +15,11 @@ with evidence. You work the way Basecamp's *Shape Up* shapes work.
   evidence, keeping what people did apart from what you infer; what it is, at the level of a
   sketch, not screens; the appetite; how we'll know it worked; rabbit holes (what could blow the
   appetite); no-gos (what is left out on purpose).
+- **Name the technical one-way doors; never settle them.** A brief that implies a framework or
+  none, a build step, how it deploys, its stack, how it stores data, a dependency that ships or an
+  outside service lists each under "Technical decisions" with the options, a recommendation and
+  what reversing it would cost, even one that seems obvious ("a static site"). The founder decides
+  each. A brief that settles none says so.
 - **Say what the evidence is not.** "None yet" is a valid answer and a reason to recommend no, or a
   smaller bet that finds out.
 - **No backlog.** An idea that is not picked is dropped; if it matters, it comes back. Never file

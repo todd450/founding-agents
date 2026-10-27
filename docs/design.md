@@ -165,6 +165,20 @@ of this (see Sources).
   be opened at any width; the phone and desktop screenshots, taken with headless Chrome by the
   `mockup-screenshots` skill, let the founder compare options in the issue without opening
   anything. The branch is never merged, so mockups never become product code by accident.
+- **Technical one-way doors reach the founder before they are built in.** Decided by the founder on
+  26 Oct 2026, after the website's "no build step or framework" was settled by an aside in a brief
+  ("the architect confirms that, not the founder"), with no architect to confirm it, and written
+  into a build issue as a rule. A one-way door here is a choice that costs a lot to reverse once
+  code or people depend on it: a framework or none, a build step, how the product deploys, its
+  stack, how it stores data, a dependency that ships, an outside service, an interface others rely
+  on. The product lead names each one a brief settles, even one taken for granted, and `propose`'s
+  queue item lists them with options, a recommendation and the cost of reversing, for the founder
+  to answer. `build`'s first step, now on Sonnet because it has to judge, refuses an issue that
+  settles one not named in its "Technical decisions" section or in a queue item on it; the builder
+  stops rather than choose one, and the reviewer sends back a change that makes one. Agents post
+  with the founder's own GitHub login, so a comment's author cannot show who decided: a decision
+  counts as seen when it is named where the founder's `decided` label says yes to it. Until the
+  architect exists, whoever cuts a brief into build issues lists the decisions each one settles.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.

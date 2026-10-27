@@ -3,7 +3,7 @@ export const meta = {
   description: 'Build one decided issue: the builder in its own worktree, the reviewer, then the integrator merges',
   whenToUse: 'When the founder asks to build a decided issue in the current product repo, e.g. /founding-agents:build 12',
   phases: [
-    { title: 'Check', detail: 'the issue is decided and no red issue is open', model: 'haiku' },
+    { title: 'Check', detail: 'the issue is decided, settles no technical decision the founder has not seen, and no red issue is open', model: 'sonnet' },
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
     { title: 'Review', detail: 'edge-case QA and code review on the PR', model: 'opus' },
     { title: 'Merge', detail: 'the integrator tests the merge and merges', model: 'sonnet' },
@@ -18,6 +18,9 @@ const raw = args && typeof args === 'object' ? args.issue : args
 const issue = Number(String(raw ?? '').replace(/[^0-9]/g, ''))
 if (!issue) throw new Error('Name the issue to build, e.g. /founding-agents:build 12')
 
+// What counts as a technical one-way door; build.js and propose.js keep the same words (a test checks).
+const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
+
 const decided = t => t.decision ? `\n\nThe founder decided: ${t.decision}\nThe change builds what they picked; the mockups show the design, not code to copy.` : ''
 
 const TICKET = {
@@ -29,8 +32,9 @@ const TICKET = {
     title: { type: 'string' },
     body: { type: 'string' },
     decision: { type: 'string', description: "the founder's pick and notes from the comments, with the mockup branch if there is one; empty if none" },
+    unseen: { type: 'array', items: { type: 'string' }, description: 'each technical one-way door the issue settles that the founder has not seen; empty if none' },
   },
-  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision'],
+  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen'],
 }
 const BUILT = {
   type: 'object',
@@ -95,10 +99,15 @@ const ticket = await agent(
 - \`gh repo view --json nameWithOwner\` gives the repo.
 - \`gh issue view ${issue} --json title,body,state,labels,comments\`: it must be open and labelled \`decided\`.
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${issue} is that issue. A red scheduled check stops other work until it is fixed.
-Return ready, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-${issue}\`) as the decision.`,
-  { label: `check #${issue}`, phase: 'Check', model: 'haiku', effort: 'low', schema: TICKET },
+- Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` queue item on this issue, with the founder's choice; the \`decided\` label is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
+Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-${issue}\`) as the decision.`,
+  { label: `check #${issue}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
 )
 if (!ticket) throw new Error(`Could not read issue #${issue}`)
+if (ticket.unseen.length) {
+  return { issue, status: 'needs the founder', reason: 'it settles technical decisions the founder has not seen', unseen: ticket.unseen,
+           next: `Name each under "Technical decisions" in #${issue} for the founder to decide, or run /founding-agents:propose ${issue}` }
+}
 if (!ticket.ready) return { issue, status: 'not started', reason: ticket.reason }
 
 let built = null

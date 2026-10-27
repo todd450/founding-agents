@@ -7,7 +7,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
-READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs.", "decision": ""}
+READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs.", "decision": "",
+         "unseen": []}
 PR = {"pr_number": 4, "pr_url": "https://github.com/o/r/pull/4", "stopped_because": ""}
 APPROVE = {"verdict": "approve", "findings": []}
 CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "where": "slug.py:3", "what": "empty title crashes"}]}
@@ -27,6 +28,20 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"], {"issue": 12, "status": "not started", "reason": "a red issue is open"})
         self.assertNotIn("run report", self.labels(run))
         self.assertEqual(self.labels(run), ["check #12"])
+
+    def test_an_issue_that_settles_an_unseen_technical_decision_waits_for_the_founder(self):
+        ticket = {**READY, "unseen": ["plain HTML with no build step"]}
+        run = self.run_workflow({"check": [ticket], "builder": [PR]})
+        self.assertEqual(run["result"]["status"], "needs the founder")
+        self.assertEqual(run["result"]["unseen"], ["plain HTML with no build step"])
+        self.assertIn('"Technical decisions"', run["result"]["next"])
+        self.assertEqual(self.labels(run), ["check #12"])
+
+    def test_the_check_looks_for_one_way_doors_with_a_model_that_can_judge_them(self):
+        check = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]
+        self.assertEqual(check["model"], "sonnet")
+        self.assertIn("technical one-way door", check["prompt"])
+        self.assertIn('"Technical decisions" section', check["prompt"])
 
     def test_an_approved_change_goes_to_the_integrator(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "reviewer": [APPROVE], "integrator": [MERGED]})

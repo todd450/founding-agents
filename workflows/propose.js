@@ -15,6 +15,9 @@ const text = String(raw ?? '').trim()
 const issue = /^#?\d+$/.test(text) ? Number(text.replace('#', '')) : 0
 if (!text) throw new Error('Name an issue or describe the idea, e.g. /founding-agents:propose 7')
 
+// What counts as a technical one-way door; build.js and propose.js keep the same words (a test checks).
+const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
+
 const BRIEF = {
   type: 'object',
   properties: {
@@ -23,8 +26,23 @@ const BRIEF = {
     recommend: { type: 'string', enum: ['go', 'no-go'] },
     reason: { type: 'string', description: 'the recommendation in one sentence' },
     overruled: { type: 'boolean', description: "true when the founder has said in a comment to go ahead despite a no-go" },
+    decisions: {
+      type: 'array',
+      description: 'every technical one-way door the brief settles; empty when it settles none',
+      items: {
+        type: 'object',
+        properties: {
+          decision: { type: 'string', description: 'the choice, in a few words' },
+          options: { type: 'array', items: { type: 'string' }, description: 'the realistic options, each in a few words' },
+          recommend: { type: 'string', description: 'the option you recommend' },
+          why: { type: 'string', description: 'why, in one sentence' },
+          reverse: { type: 'string', description: 'what reversing it later would cost' },
+        },
+        required: ['decision', 'options', 'recommend', 'why', 'reverse'],
+      },
+    },
   },
-  required: ['repo', 'issue', 'recommend', 'reason', 'overruled'],
+  required: ['repo', 'issue', 'recommend', 'reason', 'overruled', 'decisions'],
 }
 const DESIGN = {
   type: 'object',
@@ -79,10 +97,11 @@ const report = async result => {
 }
 
 phase('Brief')
+const DOORS = `Name every ${ONE_WAY} that the brief settles, including any it takes for granted, such as "a static site". For each, give the realistic options, the one you recommend and why, and what reversing it later would cost, and write them into the brief under "Technical decisions". A brief that settles none says so there. The founder decides each one; never settle one in the brief.`
 const brief = await agent(
   issue
-    ? `Shape issue #${issue} into a brief. Read it and its comments. Keep your recommendation honest even if the founder has overruled an earlier no-go in a comment, and report the overrule. If its body is already a full brief, keep it and fix only what is missing; otherwise write the brief into the issue's body with \`gh issue edit ${issue} --body-file -\`.`
-    : `Shape this idea into a brief, and open it as a new issue titled "Brief: <the idea in a few words>":
+    ? `Shape issue #${issue} into a brief. Read it and its comments. Keep your recommendation honest even if the founder has overruled an earlier no-go in a comment, and report the overrule. If its body is already a full brief, keep it and fix only what is missing; otherwise write the brief into the issue's body with \`gh issue edit ${issue} --body-file -\`. ${DOORS}`
+    : `Shape this idea into a brief, and open it as a new issue titled "Brief: <the idea in a few words>". ${DOORS}
 
 ${text}`,
   { label: 'product lead', phase: 'Brief', agentType: 'founding-agents:product-lead', model: 'opus', schema: BRIEF },
@@ -122,10 +141,20 @@ if (design) {
     )
   }
 }
+if (brief.decisions.length) {
+  lines.push('### Technical decisions', '', 'Each one is costly to reverse once it is built in, so each is yours to decide:', '')
+  brief.decisions.forEach((d, i) => lines.push(
+    `- **D${i + 1}. ${d.decision}:** ${d.options.join(' / ')}. Recommended: **${d.recommend}**, because ${d.why} Reversing it later: ${d.reverse}`,
+  ))
+  lines.push('')
+} else {
+  lines.push('**Technical decisions:** none. This changes nothing about how the product is built, deployed or stores its data.', '')
+}
+const answerDoors = brief.decisions.length ? `, your choice for each technical decision (${brief.decisions.map((_, i) => `D${i + 1}`).join(', ')})` : ''
 lines.push(
   design
-    ? `**To decide:** reply with the letter you pick and any notes, then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
-    : `**To decide:** to overrule the no-go, say so in a reply and run \`/founding-agents:propose ${brief.issue}\` again for mockups. Otherwise close the issue; nothing is kept for later.`,
+    ? `**To decide:** reply with the letter you pick${answerDoors} and any notes, then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
+    : `**To decide:** to overrule the no-go${answerDoors ? ` and settle${answerDoors.slice(1)}` : ''}, say so in a reply and run \`/founding-agents:propose ${brief.issue}\` again for mockups. Otherwise close the issue; nothing is kept for later.`,
 )
 const item = lines.join('\n')
 
