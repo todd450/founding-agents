@@ -78,7 +78,7 @@ const REVIEW = {
         properties: {
           must_fix: { type: 'boolean', description: 'false for a Nit' },
           where: { type: 'string' },
-          what: { type: 'string', description: 'steps, expected, happened, and how to reproduce' },
+          what: { type: 'string', description: 'steps, expected, happened, and how to reproduce; for a holdout scenario, only its failure class and what went wrong, never its steps or data' },
           repeat: { type: 'boolean', description: 'true when an earlier review on this PR raised it and it is still not fixed' },
         },
         required: ['must_fix', 'where', 'what', 'repeat'],

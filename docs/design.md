@@ -114,6 +114,13 @@ of this (see Sources).
   unchanged: on 26 Oct 2026 the website's install at 0.1.0 still lacked `build` and `propose`
   after both had merged. A merged change that adds or alters an agent, skill, hook or workflow
   bumps `.claude-plugin/plugin.json`; a docs-only change does not.
+- **`setup` writes starters the product then owns.** Added on 27 Oct 2026: the `basics` kit gives a
+  product a short `CLAUDE.md` (what it is, `./check.sh`, where decisions live, its own rules) and a
+  `fixtures/` folder whose README names the same failure classes as the holdouts, which a test
+  keeps in step. Like `check.sh`, neither is ever replaced once the product has one; a long
+  `CLAUDE.md` is what the first product had to cut from 4,392 lines (principle 7). `setup` also
+  creates the `red` label, so `build` and the integrator can check for red before ops watch first
+  raises it. The routines arrive with the roles that run them.
 - **Tickets: GitHub Issues.** PRs and merges already live there, and `gh` reaches all of it.
   Markdown ticket files would put every builder on the same files (principle 5); Linear adds
   another login.
@@ -139,7 +146,7 @@ of this (see Sources).
   and the PR, not the builder's summary, since it reviews the diff and the running product. Each
   send-back reaches the same builder role on the same PR with the findings; after three, the run
   stops and the PR waits for the founder instead of looping. Every step names its model. Left for
-  later: the holdout scenarios, and pacing to the weekly limit, both described below. Tested on
+  later: pacing to the weekly limit, described below; the holdout scenarios followed on 27 Oct. Tested on
   25 Oct 2026 with `claude -p "/founding-agents:build 1"` on a throwaway repo: the builder opened
   the PR, the reviewer drove about 30 inputs and sent it back with one must-fix, the builder fixed
   it on the same PR, the reviewer approved with nits only, and the integrator merged it. The
@@ -242,6 +249,20 @@ of this (see Sources).
   copy. GitHub stops a public repo's scheduled workflows after 60 days with no activity, and ops
   watch cannot report its own silence; checks that need judgement (spend, release verdicts) stay
   with the Haiku routine.
+- **Ops watch's judgement checks run as a daily routine whose instructions live in the product.**
+  Built on 27 Oct 2026. The routine checks that every scheduled workflow still runs and passed
+  (which covers the site check's silence, including GitHub turning schedules off after 60 days),
+  that `main` passes, that changes merged in the last day are live, and the week's run-report
+  totals against a budget the product sets, then the checks the product lists in
+  `.github/ops-watch/watch.md`, such as backups. A red opens one `red` issue per check and the next
+  green run closes it; a check that could not run is reported, never red. Three facts from the
+  routine docs shaped it: a cloud session does not install plugins, so the prompt is
+  `.github/ops-watch/routine.md`, copied into the product and kept current by `setup`; the cloud's
+  GitHub proxy blocks GraphQL, so `gh issue` and `gh pr` fail and every call is `gh api` over
+  REST, which a test holds; and a routine can only be created by `/schedule` or the web, so
+  `setup` creates it through the `schedule` skill after the founder's yes. Whether Haiku can be
+  picked as a routine's model is not documented; `setup` falls back to the cheapest offered. Not
+  yet run on a real product.
 - **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook reads
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
@@ -344,6 +365,18 @@ of this (see Sources).
   it is best-effort, since a builder's shell can reach any file on the machine. When a holdout
   fails, QA sends back the failure class and what went wrong, not the scenario. A scenario a
   builder has seen moves into the visible fixtures, and a new holdout replaces it.
+- **Holdouts in practice.** Built on 27 Oct 2026. The repo is `<product>-holdouts`, cloned to
+  `~/.founding-agents/holdouts/<owner>/<name>`, a path every machine can work out from the
+  product's name, so nothing in the product points to it. It holds one Markdown file per scenario
+  (setup, steps, expected) in a folder per failure class. The hook (`guard_holdouts.py`) blocks
+  every agent but `founding-agents:reviewer` from any tool call naming that folder or a
+  `-holdouts` repo; the founder's own session, which has no agent, passes, because it creates the
+  repo and writes the scenarios. The founder writes the first ones there, never through an agent,
+  so no builder's context ever held them; the reviewer adds one or two wherever a change touches a
+  class that has none. A failing holdout is a must-fix finding naming only its class and what
+  went wrong, and `build` asks for nothing more in the findings it hands the builder. Moving a
+  seen scenario into the visible fixtures is left to the founder until the librarian exists. Not
+  yet run on a real product.
 - **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
   parts of this, but they churn (Compound Engineering renamed its commands; GSD's original repo was
   archived) and their auto-triggered skills would compete with these roles. Ideas are copied with
@@ -389,7 +422,7 @@ private, since the founder is the only user for now. A website bends the order i
 3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
    holdouts), and the integrator. Run it on three to five real issues. Done on 26 Oct 2026 on the
-   website, without holdouts, which are still to build: four issues cut by hand from the decided
+   website, without holdouts, which were built on 27 Oct 2026 and have not run there yet: four issues cut by hand from the decided
    brief went through `build` to merge. #4 was sent back three times on a test the issue asked
    for that needed a CSS linter, and merged once the founder narrowed it; #5 merged after one
    send-back, with a stale step status and a layout gap the reviewer missed; #6 was sent back
