@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "approve",
+    "findings": [
+      {
+        "must_fix": false,
+        "where": "index.html: step 4",
+        "what": "Issue #1 is propose's only real run, so step 4's '1 of 2' still holds.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 8,
+      "body": "**QA: Approve**\n\n- Nit: index.html: step 4: Issue #1 is propose's only real run, so step 4's '1 of 2' still holds."
+    }
+  ]
+}

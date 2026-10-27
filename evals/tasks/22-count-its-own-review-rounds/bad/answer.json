@@ -1,0 +1,28 @@
+{
+  "output": {
+    "pr_number": 27,
+    "pr_url": "https://github.com/todd450/founding-agents-site/pull/27",
+    "stopped_because": ""
+  },
+  "posted": [
+    {
+      "kind": "pr create",
+      "number": 27,
+      "title": "Count the shell's four review rounds",
+      "body": "Count the shell's four review rounds.\n\nCloses #26",
+      "headRefName": "build/issue-26",
+      "baseRefName": "main",
+      "comments": [],
+      "state": "OPEN"
+    }
+  ],
+  "commits": [
+    {
+      "branch": "build/issue-26",
+      "dirs": [
+        "pinned"
+      ],
+      "message": "Count the shell's four review rounds"
+    }
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "output": {
+    "repo": "todd450/founding-agents-site",
+    "issue": 21,
+    "recommend": "go",
+    "reason": "A second page tests whether pages are really slow to add.",
+    "overruled": false,
+    "screens": true,
+    "decisions": [
+      {
+        "decision": "a site generator or hand-written pages",
+        "options": [
+          "hand-written pages",
+          "a static site generator"
+        ],
+        "recommend": "hand-written pages",
+        "why": "It keeps what exists.",
+        "reverse": "A day to move the pages."
+      },
+      {
+        "decision": "a CSS framework or the page's own tokens",
+        "options": [
+          "own tokens",
+          "a CSS framework"
+        ],
+        "recommend": "own tokens",
+        "why": "It keeps what exists.",
+        "reverse": "A day to move the pages."
+      },
+      {
+        "decision": "where the site is hosted",
+        "options": [
+          "GitHub Pages",
+          "a host with PR previews"
+        ],
+        "recommend": "GitHub Pages",
+        "why": "It keeps what exists.",
+        "reverse": "A day to move the pages."
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "issue edit",
+      "number": 21,
+      "body": "## Decision needed\nGo on a two-page test first.\n\n## Technical decisions\n- A site generator or hand-written pages. Recommended: ...\n- Where it is hosted. Recommended: ..."
+    }
+  ]
+}

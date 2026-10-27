@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "tests/test_style.py:15",
+        "what": "The colour check is a hand-written regex list, and it misses rgb(), a style attribute, a second <style> block, other named colours and a fallback inside var(). Use a CSS linter (stylelint, with a rule that allows colours and fonts only as var(--...)) run from check.sh, instead of regexes.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 7,
+      "body": "**Code review: Changes needed**\n\n- tests/test_style.py:15: The colour check is a hand-written regex list, and it misses rgb(), a style attribute, a second <style> block, other named colours and a fallback inside var(). Use a CSS linter (stylelint, with a rule that allows colours and fonts only as var(--...)) run from check.sh, instead of regexes."
+    }
+  ]
+}
