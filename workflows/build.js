@@ -168,8 +168,9 @@ Return ready, which is false when anything above fails or anything is unseen, an
 // needs one. Each posts its own comment on the PR; the change is approved only when all approve.
 // A repeat is a finding an earlier round raised that the builder's push did not fix. The other
 // reviewers of this round post on the same PR at the same time, so a finding they raised minutes
-// ago is not a repeat: on the website's #27, counting one stopped the run a round early.
-const REPEATS = "Earlier rounds' reviews on this PR are in its comments. Mark a finding as a repeat only when a review posted before the PR's latest push raised it and it is still not fixed. Reviews posted after the latest push are this round's, from the other reviewers working beside you: a finding only they raised is not a repeat, even if you agree with it."
+// ago is not a repeat, and nor is an earlier Nit re-rated must-fix, which the builder was allowed
+// to skip: on the website's #27, each of these stopped a run as if a fix had failed twice.
+const REPEATS = "Earlier rounds' reviews on this PR are in its comments. Mark a finding as a repeat only when a review posted before the PR's latest push raised it and it is still not fixed. Reviews posted after the latest push are this round's, from the other reviewers working beside you: a finding only they raised is not a repeat, even if you agree with it. Nor is one an earlier round marked as a Nit or informational that you now rate must-fix: the builder was allowed to skip it, so it has not failed to fix it; raise it as a new finding."
 
 const reviews = async (n, ticket, built, again, earlier) => {
   const before = earlier && earlier.length

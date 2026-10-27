@@ -188,6 +188,7 @@ class BuildWorkflowTest(unittest.TestCase):
         second = [call["prompt"] for call in run["calls"] if call["label"].startswith(("qa", "code review"))][2:]
         for prompt in second:
             self.assertIn("a finding only they raised is not a repeat", prompt)
+            self.assertIn("Nor is one an earlier round marked as a Nit", prompt)
             self.assertIn("The previous round's must-fix findings", prompt)
             self.assertIn("- QA: slug.py:3: empty title crashes", prompt)
 

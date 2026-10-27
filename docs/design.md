@@ -161,8 +161,11 @@ of this (see Sources).
   and #6 were the same findings coming back, at 43% of the website's spend. New findings still get
   the three rounds. A repeat counts only findings from an earlier round, posted before the
   builder's latest push, and from the second round reviewers are given the previous round's
-  must-fix list: on the website's #27 on 27 Oct, the security reviewer counted a finding code
-  review had raised minutes earlier in the same round, and the run stopped a round early. Every run after its first step then runs the `tidy-worktrees` skill, which
+  must-fix list. A Nit an earlier round raised and a reviewer now rates must-fix is a new finding,
+  not a repeat, since the builder was allowed to skip it. Both came from the website's #27 on
+  27 Oct, where each stopped a run as if a fix had failed twice: first a finding code review had
+  raised minutes earlier in the same round, then a link-parsing point the security reviewer had
+  parked as informational twice and re-rated in round 4. Every run after its first step then runs the `tidy-worktrees` skill, which
   removes a workflow agent's worktree (`wf_...`) only when it has no uncommitted change and its
   commit is on a branch at origin. A session's own worktree in the same folder is never touched.
   Runs go one at a time, so a running run's worktree is never in the way; parallel builders will
