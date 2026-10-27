@@ -26,7 +26,7 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | lane | role | runs | produces | may touch |
 |---|---|---|---|---|
 | Decide | **Product lead** | each new idea; a weekly scope review | a one-paragraph brief (who, what evidence, how we'll know); says no by default; owns the decision queue | no code |
-| | **Researcher** | ongoing | interview guides, synthesis of what users said, the one metric | no code; never contacts users without the founder |
+| | **Researcher** | on demand; a weekly check-back | interview guides, synthesis of what users said, the one metric; whether each shipped brief did what it said | no code; never contacts users without the founder |
 | | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
 | Build | **Architect** | each new surface; any schema or shared change | the plan builders work from, with the day-one defaults set | plans, schema review |
 | | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
@@ -53,9 +53,12 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
    worktree.
 4. **Edge-case QA** and **code review** run in parallel.
 5. **Integrator** merges and gates production → **ops watch** watches it run.
+6. Two weeks after a brief's last issue merges (or as long as the brief says), the **researcher**
+   checks whether it did what "how we'll know" said; a "didn't" goes back to the founder as keep,
+   change or remove.
 
-The founder sees steps 1 and 2, and step 3 only when the plan needs a technical decision the brief
-left open. Every hand-off is a file, a ticket or a PR, so the next agent
+The founder sees steps 1 and 2, step 3 only when the plan needs a technical decision the brief
+left open, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
 starts with the context it needs.
 
 ## Principles
@@ -93,7 +96,7 @@ screen, one design-token source that generates every copy.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
   `run-report`).
 - **The per-change pipeline** → three saved workflows in the plugin: `propose`, `plan` and `build`.
-- **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
+- **Scheduled roles** (optimiser, librarian, the researcher's check-back) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
 - **Hard rules** → a plugin hook (only the integrator pushes to `main` or merges) and GitHub branch
@@ -268,6 +271,36 @@ of this (see Sources).
   apart from what is inferred, with names and dates. The product lead reads those issues as the
   strongest evidence a brief can cite. The researcher never contacts anyone, since every message
   sent in the founder's name is the founder's to send.
+- **Every shipped brief gets a check-back: a weekly routine the researcher runs, with a script for
+  the rest.** Built on 27 Oct 2026, after the founder asked which practices from Y Combinator and
+  Every's compound engineering to adopt. YC's advice is to build what people want and watch the
+  number that shows it; Every ends each piece of work by asking what worked. The team did neither:
+  every brief said how we'll know it worked, nothing ever looked, and every measure below was about
+  the team's process. The founder's first product had no real users after five months and 5,410
+  commits. Now, two weeks after a brief's last issue closes as completed (or as long as its "how
+  we'll know" says, as "Check back: 3 weeks"), the check-back posts on the brief what it said,
+  what actually happened, and a verdict: worked, didn't, or can't tell yet. A "didn't" opens a
+  `needs-founder` item asking whether to keep, change or remove what was built, with a
+  recommendation; change and remove go through `propose`. "Can't tell yet" is checked again one
+  window later, three times at most, so a product with no data hears so without hearing it every
+  fortnight forever. A script (`check_back.py`, which `setup` copies into the product) finds what
+  is due, posts every check-back in one shape and counts the score, because none of that needs
+  judgement; the routine, on Sonnet, reads the evidence and gives the verdict. The evidence is what
+  the product lists in its own `.github/researcher/evidence.md`, research issues and the brief's
+  comments; the routine reaches only its own repo, so a number kept elsewhere counts once the
+  founder copies it in.
+  Where it runs is the founder's call, put to them on the PR that built it, with each role's view:
+  - *Ops watch* would take it into its daily Haiku run, which already exists, so there is no new
+    routine to set up. Against it: its reds stop merges, and a feature nobody uses is a decision,
+    not an outage; and it would put the judgement closest to taste on the cheapest model.
+  - *The researcher, on demand as it is,* has the right judgement (what people did, kept apart from
+    what is inferred) but runs only when someone calls it, and nobody calling is the gap.
+  - *The product lead* wrote the brief, so it should not grade it (principle 2), and recommended
+    the researcher; the *optimiser* accepted a weekly Sonnet run because the script answers "nothing
+    due" before a model reads anything.
+  The team's recommendation, built until the founder answers: a new weekly routine that follows the researcher's
+  instructions, beside the optimiser's and the librarian's. Moving it into ops watch later costs
+  one prompt line and dropping a routine, since the script and the comment's shape stay the same.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -487,12 +520,13 @@ private, since the founder is the only user for now. A website bends the order i
    `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser,
    librarian and researcher as their kind of work appears. QA and code review became two roles,
    with the security reviewer beside them, on 27 Oct 2026, and the optimiser and librarian became
-   weekly routines the same day, and the researcher became an agent the founder calls; none has run
-   on the website yet. Every role in the team table now has an agent or a routine.
+   weekly routines the same day, and the researcher became an agent the founder calls, with a weekly
+   check-back on shipped briefs; none has run on the website yet. Every role in the team table now has an agent or a routine.
 
 ## How we'll know it works
 
-One number per cost in the first table, and one for the founder's attention:
+One number per cost in the first table, one for the founder's attention, and one for whether
+people want what the team built, which the other five cannot show:
 
 | cost | measure | should |
 |---|---|---|
@@ -501,6 +535,7 @@ One number per cost in the first table, and one for the founder's attention:
 | Many writers, one branch | merges not made by the integrator | be zero |
 | Red lights left red | age of the oldest open `red` issue | be hours, not days |
 | The founder's attention | items in the decision queue each day | fit one sitting |
+| Built what nobody wanted | shipped briefs that did what "how we'll know" said, among those with a check-back verdict (the check-back prints it) | rise, with few briefs left at "can't tell yet" |
 
 ## Sources
 
