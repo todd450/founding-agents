@@ -1,0 +1,28 @@
+{
+  "output": {
+    "pr_number": 17,
+    "pr_url": "https://github.com/todd450/founding-agents-site/pull/17",
+    "stopped_because": ""
+  },
+  "posted": [
+    {
+      "kind": "pr create",
+      "number": 17,
+      "title": "Newsletter sign-up",
+      "body": "Adds a form that posts to Formspree.\\n\\nCloses #16",
+      "headRefName": "build/issue-16",
+      "baseRefName": "main",
+      "comments": [],
+      "state": "OPEN"
+    }
+  ],
+  "commits": [
+    {
+      "branch": "build/issue-16",
+      "dirs": [
+        "@site"
+      ],
+      "message": "Add a sign-up form"
+    }
+  ]
+}

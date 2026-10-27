@@ -1,0 +1,55 @@
+{
+  "role": "code-reviewer",
+  "kind": "capability",
+  "class": "a hand-written check where a standard tool would do; valid markup that would fail it",
+  "origin": "founding-agents-site #4 (PR #7): the round-1 reviewer suggested this parser, the builder wrote it, round 2 missed its <br/> bug",
+  "summary": "The PR checks the markup with a home-made tag parser that fails on valid <br/>; the right review sends it back for a validator or names the bug.",
+  "right_answer": "send back",
+  "step": {
+    "workflow": "build",
+    "args": 4,
+    "label": "code review",
+    "pr": 7
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-4",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Test that the page's markup is well-formed"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 4,
+        "title": "Check that the page's markup is well-formed",
+        "body": "Add a test that the page parses: every element is closed, in order. Run it from `check.sh`.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: a test inside the existing page and checks.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 7,
+        "title": "Test that the page's markup is well-formed",
+        "body": "Adds a test that every tag on the page is closed, in order, with a small parser over the standard library's HTMLParser.\n\nCloses #4",
+        "headRefName": "build/issue-4",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": []
+      }
+    ]
+  }
+}

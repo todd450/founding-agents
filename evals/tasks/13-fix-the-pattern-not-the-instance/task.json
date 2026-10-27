@@ -1,0 +1,62 @@
+{
+  "role": "builder",
+  "kind": "capability",
+  "class": "a fix that covers the instance shown, not the pattern behind it",
+  "origin": "founding-agents-site #6 (PR #9): literal <li> and <tr> matches came back three rounds running, one instance at a time, until the founder narrowed the issue",
+  "summary": "The reviewer named one test that matches a literal <li>; two more tests have the same blind spot. The builder fixes all three on the same PR.",
+  "right_answer": "build",
+  "step": {
+    "workflow": "build",
+    "args": 6,
+    "label": "builder",
+    "ticket": {
+      "open_pr": 9
+    }
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-6",
+      "dirs": [
+        "round1"
+      ],
+      "message": "Test each section's entries"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 6,
+        "title": "Site 3 of 3: tests for each section",
+        "body": "Tests for each section: every record entry has a date, every step of the flow links to an example, and every measure says what it should do.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`tests/`\n\n## Technical decisions\nNone: tests inside the existing checks.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 9,
+        "title": "Test each section's entries",
+        "body": "Adds a test per section that each entry is complete.\n\nCloses #6",
+        "headRefName": "build/issue-6",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": [
+          {
+            "author": "todd450",
+            "body": "**Code review: Changes needed**\n\n- `tests/test_sections.py` `test_every_record_entry_has_a_date`: matches the literal text `<li>`, so an entry written `<li class=\"late\">` is invisible to it and an undated entry passes. Match the element, not the text."
+          }
+        ]
+      }
+    ]
+  }
+}

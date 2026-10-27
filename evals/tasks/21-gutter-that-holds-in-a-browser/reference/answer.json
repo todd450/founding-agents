@@ -1,0 +1,28 @@
+{
+  "output": {
+    "pr_number": 11,
+    "pr_url": "https://github.com/todd450/founding-agents-site/pull/11",
+    "stopped_because": ""
+  },
+  "posted": [
+    {
+      "kind": "pr create",
+      "number": 11,
+      "title": "Give the band's head a gutter at desktop width",
+      "body": "Give the band's head a gutter at desktop width.\n\nCloses #10",
+      "headRefName": "build/issue-10",
+      "baseRefName": "main",
+      "comments": [],
+      "state": "OPEN"
+    }
+  ],
+  "commits": [
+    {
+      "branch": "build/issue-10",
+      "dirs": [
+        "fixed"
+      ],
+      "message": "Give the band's head a gutter at desktop width"
+    }
+  ]
+}
