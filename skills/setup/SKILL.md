@@ -1,13 +1,13 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the optimiser's or librarian's weekly routine, or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
-This version covers CI, branch protection, ops watch's site check and daily routine, the holdout
-scenarios, the product's `CLAUDE.md` and fixtures, and the labels. The other routines arrive with
-the roles that run them (`docs/design.md` in the Founding Agents repo, "Build order").
+This version covers CI, branch protection, ops watch's site check and daily routine, the
+optimiser's and the librarian's weekly routines, the holdout scenarios, the product's `CLAUDE.md`
+and fixtures, and the labels (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
 
@@ -95,6 +95,26 @@ product: `.github/ops-watch/routine.md`, which setup keeps current, and the prod
 
 Rerun step 1 whenever the plugin's copy changes; the routine reads the file, so it needs no
 change itself.
+
+## The optimiser's and the librarian's weekly routines
+
+Two more routines, each once a week. The optimiser measures tokens per merged change from the run
+reports, by role and model, and what the product costs to run, posts the numbers on one issue and
+proposes at most three savings. The librarian turns the week's incidents (red issues, changes sent
+back again and again, fixes for what a merge broke) into guards, and proposes removing guards and
+rules that guard nothing. Each files what it wants built as a `needs-founder` issue; the founder
+adds `decided` to the ones to build. Neither changes the product itself.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py optimiser`, then `librarian`.
+2. **Apply on a branch.** Rerun each with `--apply`, commit both, open one PR, and wait for the
+   merge.
+3. **Ask for a clear yes** to create the two routines, since each runs every week on the founder's
+   plan.
+4. **Create them** with the `schedule` skill: weekly tasks on this repo, early on a Monday at odd
+   minutes a few hours apart, on Sonnet, with the prompts "Follow .github/optimiser/routine.md in
+   this repo." and "Follow .github/librarian/routine.md in this repo."
+5. **Run each once now** and read its last lines. A measure it could not take is a setup problem
+   to fix.
 
 ## Holdout scenarios
 

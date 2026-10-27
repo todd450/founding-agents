@@ -121,24 +121,12 @@ OWASP, [Application Security Verification Standard](https://owasp.org/www-projec
 
 The optimiser looks after two costs: what the product costs to run (page weight, dead code,
 duplication) and what the team costs to run (tokens). Nobody owned token cost before, and Cursor
-found that workers, not planners, used most of the tokens (principle 3).
-
-- **A budget, not an impression.** Fixed limits per page (size, script, load time on a phone),
-  checked in CI, so a regression fails a check instead of waiting for the weekly review.
-- **One authoritative definition** for every piece of knowledge (*The Pragmatic Programmer*'s
-  DRY). The optimiser lists things defined in several places and proposes the one place.
-- **Cost per unit of value, not total spend** (FinOps unit economics): tokens per merged change, by
-  role and by model, priced as a share of the weekly limit on a Pro or Max plan and in dollars on
-  an API key. Spend that rises with merged changes is fine; cost per change that
-  rises is not.
-- **Where to look for tokens:** changes sent back and built again; what every session loads
-  (CLAUDE.md, skill and agent descriptions, MCP servers); the model each role runs on (move a role
-  down a tier when it does as well on the same tickets); long sessions.
-- **Measure from what Claude Code reports:** its OpenTelemetry metrics (`claude_code.token.usage`,
-  `claude_code.cost.usage`) and `/usage`. The billing record is claude.ai's usage settings on a plan
-  and the Claude Console's Usage page on an API key.
-- **Propose, never change.** Each saving becomes a builder ticket with the measured before and
-  after. Ops watch raises red when spend passes the budget; the optimiser finds out why.
+found that workers, not planners, used most of the tokens (principle 3). Performance budgets turn
+"too slow" into a number CI checks; DRY gives every piece of knowledge one home; FinOps unit
+economics measures cost per merged change rather than total spend, so spend that rises with output
+is fine and cost per change that rises is not. The practices are in
+[skills/setup/optimiser/routine.md](../skills/setup/optimiser/routine.md), since the optimiser runs
+as a routine, which loads no plugin agents.
 
 Sources: Milica Mihajlija, [Performance budgets 101](https://web.dev/articles/performance-budgets-101)
 (web.dev); Andrew Hunt and David Thomas, *The Pragmatic Programmer* (1999); FinOps Foundation,
@@ -171,13 +159,12 @@ and [Embracing risk](https://sre.google/sre-book/embracing-risk/).
 
 ## Librarian — poka-yoke and blameless postmortems
 
-- **Prevent rather than warn.** Shigeo Shingo's mistake-proofing at Toyota separates devices that
-  warn about a mistake from ones that stop it. A lesson that must hold becomes a check that stops
-  the mistake (a test, a lint rule or a hook), not a sentence in a rules file.
-- **Blame the system, not the agent.** Ask how the mistake got through, not who made it. "The
-  builder should have known" is not a finding; the missing check is.
-- **One incident, one guard,** linked to its evidence in `docs/`, and deleted when the thing it
-  guarded is removed.
+Shigeo Shingo's mistake-proofing at Toyota separates devices that warn about a mistake from ones
+that stop it, which is the difference between a line in a rules file and a check; blameless
+postmortems ask how a mistake got through instead of who made it. The first product's rules file
+grew to 4,392 lines of warnings before it was cut. The practices are in
+[skills/setup/librarian/routine.md](../skills/setup/librarian/routine.md), since the librarian runs
+as a routine.
 
 Sources: Shigeo Shingo, *Zero Quality Control: Source Inspection and the Poka-yoke System* (1986);
 John Allspaw, [Blameless postmortems and a just culture](https://www.etsy.com/codeascraft/blameless-postmortems)
