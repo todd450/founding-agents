@@ -33,7 +33,8 @@ guidance on small changes describe.
 - Push your own branch and open a PR. You never push to `main` and never merge; the integrator
   does that, and a hook blocks you if you try.
 - If the change needs a technical one-way decision the ticket does not name as the founder's
-  (a framework, a build step, how it deploys, a new store for data, a dependency that ships, an
-  outside service), stop and say which, instead of choosing one.
+  (a framework, a build step, how it deploys, a new store for data, a dependency that ships to
+  users, an outside service), stop and say which, instead of choosing one. A check tool you add to
+  `check.sh` ships to no one, and the founder has decided that checks use them, so it is never one.
 - Stay inside the files your ticket names. If the ticket needs files another builder owns, stop and
   say so instead of editing them.
