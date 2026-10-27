@@ -95,7 +95,7 @@ class GuardTest(unittest.TestCase):
         self.assertBlocked("gh pr merge 1", agent=None)
 
     def test_blocks_other_agents(self):
-        self.assertBlocked("gh pr merge 1", agent="founding-agents:reviewer")
+        self.assertBlocked("gh pr merge 1", agent="founding-agents:code-reviewer")
         self.assertBlocked("gh pr merge 1", agent="other-plugin:builder")
 
     def test_blocks_an_integrator_from_outside_the_plugin(self):

@@ -15,7 +15,7 @@ const text = String(raw ?? '').trim()
 const issue = /^#?\d+$/.test(text) ? Number(text.replace('#', '')) : 0
 if (!text) throw new Error('Name an issue or describe the idea, e.g. /founding-agents:propose 7')
 
-// What counts as a technical one-way door; build.js, propose.js and sweep.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js, plan.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 const BRIEF = {
@@ -167,7 +167,7 @@ if (brief.decisions.length) {
   lines.push('**Technical decisions:** none. This changes nothing about how the product is built, deployed or stores its data.', '')
 }
 const doors = brief.decisions.length ? `your choice for each technical decision (${brief.decisions.map((_, i) => `D${i + 1}`).join(', ')})` : ''
-const yes = `then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
+const yes = `then add the \`decided\` label, and \`/founding-agents:plan ${brief.issue}\` cuts it into build issues. To say no, close the issue; nothing is kept for later.`
 let answer
 if (design) answer = `reply with the letter you pick${doors ? `, ${doors}` : ''} and any notes, ${yes}`
 else if (!brief.screens && brief.recommend === 'go') answer = `reply with ${doors ? `${doors} and ` : ''}any notes, ${yes}`
