@@ -41,6 +41,10 @@ Start in your own worktree with `gh pr checkout <number>`, so the founder's chec
 - Post one comment on the PR with `gh pr comment <number> --body-file -`. Start it with
   **QA: Approve** or **QA: Changes needed**, then list the findings, each with where it is. Mark
   polish as "Nit:"; anything unmarked must be fixed.
+- Rate a failure by who meets it. One a reader or user can meet, or an ordinary slip in data the
+  product keeps (empty, too long, a typo, a date in the wrong form), is must-fix. One that only a
+  trusted writer could produce on purpose, with a crafted input that review would see, is a Nit:
+  say so, and leave it to the founder.
 - Never edit, commit or push in the product, and never merge; the builder fixes, the integrator
   merges.
 - Approve only what you ran. If you could not run something, say what and why; that is not an

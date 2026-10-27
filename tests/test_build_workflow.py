@@ -66,6 +66,11 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertEqual(self.labels(run), ["check #12", "builder #12, round 1", "qa #12, round 1", "code review #12, round 1",
                                             "integrator, PR #4", "tidy worktrees", "run report"])
 
+    def test_the_integrator_is_told_not_to_rerun_checks_when_main_has_not_moved(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
+        integrator = next(c for c in run["calls"] if c["label"].startswith("integrator"))
+        self.assertIn("without rerunning them when `main` has not moved", integrator["prompt"])
+
     def test_each_role_runs_as_its_plugin_agent_and_the_builder_in_a_worktree(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
         builder, qa, code, integrator = run["calls"][1:5]
@@ -262,6 +267,12 @@ class BuildWorkflowTest(unittest.TestCase):
     def test_a_change_that_does_not_need_it_gets_no_security_review(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
         self.assertFalse([label for label in self.labels(run) if label.startswith("security")])
+
+    def test_the_check_is_told_an_open_pr_never_makes_the_issue_unready(self):
+        # On the website's #27 the check read an open PR as "already being built" and skipped it, so
+        # the six issues that build after it never started.
+        prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
+        self.assertIn("An open PR is never a reason to stop", prompt)
 
     def test_an_open_pr_for_the_issue_is_continued_not_started_again(self):
         run = self.run_workflow({"check": [{**READY, "open_pr": 9}], "builder": [{**PR, "pr_number": 9}],
