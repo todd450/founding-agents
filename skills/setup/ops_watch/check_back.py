@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""The researcher's check-back: did each shipped brief do what its "how we'll know" said?
+"""Ops watch's check-back: did each shipped brief do what its "how we'll know" said?
 
 `due` lists the briefs whose check-back is due, with what each said; `post <brief>` reads the
-researcher's verdict as JSON on stdin and posts the check-back in one shape, opening a
+verdict as JSON on stdin and posts the check-back in one shape, opening a
 `needs-founder` item when the brief did not work; `score` prints the share of shipped briefs that
 worked, among those with a verdict. Only the verdict and what happened need judgement, so
 everything else is here.
@@ -15,7 +15,7 @@ three times in all.
 
 Every call is `gh api` over REST inside this repo, since a routine's cloud proxy blocks GraphQL and
 everything outside `repos/<owner>/<repo>/`. The Founding Agents `setup` skill copies this file into
-the product. Change it in the plugin's skills/setup/researcher/ and rerun setup.
+the product. Change it in the plugin's skills/setup/ops_watch/ and rerun setup.
 """
 
 import argparse
@@ -166,7 +166,7 @@ def decision_item(brief, verdict):
     reason = verdict.get("why") or "no reason given"
     return "\n".join([
         f"**Decision needed:** keep, change or remove what #{brief['number']} built. It did not do what "
-        f"its brief said. The researcher recommends **{verdict['recommend']}**: {reason}",
+        f"its brief said. Ops watch recommends **{verdict['recommend']}**: {reason}",
         "",
         "**What we said:**",
         quote(brief["promise"]),

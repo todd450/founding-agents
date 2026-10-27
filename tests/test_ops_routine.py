@@ -18,7 +18,7 @@ class RoutineTest(unittest.TestCase):
     def test_every_routine_uses_no_graphql_command_since_the_cloud_proxy_blocks_them(self):
         # In a routine, `gh issue`, `gh pr` and `gh repo view` go through GraphQL and get a 403.
         # A routine names those three to warn against them; every command it runs is `gh api`.
-        self.assertEqual([p.parent.name for p in ROUTINES], ["librarian", "ops_watch", "optimiser", "researcher"])
+        self.assertEqual([p.parent.name for p in ROUTINES], ["librarian", "ops_watch", "optimiser"])
         for routine in ROUTINES:
             text = routine.read_text()
             commands = [c for c in re.findall(r"`(gh [^`]+)`", text) if c not in ("gh issue", "gh pr", "gh repo view")]
@@ -52,6 +52,12 @@ class RoutineTest(unittest.TestCase):
     def test_a_check_that_could_not_run_is_not_red(self):
         self.assertIn("A check you could not run is not red", ROUTINE)
 
+    def test_a_brief_that_did_not_work_goes_to_the_founder_and_is_never_red(self):
+        # A red stops merges; a feature nobody uses is a decision, not an outage.
+        section = ROUTINE.split("## Check-backs on shipped briefs", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("This is never red", section)
+        self.assertNotIn("labels[]=red", section)
+
 
 class KitTest(unittest.TestCase):
     def test_installs_the_weekly_routines_where_their_prompts_point(self):
@@ -61,17 +67,6 @@ class KitTest(unittest.TestCase):
                 install(root, plan(root, kit))
                 self.assertTrue((root / ".github" / kit / "routine.md").exists(), kit)
 
-    def test_installs_the_check_back_and_leaves_the_products_evidence_its_own(self):
-        with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            (root / ".github/researcher").mkdir(parents=True)
-            (root / ".github/researcher/evidence.md").write_text("- **The one metric:** weekly sign-ups\n")
-            install(root, plan(root, "researcher"))
-            for name in ("routine.md", "check_back.py"):
-                self.assertEqual((root / ".github/researcher" / name).read_bytes(),
-                                 (SETUP / "researcher" / name).read_bytes(), name)
-            self.assertIn("weekly sign-ups", (root / ".github/researcher/evidence.md").read_text())
-
     def test_keeps_the_routine_current_and_the_products_checks_its_own(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -80,6 +75,10 @@ class KitTest(unittest.TestCase):
             (root / ".github/ops-watch/watch.md").write_text("- **Address:** https://o.github.io/site/\n")
             install(root, plan(root, "ops-routine"))
             self.assertEqual((root / ".github/ops-watch/routine.md").read_text(), ROUTINE)
+            # The check-back's script goes beside the routine, which runs it from there.
+            self.assertEqual((root / ".github/ops-watch/check_back.py").read_bytes(),
+                             (SETUP / "ops_watch" / "check_back.py").read_bytes())
+            self.assertIn("python3 .github/ops-watch/check_back.py due", ROUTINE)
             self.assertIn("o.github.io", (root / ".github/ops-watch/watch.md").read_text())
 
 
