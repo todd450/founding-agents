@@ -1,13 +1,13 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, or to set up the holdout scenarios. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
-This version covers CI, branch protection, ops watch's site check and the holdout scenarios. The
-other routines, labels and fixtures arrive with the build steps that use them (`docs/design.md` in the Founding Agents
-repo, "Build order").
+This version covers CI, branch protection, ops watch's site check, the holdout scenarios, the
+product's `CLAUDE.md` and fixtures, and the labels. The routines arrive with the roles that run
+them (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
 
@@ -89,17 +89,29 @@ reviewer reads them; the plugin's `guard_holdouts` hook blocks every other agent
 
 Rerunning it on another machine clones the same repo there.
 
+## The map and the fixtures
+
+Every product gets a short `CLAUDE.md`, the map every session loads, and a `fixtures/` folder for
+the visible edge-case scenarios builders write their tests from.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py basics` shows the two starter
+   files. A product that already has either keeps its own; for an existing `CLAUDE.md`, suggest to
+   the founder what the starter adds, rather than changing it.
+2. **Fill in the starter `CLAUDE.md` with the founder:** one paragraph on what the product is and
+   who it is for, and the product's own rules with the check that holds each. Keep it short; a
+   rule worth keeping becomes a check, not a paragraph.
+3. **Apply on a branch.** Rerun with `--apply`, commit, and open a PR.
+
 ## Labels
 
-`build` takes only issues labelled `decided`, the founder's yes. Create the queue's labels once,
-skipping any that exist:
+`build` takes only issues labelled `decided`, the founder's yes; `needs-founder` is the decision
+queue; an open `red` issue stops merges. Create them once, skipping any that exist:
 
 ```
 gh label create needs-founder --color FBCA04 --description "Waiting on the founder's decision"
 gh label create decided --color 0E8A16 --description "The founder said yes; ready to build"
+gh label create red --color B60205 --description "A scheduled check failed; nothing merges until it is fixed"
 ```
-
-Ops watch creates `red` itself the first time a check fails.
 
 ## Needs
 
