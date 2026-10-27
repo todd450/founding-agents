@@ -8,7 +8,9 @@ decides scope and taste and talks to users; the agents plan, build, check, ship 
 `setup` skill that turns on branch protection and installs ops watch's nightly site check,
 `/founding-agents:propose`, which turns an idea into a brief and mockups for the founder to decide,
 and `/founding-agents:build`, which built the site's page through four decided issues. Step 5,
-growing the team on demand, is next.
+growing the team on demand, has begun with `/founding-agents:sweep codebase|tests|security`, which
+runs the optimiser, the test auditor or the security reviewer and puts up to five findings to the
+founder for `build`.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.

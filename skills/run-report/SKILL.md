@@ -11,6 +11,8 @@ Run from the product repo's folder:
   session that ran `/founding-agents:build <n>` and comments the table on issue `<n>`.
 - Use `--workflow propose` for a propose run. For an idea in words, `--issue` is the issue the product
   lead opened.
+- Use `--workflow sweep` for a sweep run, with `--issue` the queue item it opened; it reports the
+  newest session that ran a sweep.
 - `--budget <dollars>` flags a run that cost more, above the table. The workflows pass their own
   budget.
 - Leave out `--post` to print the table only; `--session <path to a .jsonl>` reports on one session

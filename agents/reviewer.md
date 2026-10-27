@@ -40,6 +40,9 @@ Start in your own worktree with `gh pr checkout <number>`, so the founder's chec
 - Check the tests: they run from `check.sh` in CI, they test behaviour rather than exact wording,
   and none rebuilds by hand what a standard validator, linter, link checker, accessibility checker
   or browser test already does. A hand-written check where a standard tool would do is a finding.
+- When the issue has pass marks, check each one yourself; one you cannot confirm is a finding to
+  fix. When its details are in a private security advisory, read it with `gh api`, and say only
+  which pass marks hold and which do not: the steps to reproduce stay out of the PR.
 - Send back a change that is too large without reviewing it, and say how to split it.
 
 **The review**

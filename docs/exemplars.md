@@ -21,6 +21,7 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Builder | Kent Beck's test-driven development; Google's small changes |
 | Edge-case QA | Elisabeth Hendrickson's test heuristics |
 | Code reviewer | Google's code review guide |
+| Test auditor | Google's test sizes and flaky-test work; mutation testing |
 | Security reviewer | Trail of Bits findings, against OWASP ASVS |
 | Optimiser | Performance budgets; DRY; FinOps unit economics for token cost |
 | Integrator | Rust's bors and the Not Rocket Science Rule |
@@ -114,13 +115,23 @@ edge-case QA's.
 Sources: Google, [The standard of code review](https://google.github.io/eng-practices/review/reviewer/standard.html)
 and [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html).
 
+## Test auditor — Google's testing and mutation testing
+
+The test auditor judges the suite itself, which nobody else does: the builder writes tests for one
+change and the reviewer runs them. Its practices are in [agents/test-auditor.md](../agents/test-auditor.md).
+Chosen by Claude when the role was added on 27 Oct 2026; the founder may swap it.
+
+Sources: Titus Winters, Tom Manshreck and Hyrum Wright, [*Software Engineering at Google*](https://abseil.io/resources/swe-book)
+(O'Reilly, 2020), chapters 11 to 14 on test size, unit tests and flaky tests; Goran Petrović and
+Marko Ivanković, [State of mutation testing at Google](https://research.google/pubs/state-of-mutation-testing-at-google/)
+(ICSE SEIP, 2018).
+
 ## Security reviewer — Trail of Bits, against OWASP ASVS
 
-- **Check against OWASP ASVS,** a published list of security requirements (sign-in, sessions,
-  access control, input handling, storage and more), and name the requirement each finding breaks.
-- **Write each finding the way Trail of Bits does:** severity, how hard it is to exploit, an exploit
-  scenario a reader can follow, a short-term fix and a long-term fix.
-- **Say what was not reviewed.** Findings are never a complete list.
+ASVS gives the reviewer a published list to check against and a name for what each finding breaks;
+Trail of Bits' reports give each finding a shape the founder can rank: severity, ease, a scenario,
+a short-term and a long-term fix. The practices are in
+[agents/security-reviewer.md](../agents/security-reviewer.md).
 
 Sources: Trail of Bits, [Anatomy of a report](https://www.trailofbits.com/anatomy-of-a-report/);
 OWASP, [Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/).
@@ -129,12 +140,12 @@ OWASP, [Application Security Verification Standard](https://owasp.org/www-projec
 
 The optimiser looks after two costs: what the product costs to run (page weight, dead code,
 duplication) and what the team costs to run (tokens). Nobody owned token cost before, and Cursor
-found that workers, not planners, used most of the tokens (principle 3).
+found that workers, not planners, used most of the tokens (principle 3). Budgets make a cost a
+number with a limit, DRY names the duplication to remove, and unit economics judges tokens per
+merged change rather than total spend. The practices for the codebase are in
+[agents/optimiser.md](../agents/optimiser.md); until its weekly routine exists, the token practices
+are specced here:
 
-- **A budget, not an impression.** Fixed limits per page (size, script, load time on a phone),
-  checked in CI, so a regression fails a check instead of waiting for the weekly review.
-- **One authoritative definition** for every piece of knowledge (*The Pragmatic Programmer*'s
-  DRY). The optimiser lists things defined in several places and proposes the one place.
 - **Cost per unit of value, not total spend** (FinOps unit economics): tokens per merged change, by
   role and by model, priced as a share of the weekly limit on a Pro or Max plan and in dollars on
   an API key. Spend that rises with merged changes is fine; cost per change that

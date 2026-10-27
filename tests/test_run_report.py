@@ -84,6 +84,13 @@ class FindSessionTest(unittest.TestCase):
             self.assertEqual(find_session(logs, "propose", 4).name, "c.jsonl")
             self.assertIsNone(find_session(logs, "build", 5))
 
+    def test_a_sweep_is_found_by_its_workflow_alone(self):
+        with tempfile.TemporaryDirectory() as folder:
+            logs = Path(folder)
+            write(logs / "a.jsonl", {"type": "user", "message": {"content":
+                  "<command-name>/founding-agents:sweep</command-name><command-args>security</command-args>"}})
+            self.assertEqual(find_session(logs, "sweep", 31).name, "a.jsonl")
+
     def test_project_logs_are_named_from_the_folder_path(self):
         self.assertEqual(project_logs(Path("/Users/t/code/my.site")).name, "-Users-t-code-my-site")
 
