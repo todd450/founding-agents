@@ -379,7 +379,16 @@ of this (see Sources).
   which would spend allowance on every push of a draft. A session started with `--agent` gets only
   its agent file's tools, so it cannot return `--json-schema`'s structured output: an agent step is
   asked to end its reply with the result as JSON, and Haiku reads it from the reply when that
-  fails. FIRST_RUN
+  fails. First run, 27 Oct 2026: 57 trials in 45 minutes, $26.45 at API prices, against the $35
+  estimated; 91% of trials passed and 89% of tasks passed all three. Two failures are the agents':
+  on the regex colour test the code reviewer found every hole but never said to use a CSS linter
+  (0 of 3), which is #4's stall, and QA sent back a correct page in two of three, asking for a test
+  the issue did not. Three were the graders': two pinned the words an agent might use and one read
+  markup as words, found by reading the transcripts and fixed before counting, which a test now
+  holds. Most capability tasks passed every trial, since the instructions changed after the website
+  runs (standard tools, the review split), so they need harder tasks before they say much. The
+  builder on Sonnet passed all fifteen of its trials, as Opus did, at $0.22 a trial against $0.78;
+  three builder tasks are too few to move it back, so harder builder tasks come before that choice.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small

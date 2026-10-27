@@ -27,7 +27,9 @@ class StatusTest(unittest.TestCase):
 
     def test_the_red_line_agrees_with_the_record(self):
         none_open = re.search(r"Open `red` issues: none", STATUS) is not None
-        self.assertEqual("No open red issue" in PAGE, none_open)
+        band = re.sub(r"<[^>]+>", "", re.search(r'class="band-head">(.*?)</div>', PAGE, re.S).group(1))
+        says_none = re.search(r"\bno\b[^.]*\bred issue|red issues?[^.]*\bnone\b", band, re.I) is not None
+        self.assertEqual(says_none, none_open)
 
 
 if __name__ == "__main__":
