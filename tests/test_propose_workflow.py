@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
 GO = {"repo": "o/site", "issue": 7, "recommend": "go", "reason": "two founders asked for it", "overruled": False,
-      "decisions": []}
+      "screens": True, "decisions": []}
 NO_GO = {**GO, "recommend": "no-go", "reason": "no evidence anyone wants it yet"}
 
 
@@ -21,6 +21,11 @@ def option(letter, stars):
 
 DESIGN = {"branch": "propose/issue-7", "stopped_because": "", "recommended": "B", "options": [option("A", 3), option("B", 6)]}
 POSTED = {"comment_url": "https://github.com/o/site/issues/7#issuecomment-1"}
+
+
+DOOR = {"decision": "How the site deploys", "options": ["GitHub Pages", "Netlify"], "recommend": "GitHub Pages",
+        "why": "it already serves the site.", "reverse": "an hour while it is one page"}
+BUILT = {**GO, "screens": False, "decisions": [DOOR]}
 
 
 @unittest.skipUnless(HAVE_NODE, "needs node")
@@ -105,6 +110,22 @@ class ProposeWorkflowTest(unittest.TestCase):
         prompt = run_workflow("propose", {"product lead": [NO_GO], "queue": [POSTED]}, 7)["calls"][0]["prompt"]
         self.assertIn('"Technical decisions"', prompt)
         self.assertIn('"a static site"', prompt)
+
+    def test_a_brief_with_nothing_on_screen_skips_the_designer_and_asks_only_the_decisions(self):
+        run = run_workflow("propose", {"product lead": [BUILT], "queue": [POSTED]}, 7)
+        self.assertEqual([call["label"] for call in run["calls"]], ["product lead", "queue item", "run report"])
+        item = self.queue_item(run)
+        self.assertIn("**D1. How the site deploys:** GitHub Pages / Netlify", item)
+        self.assertIn("reply with your choice for each technical decision (D1) and any notes, then add the `decided` label", item)
+        self.assertNotIn("which option", item)
+        self.assertNotIn("again for mockups", item)
+
+    def test_an_overruled_no_go_with_nothing_on_screen_is_decided_without_mockups(self):
+        run = run_workflow("propose", {"product lead": [{**BUILT, "recommend": "no-go", "overruled": True}],
+                                       "queue": [POSTED]}, 7)
+        self.assertNotIn("designer", [call["label"] for call in run["calls"]])
+        item = self.queue_item(run)
+        self.assertIn("say so in a reply with your choice for each technical decision (D1), then add the `decided` label", item)
 
     def test_the_queue_item_adds_the_needs_founder_label(self):
         item = self.queue_item(run_workflow("propose", {"product lead": [NO_GO], "queue": [POSTED]}, 7))
