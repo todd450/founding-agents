@@ -162,7 +162,11 @@ of this (see Sources).
   designer had no `Skill` tool, so it could not find the screenshot script and built a CI renderer
   instead; it now has the tool, and stops when screenshots cannot be taken. A headless run
   (`claude -p`) stops waiting for a workflow after 600 seconds unless
-  `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` is set.
+  `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` is set. A brief that changes nothing on screen, such as
+  how the product is built or deploys, skips the designer too: the product lead says whether it
+  does, and the item asks only go or no-go and each technical decision. Found on 26 Oct 2026 before
+  the website's build-and-deploy brief, which would otherwise have sent the designer to mock up a
+  choice with no screens.
 - **Mockups: one HTML page per option on a `propose/issue-<n>` branch, with screenshots in the
   issue.** Decided by the founder on 25 Oct 2026. A page shows real content at real lengths and can
   be opened at any width; the phone and desktop screenshots, taken with headless Chrome by the
