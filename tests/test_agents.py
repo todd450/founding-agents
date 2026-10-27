@@ -30,5 +30,26 @@ class AgentFileTest(unittest.TestCase):
         self.assertEqual(writers, {"builder", "designer"})
 
 
+
+class ProportionTest(unittest.TestCase):
+    """Reviews weigh who can reach a finding, and the integrator does not repeat checks CI ran."""
+
+    def read(self, name):
+        text = (Path(__file__).resolve().parent.parent / "agents" / f"{name}.md").read_text()
+        return " ".join(text.split())
+
+    def test_reviewers_rate_a_finding_by_who_can_reach_it(self):
+        # On the website's #27, six rounds went on link tricks only the founder's own data could carry.
+        self.assertIn("Rate severity by who can reach the input", self.read("security-reviewer"))
+        self.assertIn("Rate a failure by who meets it", self.read("qa"))
+        self.assertIn("by who can reach the input", self.read("code-reviewer"))
+
+    def test_the_integrator_merges_on_green_checks_when_main_has_not_moved(self):
+        integrator = self.read("integrator")
+        self.assertIn("git merge-base --is-ancestor origin/main FETCH_HEAD", integrator)
+        self.assertIn("gh pr update-branch", integrator)
+        self.assertIn("Merge on that green result, without rerunning them", integrator)
+
+
 if __name__ == "__main__":
     unittest.main()

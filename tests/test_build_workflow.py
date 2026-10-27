@@ -66,6 +66,11 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertEqual(self.labels(run), ["check #12", "builder #12, round 1", "qa #12, round 1", "code review #12, round 1",
                                             "integrator, PR #4", "tidy worktrees", "run report"])
 
+    def test_the_integrator_is_told_not_to_rerun_checks_when_main_has_not_moved(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
+        integrator = next(c for c in run["calls"] if c["label"].startswith("integrator"))
+        self.assertIn("without rerunning them when `main` has not moved", integrator["prompt"])
+
     def test_each_role_runs_as_its_plugin_agent_and_the_builder_in_a_worktree(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
         builder, qa, code, integrator = run["calls"][1:5]
