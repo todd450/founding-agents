@@ -180,6 +180,24 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertNotIn("as a repeat", first)
         self.assertIn("as a repeat", second)
 
+    def test_a_repeat_is_only_a_finding_from_an_earlier_round(self):
+        # On the website's #27, a reviewer counted a finding the other reviewers had raised minutes
+        # earlier in the same round as a repeat, and the run stopped a round early.
+        run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, APPROVE],
+                                 "integrator": [MERGED]})
+        second = [call["prompt"] for call in run["calls"] if call["label"].startswith(("qa", "code review"))][2:]
+        for prompt in second:
+            self.assertIn("a finding only they raised is not a repeat", prompt)
+            self.assertIn("The previous round's must-fix findings", prompt)
+            self.assertIn("- QA: slug.py:3: empty title crashes", prompt)
+
+    def test_a_continued_pr_gets_the_rule_but_no_list_it_cannot_know(self):
+        run = self.run_workflow({"check": [{**READY, "open_pr": 9}], "builder": [{**PR, "pr_number": 9}],
+                                 "qa": [APPROVE], "integrator": [MERGED]})
+        qa = next(call["prompt"] for call in run["calls"] if call["label"].startswith("qa"))
+        self.assertIn("a finding only they raised is not a repeat", qa)
+        self.assertNotIn("The previous round's must-fix findings", qa)
+
     def test_qa_and_code_review_run_side_by_side_and_both_must_approve(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [APPROVE, APPROVE],
                                     "code review": [{**CODE_OK, **CHANGES, "security": False}, CODE_OK],
