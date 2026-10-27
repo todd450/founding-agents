@@ -27,7 +27,8 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
 
-The starting five's combined reviewer takes both the edge-case QA and the code reviewer sections.
+The starting five's combined reviewer took both the edge-case QA and the code reviewer sections
+until 27 Oct 2026, when they became two agents.
 
 ## Product lead — Basecamp's *Shape Up*
 
@@ -39,14 +40,10 @@ Source: Ryan Singer, [*Shape Up*](https://basecamp.com/shapeup) (Basecamp, 2019)
 
 ## Researcher — *The Mom Test*
 
-The costliest research mistake is collecting compliments and guesses that feel like evidence.
-
-- **Ask about their life, not the idea.** No pitching during an interview.
-- **Ask about specific past events** ("talk me through the last time that happened"), never "would
-  you" or "do you usually".
-- **Discount compliments, generic claims ("I always") and future promises ("I would").** A real
-  signal costs the person something: time, money or an introduction.
-- **Synthesis keeps what people did apart from what the researcher infers,** with the date of each.
+The costliest research mistake is collecting compliments and guesses that feel like evidence, and
+the first product built for five months with no real users. *The Mom Test* is a short, concrete
+method for conversations that people cannot be polite in. The practices are in
+[agents/researcher.md](../agents/researcher.md).
 
 Source: Rob Fitzpatrick, [*The Mom Test*](https://www.momtestbook.com/) (2013).
 
@@ -68,18 +65,11 @@ Karri Saarinen, [Airbnb Design Language System](https://karrisaarinen.com/dls/) 
 ## Architect — Amazon's doors and Stripe's compatibility
 
 The architect's decisions cost the most to change later: schema, shared code, the interfaces
-between parts.
-
-- **Sort one-way from two-way doors.** Bezos's 2015 letter splits decisions into the irreversible,
-  which deserve slow care, and the reversible, which should be made fast by whoever is closest.
-  The plan spends its effort on the one-way doors (schema, stored formats, data users depend on,
-  interfaces other parts call) and leaves the two-way doors to the builder.
-- **Every interface is a contract.** Stripe has kept every version of its API working since 2011.
-  Add fields and endpoints; never change or remove what callers depend on without a migration;
-  when a shape must change, adapt old callers in one place.
-- **The plan names each one-way door,** the alternatives considered for it and why one won, and the
-  day-one defaults it sets.
-- **Split for builders** into tickets that do not touch the same files (principle 5).
+between parts. Bezos's 2015 letter splits decisions into the irreversible, which deserve slow care,
+and the reversible, which should be made fast by whoever is closest; Stripe has kept every version
+of its API working since 2011. The practices are in [agents/architect.md](../agents/architect.md).
+One change from the letter: on this team the architect recommends each one-way door and the founder
+decides it.
 
 Sources: Jeff Bezos, [2015 letter to shareholders](https://s2.q4cdn.com/299287126/files/doc_financials/annual/2015-Letter-to-Shareholders.PDF);
 Brandur Leach, [APIs as infrastructure: future-proofing Stripe with versioning](https://stripe.com/blog/api-versioning)
@@ -98,8 +88,8 @@ Sources: Kent Beck, *Test-Driven Development: By Example* (Addison-Wesley, 2002)
 ## Edge-case QA — Elisabeth Hendrickson
 
 The failure checklist names classes of failure. Hendrickson's heuristics generate the cases inside
-each class, and her exploratory testing drives the real app instead of reading the code. Until the
-team splits QA from code review, the practices are in [agents/reviewer.md](../agents/reviewer.md).
+each class, and her exploratory testing drives the real app instead of reading the code. The
+practices are in [agents/qa.md](../agents/qa.md).
 
 Sources: Elisabeth Hendrickson, [*Explore It!*](https://pragprog.com/titles/ehxta/explore-it/)
 (Pragmatic Bookshelf, 2013), and her Test Heuristics Cheat Sheet (with James Lyndsay and Dale
@@ -108,19 +98,17 @@ Emery).
 ## Code reviewer — Google's code review guide
 
 Google's guide gives the reviewer a standard to approve against and words for what must be fixed
-and what may be skipped. The practices are in [agents/reviewer.md](../agents/reviewer.md), with
-edge-case QA's.
+and what may be skipped. The practices are in [agents/code-reviewer.md](../agents/code-reviewer.md).
 
 Sources: Google, [The standard of code review](https://google.github.io/eng-practices/review/reviewer/standard.html)
 and [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html).
 
 ## Security reviewer — Trail of Bits, against OWASP ASVS
 
-- **Check against OWASP ASVS,** a published list of security requirements (sign-in, sessions,
-  access control, input handling, storage and more), and name the requirement each finding breaks.
-- **Write each finding the way Trail of Bits does:** severity, how hard it is to exploit, an exploit
-  scenario a reader can follow, a short-term fix and a long-term fix.
-- **Say what was not reviewed.** Findings are never a complete list.
+ASVS turns "is it secure" into a list of requirements a finding can name, and Trail of Bits'
+report format makes each finding something the builder can act on: how bad, how likely, how it
+happens and how to fix it now and for good. The practices are in
+[agents/security-reviewer.md](../agents/security-reviewer.md).
 
 Sources: Trail of Bits, [Anatomy of a report](https://www.trailofbits.com/anatomy-of-a-report/);
 OWASP, [Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/).
@@ -129,24 +117,12 @@ OWASP, [Application Security Verification Standard](https://owasp.org/www-projec
 
 The optimiser looks after two costs: what the product costs to run (page weight, dead code,
 duplication) and what the team costs to run (tokens). Nobody owned token cost before, and Cursor
-found that workers, not planners, used most of the tokens (principle 3).
-
-- **A budget, not an impression.** Fixed limits per page (size, script, load time on a phone),
-  checked in CI, so a regression fails a check instead of waiting for the weekly review.
-- **One authoritative definition** for every piece of knowledge (*The Pragmatic Programmer*'s
-  DRY). The optimiser lists things defined in several places and proposes the one place.
-- **Cost per unit of value, not total spend** (FinOps unit economics): tokens per merged change, by
-  role and by model, priced as a share of the weekly limit on a Pro or Max plan and in dollars on
-  an API key. Spend that rises with merged changes is fine; cost per change that
-  rises is not.
-- **Where to look for tokens:** changes sent back and built again; what every session loads
-  (CLAUDE.md, skill and agent descriptions, MCP servers); the model each role runs on (move a role
-  down a tier when it does as well on the same tickets); long sessions.
-- **Measure from what Claude Code reports:** its OpenTelemetry metrics (`claude_code.token.usage`,
-  `claude_code.cost.usage`) and `/usage`. The billing record is claude.ai's usage settings on a plan
-  and the Claude Console's Usage page on an API key.
-- **Propose, never change.** Each saving becomes a builder ticket with the measured before and
-  after. Ops watch raises red when spend passes the budget; the optimiser finds out why.
+found that workers, not planners, used most of the tokens (principle 3). Performance budgets turn
+"too slow" into a number CI checks; DRY gives every piece of knowledge one home; FinOps unit
+economics measures cost per merged change rather than total spend, so spend that rises with output
+is fine and cost per change that rises is not. The practices are in
+[skills/setup/optimiser/routine.md](../skills/setup/optimiser/routine.md), since the optimiser runs
+as a routine, which loads no plugin agents.
 
 Sources: Milica Mihajlija, [Performance budgets 101](https://web.dev/articles/performance-budgets-101)
 (web.dev); Andrew Hunt and David Thomas, *The Pragmatic Programmer* (1999); FinOps Foundation,
@@ -179,13 +155,12 @@ and [Embracing risk](https://sre.google/sre-book/embracing-risk/).
 
 ## Librarian — poka-yoke and blameless postmortems
 
-- **Prevent rather than warn.** Shigeo Shingo's mistake-proofing at Toyota separates devices that
-  warn about a mistake from ones that stop it. A lesson that must hold becomes a check that stops
-  the mistake (a test, a lint rule or a hook), not a sentence in a rules file.
-- **Blame the system, not the agent.** Ask how the mistake got through, not who made it. "The
-  builder should have known" is not a finding; the missing check is.
-- **One incident, one guard,** linked to its evidence in `docs/`, and deleted when the thing it
-  guarded is removed.
+Shigeo Shingo's mistake-proofing at Toyota separates devices that warn about a mistake from ones
+that stop it, which is the difference between a line in a rules file and a check; blameless
+postmortems ask how a mistake got through instead of who made it. The first product's rules file
+grew to 4,392 lines of warnings before it was cut. The practices are in
+[skills/setup/librarian/routine.md](../skills/setup/librarian/routine.md), since the librarian runs
+as a routine.
 
 Sources: Shigeo Shingo, *Zero Quality Control: Source Inspection and the Poka-yoke System* (1986);
 John Allspaw, [Blameless postmortems and a just culture](https://www.etsy.com/codeascraft/blameless-postmortems)

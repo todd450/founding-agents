@@ -5,7 +5,7 @@ export const meta = {
   phases: [
     { title: 'Brief', detail: 'the product lead writes the brief and recommends', model: 'opus' },
     { title: 'Design', detail: 'the designer storyboards and mocks up two or three options', model: 'opus' },
-    { title: 'Views', detail: 'the builder, reviewer and integrator each recommend, and say why', model: 'sonnet' },
+    { title: 'Views', detail: 'every other role recommends from what its job knows, and says why', model: 'sonnet' },
     { title: 'Team', detail: "the team's overall recommendation, weighing every role's", model: 'opus' },
     { title: 'Queue', detail: "one needs-founder item with each role's recommendation, the team's, the options and their costs", model: 'haiku' },
     { title: 'Report', detail: "the run's time, tokens and cost, posted on the issue", model: 'haiku' },
@@ -17,7 +17,7 @@ const text = String(raw ?? '').trim()
 const issue = /^#?\d+$/.test(text) ? Number(text.replace('#', '')) : 0
 if (!text) throw new Error('Name an issue or describe the idea, e.g. /founding-agents:propose 7')
 
-// What counts as a technical one-way door; build.js and propose.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js and plan.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 const BRIEF = {
@@ -102,8 +102,12 @@ const VIEW = {
 // The roles who each recommend after the product lead and the designer, each from what its job
 // knows; every one is an agent file in agents/ (a test checks).
 const VOICES = [
+  { name: 'Researcher', agentType: 'founding-agents:researcher', lens: 'what people have actually said and done, and how strong that evidence is' },
+  { name: 'Architect', agentType: 'founding-agents:architect', lens: 'how it fits what is already built, and which choices would be costly to undo' },
   { name: 'Builder', agentType: 'founding-agents:builder', lens: 'how much work it is to build and keep working, and what could make it take longer' },
-  { name: 'Reviewer', agentType: 'founding-agents:reviewer', lens: 'what could go wrong for the people using it, and how hard that will be to check' },
+  { name: 'QA', agentType: 'founding-agents:qa', lens: 'what could go wrong for the people using it, and how hard that will be to check' },
+  { name: 'Code reviewer', agentType: 'founding-agents:code-reviewer', lens: 'whether it adds more to look after than it is worth, and whether a simpler version would do' },
+  { name: 'Security reviewer', agentType: 'founding-agents:security-reviewer', lens: "what it risks for people's data, accounts and privacy" },
   { name: 'Integrator', agentType: 'founding-agents:integrator', lens: 'what releasing it means, and the risk to the live product' },
 ]
 const PLAIN = 'in plain English for someone who does not read code, with no jargon, file names or code'
@@ -182,7 +186,7 @@ const asked = [
 const recommend = `go or no-go${options ? ', one option' : ''}${choices ? ' and a choice on each technical decision' : ''}`
 
 phase('Views')
-const views = await Promise.all(VOICES.map(v => agent(
+const views = await parallel(VOICES.map(v => () => agent(
   `Read issue #${brief.issue} in ${brief.repo}: the brief and its comments. ${asked}
 
 Recommend ${recommend}, from what your role knows: ${v.lens}. Form your own view; the brief's recommendation is the product lead's. Say why ${PLAIN}, in two or three sentences. Read only: change nothing and post nothing.`,
@@ -254,7 +258,7 @@ if (brief.decisions.length) {
   lines.push('**Technical decisions:** none. This changes nothing about how the product is built, deployed or stores its data.', '')
 }
 const doors = brief.decisions.length ? `your choice for each technical decision (${brief.decisions.map((_, i) => `D${i + 1}`).join(', ')})` : ''
-const yes = `then add the \`decided\` label, and \`/founding-agents:build ${brief.issue}\` builds it. To say no, close the issue; nothing is kept for later.`
+const yes = `then add the \`decided\` label, and \`/founding-agents:plan ${brief.issue}\` cuts it into build issues. To say no, close the issue; nothing is kept for later.`
 let answer
 if (design) answer = `reply with the letter you pick${doors ? `, ${doors}` : ''} and any notes, ${yes}`
 else if (!brief.screens && brief.recommend === 'go') answer = `reply with ${doors ? `${doors} and ` : ''}any notes, ${yes}`

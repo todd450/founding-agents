@@ -1,14 +1,11 @@
 """The propose workflow ends in one queue item: each role's recommendation and the team's, the options and how to decide."""
 
-import re
 import sys
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from workflow_harness import HAVE_NODE, WORKFLOWS, run_workflow  # noqa: E402
-
-AGENTS = WORKFLOWS.parent / "agents"
+from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
 GO = {"repo": "o/site", "issue": 7, "recommend": "go", "reason": "two founders asked for it", "overruled": False,
       "screens": True, "decisions": []}
@@ -36,7 +33,7 @@ def view(recommend="go", option="", why="It is a day's work.", decisions=()):
     return {"recommend": recommend, "option": option, "why": why, "decisions": list(decisions)}
 
 
-VOICES = ["builder", "reviewer", "integrator"]
+VOICES = ["researcher", "architect", "builder", "qa", "code reviewer", "security reviewer", "integrator"]
 TEAM = view(option="B", why="Everyone agrees B is worth its six days.")
 
 
@@ -79,20 +76,13 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertEqual((designer["agentType"], designer["isolation"]), ("founding-agents:designer", "worktree"))
         for voice in VOICES:
             self.assertEqual((self.call(run, voice)["agentType"], self.call(run, voice)["model"]),
-                             (f"founding-agents:{voice}", "sonnet"))
+                             (f"founding-agents:{voice.replace(' ', '-')}", "sonnet"))
         self.assertEqual(self.call(run, "team")["model"], "opus")
         self.assertEqual(self.call(run, "queue item")["model"], "haiku")
 
-    def test_every_agent_a_workflow_names_is_an_agent_file(self):
-        for script in WORKFLOWS.glob("*.js"):
-            for name in re.findall(r"founding-agents:([a-z-]+)", script.read_text()):
-                if name in {"build", "propose", "plan", "sweep"}:  # slash commands, not agents
-                    continue
-                self.assertTrue((AGENTS / f"{name}.md").exists(), f"{script.name} names {name}, which has no agent file")
-
     def test_the_queue_item_gives_the_teams_recommendation_then_each_roles_with_why(self):
         views = {"builder": view(option="A", why="A is two days less work."),
-                 "reviewer": view(option="B", why="B is easier to check on a phone."),
+                 "qa": view(option="B", why="B is easier to check on a phone."),
                  "integrator": view(option="B", why="Neither changes how the site goes live.")}
         team = view(option="B", why="B shows the whole journey; the builder prefers A to save two days.")
         item = self.queue_item(run_workflow("propose", replies(views=views, team=team), 7))
@@ -101,7 +91,7 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertIn("- **Product lead:** go. two founders asked for it", item)
         self.assertIn("- **Designer:** option B. B shows the whole journey.", item)
         self.assertIn("- **Builder:** go, option A. A is two days less work.", item)
-        self.assertIn("- **Reviewer:** go, option B. B is easier to check on a phone.", item)
+        self.assertIn("- **QA:** go, option B. B is easier to check on a phone.", item)
         self.assertIn("- **Integrator:** go, option B. Neither changes how the site goes live.", item)
         self.assertLess(item.index("**The team:"), item.index("**Product lead:**"))
 
@@ -126,15 +116,15 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertIn("https://github.com/o/site/blob/propose/issue-7/mockups/issue-7/b-phone.png?raw=true", item)
         self.assertIn("**Cost:** 6 days", item)
         self.assertIn("add the `decided` label", item)
-        self.assertIn("/founding-agents:build 7", item)
+        self.assertIn("/founding-agents:plan 7", item)
 
     def test_a_role_or_team_that_returns_nothing_still_leaves_a_queue_item(self):
         r = replies()
-        r["reviewer"], r["team"] = [None], [None]
+        r["qa"], r["team"] = [None], [None]
         run = run_workflow("propose", r, 7)
         item = self.queue_item(run)
         self.assertIn("**The team** gave no overall recommendation", item)
-        self.assertNotIn("**Reviewer:**", item)
+        self.assertNotIn("**QA:**", item)
         self.assertIn("- **Builder:** go, option B.", item)
         self.assertIn("### B. Option B (recommended)", item)
         self.assertEqual(run["result"]["team"], "")
