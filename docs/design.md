@@ -252,8 +252,14 @@ of this (see Sources).
   again, fixes for what a merge broke, runs that stopped for the founder), asks which check would
   have stopped each, and files at most three guards or prunes. Every proposal is a `needs-founder`
   issue, so a guard or a saving is built through `build` like any change, after the founder's
-  `decided`. Both run on Sonnet: they judge, but weekly and on a small amount of reading. Not yet
-  run on a real product.
+  `decided`. Both run on Sonnet: they judge, but weekly and on a small amount of reading. First
+  run on the website on 27 Oct 2026, each in about a minute. The optimiser opened issues through
+  `gh api`, which settles that a routine can write: it posted the week's numbers (one merged
+  change at $6.19, 16% of the week's cost on a `propose` run waiting for the founder) and proposed
+  one saving, a size budget for the page in `check.sh`. The librarian filed nothing, correctly:
+  the changes sent back three times and the errors found after merge were already guarded by the
+  standard checks and browser tests that came after them. Both found `search/` blocked and listed
+  issues instead, which their instructions now say.
 - **The researcher prepares and makes sense of conversations; the founder has them.** Built on
   27 Oct 2026, at the founder's request and before any product has users, so it waits for one. It
   is an agent the founder calls on demand, not a workflow step: research has no fixed place in a
@@ -291,8 +297,15 @@ of this (see Sources).
   GitHub proxy blocks GraphQL, so `gh issue` and `gh pr` fail and every call is `gh api` over
   REST, which a test holds; and a routine can only be created by `/schedule` or the web, so
   `setup` creates it through the `schedule` skill after the founder's yes. Whether Haiku can be
-  picked as a routine's model is not documented; `setup` falls back to the cheapest offered. Not
-  yet run on a real product.
+  picked as a routine's model is not documented; `setup` falls back to the cheapest offered.
+  First run on the website on 27 Oct 2026, on Haiku, which routines accept: scheduled checks and
+  `main` were green, and the live-site check could not run, since the cloud's network refused
+  `github.io` with a 403. So the routine no longer fetches the site: it reads what GitHub Pages
+  serves (`pages/builds/latest`) and checks each merge is in that commit, reading the served
+  files there. The cloud's GitHub proxy also serves only the routine's own repo, so `search/`
+  gets a 403 too; a test now holds every routine's calls to `repos/<owner>/<repo>/`. A routine
+  created through the API gets every claude.ai connector the founder has unless they are
+  cleared, so `setup` creates each with none.
 - **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook reads
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where

@@ -26,6 +26,17 @@ class RoutineTest(unittest.TestCase):
             for command in commands:
                 self.assertTrue(command.startswith("gh api"), f"{routine.parent.name}: {command}")
 
+    def test_every_routine_stays_inside_its_own_repo(self):
+        # The cloud's GitHub proxy serves only the routine's own repo: on 27 Oct 2026 the first runs
+        # got a 403 for `search/issues`, and for fetching the live site.
+        for routine in ROUTINES:
+            for command in re.findall(r"`(gh api [^`]+)`", routine.read_text()):
+                self.assertIn("repos/<owner>/<repo>", command, f"{routine.parent.name}: {command}")
+
+    def test_ops_watch_reads_what_pages_serves_instead_of_fetching_the_site(self):
+        self.assertIn("pages/builds/latest", ROUTINE)
+        self.assertNotIn("curl", ROUTINE)
+
     def test_the_weekly_routines_only_propose_and_leave_deciding_to_the_founder(self):
         for name in ("optimiser", "librarian"):
             text = (SETUP / name / "routine.md").read_text()
