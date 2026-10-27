@@ -114,6 +114,13 @@ of this (see Sources).
   unchanged: on 26 Oct 2026 the website's install at 0.1.0 still lacked `build` and `propose`
   after both had merged. A merged change that adds or alters an agent, skill, hook or workflow
   bumps `.claude-plugin/plugin.json`; a docs-only change does not.
+- **`setup` writes starters the product then owns.** Added on 27 Oct 2026: the `basics` kit gives a
+  product a short `CLAUDE.md` (what it is, `./check.sh`, where decisions live, its own rules) and a
+  `fixtures/` folder whose README names the same failure classes as the holdouts, which a test
+  keeps in step. Like `check.sh`, neither is ever replaced once the product has one; a long
+  `CLAUDE.md` is what the first product had to cut from 4,392 lines (principle 7). `setup` also
+  creates the `red` label, so `build` and the integrator can check for red before ops watch first
+  raises it. The routines arrive with the roles that run them.
 - **Tickets: GitHub Issues.** PRs and merges already live there, and `gh` reaches all of it.
   Markdown ticket files would put every builder on the same files (principle 5); Linear adds
   another login.
@@ -139,7 +146,7 @@ of this (see Sources).
   and the PR, not the builder's summary, since it reviews the diff and the running product. Each
   send-back reaches the same builder role on the same PR with the findings; after three, the run
   stops and the PR waits for the founder instead of looping. Every step names its model. Left for
-  later: the holdout scenarios, and pacing to the weekly limit, both described below. Tested on
+  later: pacing to the weekly limit, described below; the holdout scenarios followed on 27 Oct. Tested on
   25 Oct 2026 with `claude -p "/founding-agents:build 1"` on a throwaway repo: the builder opened
   the PR, the reviewer drove about 30 inputs and sent it back with one must-fix, the builder fixed
   it on the same PR, the reviewer approved with nits only, and the integrator merged it. The
@@ -194,7 +201,7 @@ of this (see Sources).
   queue item lists them with options, a recommendation and the cost of reversing, for the founder
   to answer. `build`'s first step, now on Sonnet because it has to judge, refuses an issue that
   settles one not named in its "Technical decisions" section or in a queue item on it; the builder
-  stops rather than choose one, and the reviewer sends back a change that makes one. Agents post
+  stops rather than choose one, and the code reviewer sends back a change that makes one. Agents post
   with the founder's own GitHub login, so a comment's author cannot show who decided: a decision
   counts as seen when it is named where the founder's `decided` label says yes to it. The architect
   lists, in each build issue it cuts, the decisions that issue settles.
@@ -225,6 +232,15 @@ of this (see Sources).
   issue owns. One run report goes on the brief. Two builders is the default because builders and
   reviewers all run on Opus, so four at once spends the week's Opus allowance four times as fast,
   and pacing to the weekly limit is not built yet. Not yet run on a real product.
+- **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
+  the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
+  its own worktree and posting its own comment; when the code reviewer says the diff touches
+  routes, sign-in, permissions, stored data, secrets, outside input or model calls, the security
+  reviewer looks too. The change is approved only when every reviewer approves, and the builder
+  gets all their findings, each marked with who raised it. QA is the only role that reads the
+  holdouts, so the holdout guard now trusts `founding-agents:qa`. The split's cost: two Opus
+  reviewers each round where there was one, and the reviewer was already the largest cost in five
+  of six website builds; the optimiser's numbers say whether it pays.
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
@@ -242,6 +258,20 @@ of this (see Sources).
   copy. GitHub stops a public repo's scheduled workflows after 60 days with no activity, and ops
   watch cannot report its own silence; checks that need judgement (spend, release verdicts) stay
   with the Haiku routine.
+- **Ops watch's judgement checks run as a daily routine whose instructions live in the product.**
+  Built on 27 Oct 2026. The routine checks that every scheduled workflow still runs and passed
+  (which covers the site check's silence, including GitHub turning schedules off after 60 days),
+  that `main` passes, that changes merged in the last day are live, and the week's run-report
+  totals against a budget the product sets, then the checks the product lists in
+  `.github/ops-watch/watch.md`, such as backups. A red opens one `red` issue per check and the next
+  green run closes it; a check that could not run is reported, never red. Three facts from the
+  routine docs shaped it: a cloud session does not install plugins, so the prompt is
+  `.github/ops-watch/routine.md`, copied into the product and kept current by `setup`; the cloud's
+  GitHub proxy blocks GraphQL, so `gh issue` and `gh pr` fail and every call is `gh api` over
+  REST, which a test holds; and a routine can only be created by `/schedule` or the web, so
+  `setup` creates it through the `schedule` skill after the founder's yes. Whether Haiku can be
+  picked as a routine's model is not documented; `setup` falls back to the cheapest offered. Not
+  yet run on a real product.
 - **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook reads
   which agent is calling and blocks `git push` to `main` and `gh pr merge` for every agent but the
   integrator. The docs call hook filtering best-effort, so the hard gate sits on GitHub, where
@@ -292,8 +322,9 @@ of this (see Sources).
   the table. Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
   spend waits for the optimiser.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
-  Opus 5.5 for the product lead, architect, designer, reviewer and builders, Sonnet 5.5 for the
-  integrator and Haiku 5.5 for ops watch and the workflows' small steps.
+  Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
+  builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
+  steps.
 - **Builders run on Opus, an exception to principle 3.** The founder's choice on 26 Oct 2026, after
   the first website builds on Sonnet; on #5 the Sonnet builder was sent back once and still shipped
   a step status the issue had said to check against the repo. The cost is the shared limit:
@@ -344,6 +375,18 @@ of this (see Sources).
   it is best-effort, since a builder's shell can reach any file on the machine. When a holdout
   fails, QA sends back the failure class and what went wrong, not the scenario. A scenario a
   builder has seen moves into the visible fixtures, and a new holdout replaces it.
+- **Holdouts in practice.** Built on 27 Oct 2026. The repo is `<product>-holdouts`, cloned to
+  `~/.founding-agents/holdouts/<owner>/<name>`, a path every machine can work out from the
+  product's name, so nothing in the product points to it. It holds one Markdown file per scenario
+  (setup, steps, expected) in a folder per failure class. The hook (`guard_holdouts.py`) blocks
+  every agent but `founding-agents:qa` (the reviewer until the split) from any tool call naming that folder or a
+  `-holdouts` repo; the founder's own session, which has no agent, passes, because it creates the
+  repo and writes the scenarios. The founder writes the first ones there, never through an agent,
+  so no builder's context ever held them; QA adds one or two wherever a change touches a
+  class that has none. A failing holdout is a must-fix finding naming only its class and what
+  went wrong, and `build` asks for nothing more in the findings it hands the builder. Moving a
+  seen scenario into the visible fixtures is left to the founder until the librarian exists. Not
+  yet run on a real product.
 - **Borrow, don't depend.** Existing suites (gstack, Compound Engineering, Superpowers, GSD) cover
   parts of this, but they churn (Compound Engineering renamed its commands; GSD's original repo was
   archived) and their auto-triggered skills would compete with these roles. Ideas are copied with
@@ -389,7 +432,7 @@ private, since the founder is the only user for now. A website bends the order i
 3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
    one reviewer combining QA and code review (read only; runs the visible fixtures and the
    holdouts), and the integrator. Run it on three to five real issues. Done on 26 Oct 2026 on the
-   website, without holdouts, which are still to build: four issues cut by hand from the decided
+   website, without holdouts, which were built on 27 Oct 2026 and have not run there yet: four issues cut by hand from the decided
    brief went through `build` to merge. #4 was sent back three times on a test the issue asked
    for that needed a CSS linter, and merged once the founder narrowed it; #5 merged after one
    send-back, with a stale step status and a layout gap the reviewer missed; #6 was sent back
@@ -405,7 +448,8 @@ private, since the founder is the only user for now. A website bends the order i
 5. **Grow on demand:** the architect for schema or shared changes (built as `plan` on 27 Oct 2026,
    not yet run on the website); two to four parallel builders once one is routine (built into
    `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser,
-   librarian and researcher as their kind of work appears.
+   librarian and researcher as their kind of work appears. QA and code review became two roles,
+   with the security reviewer beside them, on 27 Oct 2026, not yet run on the website.
 
 ## How we'll know it works
 
