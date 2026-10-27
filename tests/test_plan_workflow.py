@@ -1,5 +1,6 @@
 """The plan workflow checks the brief, and the architect either opens build issues or asks the founder."""
 
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -13,8 +14,10 @@ PLANNED = {"decisions": [], "plan_url": "https://github.com/o/site/issues/7#issu
            "issues": [{"number": 8, "title": "Add the price table", "after": []},
                       {"number": 9, "title": "Link pricing from the home page", "after": [8]}]}
 DOOR = {"decision": "Where prices are stored", "options": ["in the page", "a JSON file"], "recommend": "a JSON file",
-        "why": "both pages read the same prices.", "reverse": "an hour while two pages read them"}
+        "why": "Both pages read the same prices.", "reverse": "an hour while two pages read them"}
 POSTED = {"comment_url": "https://github.com/o/site/issues/7#issuecomment-3"}
+TEAM = {"why": "Keep prices in one place.", "decisions": [
+    {"id": "P1", "choice": "a JSON file", "why": "QA would keep it in the page, but two pages read it."}]}
 
 
 @unittest.skipUnless(HAVE_NODE, "needs node")
@@ -50,16 +53,56 @@ class PlanWorkflowTest(unittest.TestCase):
                      "## Technical decisions", "technical one-way door"):
             self.assertIn(part, prompt)
 
-    def test_an_open_decision_goes_to_the_founder_and_no_issues_are_opened(self):
-        run = run_workflow("plan", {"check": [READY], "architect": [{**PLANNED, "issues": [], "plan_url": "",
+    def open_decision(self, **replies):
+        return run_workflow("plan", {"check": [READY], "architect": [{**PLANNED, "issues": [], "plan_url": "",
                                                                      "decisions": [DOOR]}],
-                                    "queue": [POSTED]}, 7)
+                                     "queue": [POSTED], **replies}, 7)
+
+    def test_an_open_decision_goes_to_the_founder_and_no_issues_are_opened(self):
+        run = self.open_decision(team=[TEAM])
         self.assertEqual(run["result"]["status"], "needs the founder")
-        self.assertEqual(self.labels(run), ["check #7", "architect", "queue item", "run report"])
-        item = run["calls"][2]["prompt"]
-        self.assertIn("**P1. Where prices are stored:** in the page / a JSON file. Recommended: **a JSON file**", item)
+        labels = self.labels(run)
+        self.assertEqual(labels[:2], ["check #7", "architect"])
+        self.assertEqual(labels[-3:], ["team", "queue item", "run report"])
+        item = run["calls"][-2]["prompt"]
+        self.assertIn("**P1. Where prices are stored:** in the page / a JSON file. Reversing it later: an hour", item)
         self.assertIn("--remove-label decided --add-label needs-founder", item)
         self.assertIn("`/founding-agents:plan 7` plans it with your answers", item)
+
+    def test_every_other_role_recommends_and_the_team_weighs_them(self):
+        run = self.open_decision(team=[TEAM], qa=[{"why": "", "decisions": [
+            {"id": "P1", "choice": "in the page", "why": "One file is one thing to check."}]}])
+        voices = [c for c in run["calls"] if c["agentType"] not in (None, "founding-agents:architect")]
+        self.assertEqual({c["agentType"] for c in voices},
+                         {f"founding-agents:{n}" for n in ("product-lead", "researcher", "designer", "builder", "qa",
+                                                           "code-reviewer", "security-reviewer", "integrator")})
+        for voice in voices:
+            self.assertEqual(voice["model"], "sonnet")
+            self.assertNotIn("Each role's choices", voice["prompt"])
+        team = next(c for c in run["calls"] if c["label"] == "team")
+        self.assertEqual(team["model"], "opus")
+        self.assertIn("- Architect: P1: a JSON file. Both pages read the same prices.", team["prompt"])
+        self.assertIn("- QA: P1: in the page. One file is one thing to check.", team["prompt"])
+
+    def test_the_queue_item_leads_with_the_team_then_each_role(self):
+        item = self.open_decision(team=[TEAM], qa=[{"why": "", "decisions": [
+            {"id": "P1", "choice": "in the page", "why": "One file is one thing to check."}]}])["calls"][-2]["prompt"]
+        self.assertIn("**The team:** Keep prices in one place.", item)
+        self.assertIn("  - **The team: a JSON file.** QA would keep it in the page, but two pages read it.", item)
+        self.assertIn("  - Architect: a JSON file. Both pages read the same prices.", item)
+        self.assertIn("  - QA: in the page. One file is one thing to check.", item)
+        self.assertNotIn("because", item)
+
+    def test_without_a_team_view_each_role_still_reaches_the_founder(self):
+        item = self.open_decision()["calls"][-2]["prompt"]
+        self.assertIn("**The team** gave no overall recommendation", item)
+        self.assertIn("  - Architect: a JSON file.", item)
+
+    def test_every_voice_is_an_agent_file(self):
+        agents = Path(__file__).resolve().parent.parent / "agents"
+        source = (Path(__file__).resolve().parent.parent / "workflows" / "plan.js").read_text()
+        for name in re.findall(r"agentType: 'founding-agents:([a-z-]+)'", source):
+            self.assertTrue((agents / f"{name}.md").exists(), name)
 
     def test_an_architect_that_opens_nothing_stops_the_run(self):
         run = run_workflow("plan", {"check": [READY], "architect": [{**PLANNED, "issues": [], "plan_url": "",

@@ -9,7 +9,7 @@ from pathlib import Path
 SETUP = Path(__file__).resolve().parent.parent / "skills" / "setup"
 sys.path.insert(0, str(SETUP))
 sys.path.insert(0, str(SETUP / "ops_watch"))
-from check_site import TITLE, Response, broken_links, deploy_problems, report_issue  # noqa: E402
+from check_site import TITLE, Response, broken_links, deploy_problems, report_issue, site_problems  # noqa: E402
 from install_kit import KITS, install, plan  # noqa: E402
 
 ROOT = "https://owner.github.io/site/"
@@ -152,6 +152,31 @@ class RedIssueTest(unittest.TestCase):
     def test_a_refused_change_fails_the_run(self):
         gh = FakeGh({**self.open_issues(), ("issue", "create"): (1, "", "HTTP 403")})
         self.assertFalse(report_issue("o/r", ["site down"], "run 5", gh=gh))
+
+
+class LiveAddressTest(unittest.TestCase):
+    """A product served off GitHub Pages, such as the website on Vercel, names its live address."""
+
+    def test_a_named_address_is_crawled_and_the_pages_api_is_not_asked(self):
+        asked = []
+        url, problems = site_problems("o/site", "https://site.vercel.app/",
+                                      deploy=lambda repo: asked.append(repo) or ("", []),
+                                      crawl=lambda url: [f"{url} answers HTTP 503"])
+        self.assertEqual(asked, [])
+        self.assertEqual((url, problems), ("https://site.vercel.app/", ["https://site.vercel.app/ answers HTTP 503"]))
+
+    def test_without_an_address_the_pages_deploy_is_checked_then_crawled(self):
+        url, problems = site_problems("o/site", None,
+                                      deploy=lambda repo: (ROOT, ["the latest Pages build failed"]),
+                                      crawl=lambda url: [f"{url}x answers HTTP 404"])
+        self.assertEqual(url, ROOT)
+        self.assertEqual(problems, ["the latest Pages build failed", f"{ROOT}x answers HTTP 404"])
+
+    def test_the_address_comes_from_the_repository_variable_the_workflow_passes(self):
+        workflow = (SETUP / "ops_watch" / "ops-watch.yml").read_text()
+        self.assertIn("OPS_WATCH_URL: ${{ vars.OPS_WATCH_URL }}", workflow)
+        source = (SETUP / "ops_watch" / "check_site.py").read_text()
+        self.assertIn('os.environ.get("OPS_WATCH_URL") or None', source)
 
 
 class InstallTest(unittest.TestCase):

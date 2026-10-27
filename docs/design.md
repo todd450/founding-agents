@@ -159,7 +159,10 @@ of this (see Sources).
   marks each must-fix that an earlier review raised and is still unfixed as a repeat, and one
   repeat after a builder's fix ends the run for the founder, before a third round: the stalls on #4
   and #6 were the same findings coming back, at 43% of the website's spend. New findings still get
-  the three rounds. Every run after its first step then runs the `tidy-worktrees` skill, which
+  the three rounds. A repeat counts only findings from an earlier round, posted before the
+  builder's latest push, and from the second round reviewers are given the previous round's
+  must-fix list: on the website's #27 on 27 Oct, the security reviewer counted a finding code
+  review had raised minutes earlier in the same round, and the run stopped a round early. Every run after its first step then runs the `tidy-worktrees` skill, which
   removes a workflow agent's worktree (`wf_...`) only when it has no uncommitted change and its
   commit is on a branch at origin. A session's own worktree in the same folder is never touched.
   Runs go one at a time, so a running run's worktree is never in the way; parallel builders will
@@ -220,6 +223,15 @@ of this (see Sources).
   issue it builds after is closed. The founder's attention goes to the decisions, not to approving
   cuts. Not yet run on a real product; schema review of a builder's change, the architect's other
   job, is left until a product has a schema.
+- **`plan`'s queue item carries every role's choice and the team's.** Done on 27 Oct 2026, after
+  the founder asked for each role's recommendation on every decision put to them. When the
+  architect stops with open decisions, every other role with an agent (product lead, researcher,
+  designer, builder, QA, code reviewer, security reviewer, integrator) chooses on each, on Sonnet,
+  without seeing the others' picks; an Opus step weighs them on their reasons, not by count, and
+  names any role that disagrees. The queue item leads with the team's pick, then the architect's
+  and each role's, each with its own reason as a sentence. It mirrors `propose`'s queue item
+  (#31). The voices cost a run only when the architect has stopped, which on the website was one
+  of two runs.
 - **Parallel builders: `build` on a brief builds its issues two to four at a time.** Built on 27 Oct
   2026, on top of `plan`. `/founding-agents:build <brief>` sees the issues the architect cut from
   the brief and builds them with two builders at once by default; `build <brief> 3` asks for three,
@@ -333,7 +345,10 @@ of this (see Sources).
   product, because a product's workflow cannot read this private repo; rerunning `setup` updates the
   copy. GitHub stops a public repo's scheduled workflows after 60 days with no activity, and ops
   watch cannot report its own silence; checks that need judgement (spend, release verdicts) stay
-  with the Haiku routine.
+  with the Haiku routine. A product served off Pages, as the website is on Vercel since 27 Oct,
+  sets the repository variable `OPS_WATCH_URL` to its live address: the check then crawls that
+  address and does not ask the Pages API, and a Pages product's check is unchanged. The plugin's
+  copy holds this path so that rerunning `setup`, which replaces the product's copy, keeps it.
 - **Ops watch's judgement checks run as a daily routine whose instructions live in the product.**
   Built on 27 Oct 2026. The routine checks that every scheduled workflow still runs and passed
   (which covers the site check's silence, including GitHub turning schedules off after 60 days),
