@@ -11,8 +11,11 @@ export const meta = {
   ],
 }
 
-// A change the reviewer sends back this many times goes to the founder instead of round four.
+// A change the reviewer sends back this many times goes to the founder instead of round four, and
+// sooner if the builder fails to fix the same finding twice.
 const ROUNDS = 3
+// Dollars at API prices one run should stay under; the run report flags a run over it.
+const BUDGET = 5
 
 const raw = args && typeof args === 'object' ? args.issue : args
 const issue = Number(String(raw ?? '').replace(/[^0-9]/g, ''))
@@ -33,8 +36,9 @@ const TICKET = {
     body: { type: 'string' },
     decision: { type: 'string', description: "the founder's pick and notes from the comments, with the mockup branch if there is one; empty if none" },
     unseen: { type: 'array', items: { type: 'string' }, description: 'each technical one-way door the issue settles that the founder has not seen; empty if none' },
+    open_pr: { type: 'integer', description: 'the open PR that already builds this issue; 0 if none' },
   },
-  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen'],
+  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen', 'open_pr'],
 }
 const BUILT = {
   type: 'object',
@@ -57,8 +61,9 @@ const REVIEW = {
           must_fix: { type: 'boolean', description: 'false for a Nit' },
           where: { type: 'string' },
           what: { type: 'string', description: 'steps, expected, happened, and how to reproduce' },
+          repeat: { type: 'boolean', description: 'true when an earlier review on this PR raised it and it is still not fixed' },
         },
-        required: ['must_fix', 'where', 'what'],
+        required: ['must_fix', 'where', 'what', 'repeat'],
       },
     },
   },
@@ -83,14 +88,25 @@ const REPORTED = {
   required: ['comment_url', 'reason'],
 }
 
-// A run that got past its first step posts its time, tokens and cost on the issue, stalled runs too.
+const TIDIED = {
+  type: 'object',
+  properties: { removed: { type: 'integer' }, kept: { type: 'array', items: { type: 'string' }, description: 'each kept worktree and why' } },
+  required: ['removed', 'kept'],
+}
+
+// A run that got past its first step removes the worktrees whose work is on GitHub, then posts its
+// time, tokens and cost on the issue, stalled runs too.
 const report = async result => {
   phase('Report')
+  const tidied = await agent(
+    'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
+    { label: 'tidy worktrees', phase: 'Report', model: 'haiku', effort: 'low', schema: TIDIED },
+  )
   const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --post\`. Return the comment's URL, or why it was not posted.`,
+    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --budget ${BUDGET} --post\`. Return the comment's URL, or why it was not posted.`,
     { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
   )
-  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted' }
+  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted', worktrees_kept: tidied ? tidied.kept : [] }
 }
 
 phase('Check')
@@ -100,6 +116,7 @@ const ticket = await agent(
 - \`gh issue view ${issue} --json title,body,state,labels,comments\`: it must be open and labelled \`decided\`.
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${issue} is that issue. A red scheduled check stops other work until it is fixed.
 - Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` queue item on this issue, with the founder's choice; the \`decided\` label is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
+- \`gh pr list --state open --json number,headRefName,body\`: an open PR on the branch \`build/issue-${issue}\`, or one whose description closes #${issue}, already builds it. Return its number as open_pr, or 0.
 Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-${issue}\`) as the decision.`,
   { label: `check #${issue}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
 )
@@ -113,7 +130,14 @@ if (!ticket.ready) return { issue, status: 'not started', reason: ticket.reason 
 let built = null
 let review = null
 for (let round = 1; round <= ROUNDS; round++) {
-  const task = round === 1
+  const resume = round === 1 && ticket.open_pr
+  const task = resume
+    ? `PR #${ticket.open_pr} already builds issue #${issue} in ${ticket.repo}: ${ticket.title}
+
+${ticket.body}${decided(ticket)}
+
+Continue it rather than starting again. Check out its branch in your worktree with \`gh pr checkout ${ticket.open_pr}\`, read the reviews and comments on the PR, fix every finding not yet fixed that is not a Nit, finish anything the issue asks for that is missing, rerun the whole suite, and push to the same branch. Do not open a new PR.`
+    : round === 1
     ? `Build issue #${issue} in ${ticket.repo}: ${ticket.title}
 
 ${ticket.body}${decided(ticket)}
@@ -137,11 +161,15 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
 
 ${ticket.body}${decided(ticket)}
 
-Post your review on the PR, then return the verdict and every finding.`,
+${round > 1 || resume ? 'Earlier reviews on this PR are in its comments. Mark each finding an earlier review raised that is still not fixed as a repeat.\n\n' : ''}Post your review on the PR, then return the verdict and every finding.`,
     { label: `reviewer, round ${round}`, phase: 'Review', agentType: 'founding-agents:reviewer', model: 'opus', schema: REVIEW },
   )
   if (!review) return await report({ issue, status: 'stopped in review', reason: 'the reviewer returned nothing', pr: built.pr_url })
   if (review.verdict === 'approve') break
+  const stuck = review.findings.filter(f => f.must_fix && f.repeat)
+  if ((round > 1 || resume) && stuck.length) {
+    return await report({ issue, status: 'the same finding came back unfixed; the founder decides', pr: built.pr_url, findings: stuck })
+  }
   log(`Round ${round}: the reviewer sent PR #${built.pr_number} back with ${review.findings.filter(f => f.must_fix).length} finding(s) to fix`)
 }
 
