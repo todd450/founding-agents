@@ -68,18 +68,11 @@ Karri Saarinen, [Airbnb Design Language System](https://karrisaarinen.com/dls/) 
 ## Architect — Amazon's doors and Stripe's compatibility
 
 The architect's decisions cost the most to change later: schema, shared code, the interfaces
-between parts.
-
-- **Sort one-way from two-way doors.** Bezos's 2015 letter splits decisions into the irreversible,
-  which deserve slow care, and the reversible, which should be made fast by whoever is closest.
-  The plan spends its effort on the one-way doors (schema, stored formats, data users depend on,
-  interfaces other parts call) and leaves the two-way doors to the builder.
-- **Every interface is a contract.** Stripe has kept every version of its API working since 2011.
-  Add fields and endpoints; never change or remove what callers depend on without a migration;
-  when a shape must change, adapt old callers in one place.
-- **The plan names each one-way door,** the alternatives considered for it and why one won, and the
-  day-one defaults it sets.
-- **Split for builders** into tickets that do not touch the same files (principle 5).
+between parts. Bezos's 2015 letter splits decisions into the irreversible, which deserve slow care,
+and the reversible, which should be made fast by whoever is closest; Stripe has kept every version
+of its API working since 2011. The practices are in [agents/architect.md](../agents/architect.md).
+One change from the letter: on this team the architect recommends each one-way door and the founder
+decides it.
 
 Sources: Jeff Bezos, [2015 letter to shareholders](https://s2.q4cdn.com/299287126/files/doc_financials/annual/2015-Letter-to-Shareholders.PDF);
 Brandur Leach, [APIs as infrastructure: future-proofing Stripe with versioning](https://stripe.com/blog/api-versioning)
