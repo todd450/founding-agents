@@ -1,4 +1,4 @@
-"""Both workflows define a technical one-way door in the same words, so they judge the same way."""
+"""Every workflow defines a technical one-way door in the same words, so they judge the same way."""
 
 import re
 import unittest
@@ -13,9 +13,10 @@ def one_way(name):
 
 
 class OneWayDoorTest(unittest.TestCase):
-    def test_build_and_propose_use_the_same_definition(self):
+    def test_every_workflow_uses_the_same_definition(self):
         self.assertIsNotNone(one_way("build.js"))
         self.assertEqual(one_way("build.js"), one_way("propose.js"))
+        self.assertEqual(one_way("build.js"), one_way("sweep.js"))
 
 
 if __name__ == "__main__":

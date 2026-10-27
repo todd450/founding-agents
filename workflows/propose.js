@@ -15,7 +15,7 @@ const text = String(raw ?? '').trim()
 const issue = /^#?\d+$/.test(text) ? Number(text.replace('#', '')) : 0
 if (!text) throw new Error('Name an issue or describe the idea, e.g. /founding-agents:propose 7')
 
-// What counts as a technical one-way door; build.js and propose.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 const BRIEF = {

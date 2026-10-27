@@ -32,8 +32,9 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
 | | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
 | Check | **Code reviewer** | every change | correctness and simplification; sees the diff, not the builder's reasoning | read only |
-| | **Security reviewer** | changes to routes, permissions, storage or model calls | findings | read only |
-| | **Optimiser** | weekly | page cost, token cost per merged change, dead code, one thing defined in several places | proposes builder tasks |
+| | **Security reviewer** | changes to routes, permissions, storage or model calls; a `security` sweep | findings | read only |
+| | **Optimiser** | weekly; a `codebase` sweep | page cost, token cost per merged change, dead code, one thing defined in several places | proposes builder tasks |
+| | **Test auditor** | a `tests` sweep | missing cases, slow or flaky tests, tests of wording, hand-written checks a standard tool does | proposes builder tasks |
 | Ship & run | **Integrator** | the only merger | rebase, run checks, gate production, cut releases | `main` and production |
 | | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder | read plus notifications |
 | | **Librarian** | after each incident; a weekly prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
@@ -90,7 +91,8 @@ screen, one design-token source that generates every copy.
   builders also get their own worktree.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
   `run-report`, `compare-changes`).
-- **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`.
+- **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`, and a
+  third, `sweep`, that finds work for `build` instead of starting from the founder's idea.
 - **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
@@ -198,6 +200,27 @@ of this (see Sources).
 - **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
   issue holds the recommendation, the mockups and what each option costs. A nicer page comes later
   only if the label proves clumsy.
+- **Sweeps: a third workflow that finds work and hands it to `build`.** Decided by the founder on
+  27 Oct 2026, for sprints that optimise the codebase, improve the test suite or look for
+  vulnerabilities. `/founding-agents:sweep codebase|tests|security` runs on demand; a weekly
+  routine can call it once it has run by hand. Only the start differs from a feature: a finder
+  (the optimiser, the test auditor or the security reviewer) reads and runs the product and brings
+  at most five findings, ranked, each with its evidence, the fix's size, what leaving it costs,
+  its pass marks and any technical decision it settles. A script files each as an issue labelled
+  `sweep` and posts one `needs-founder` queue item listing them; the founder adds `decided` to the
+  ones worth fixing, `build` builds each, and the rest are closed, since nothing is kept for later.
+  The founder still picks because a sweep left to fix all it finds is how the first product ran
+  up 731 bug-sweep and audit commits. A finder only reads, so a sweep never writes over a build;
+  its fixes go through `build` one at a time like any change. Each finding's **pass marks** say
+  what done means for that kind, since "does it work" is not the question: for the codebase,
+  behaviour unchanged and the measured number moved; for tests, the suite still fails on faults
+  planted in the code it covers; for security, a test that reproduces the exploit fails before the
+  fix and passes after. The builder meets each and the reviewer sends back any it cannot confirm.
+  On a public repo a security finding's details go in a draft security advisory, which only the
+  repo's admins see, and its issue and the queue item carry only a summary that does not reveal
+  it; the fix's PR still shows the change, so publishing the advisory after the merge is the
+  founder's call. The finders run on Opus, since they judge. The test auditor is a role the team
+  table did not have; its exemplars are the founder's to change.
 - **Red lights: ops watch opens a `red` issue, and the integrator merges nothing while one is
   open.** A routine cannot push to a phone itself, but an issue notifies through GitHub, and
   blocking merges is what makes principle 9 hold.
@@ -383,7 +406,9 @@ private, since the founder is the only user for now. A website bends the order i
    carried them with their costs.
 5. **Grow on demand:** the architect for schema or shared changes; two to four parallel builders
    once one is routine; then the security reviewer, optimiser, librarian and researcher as their
-   kind of work appears.
+   kind of work appears. The optimiser, the security reviewer and a test auditor arrived first, on
+   27 Oct 2026, as the finders `sweep` runs; tested only against scripted replies, so it is done
+   once a sweep of each kind has run on the website and its findings have gone through `build`.
 
 ## How we'll know it works
 

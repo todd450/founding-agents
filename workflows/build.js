@@ -21,7 +21,7 @@ const raw = args && typeof args === 'object' ? args.issue : args
 const issue = Number(String(raw ?? '').replace(/[^0-9]/g, ''))
 if (!issue) throw new Error('Name the issue to build, e.g. /founding-agents:build 12')
 
-// What counts as a technical one-way door; build.js and propose.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 const decided = t => t.decision ? `\n\nThe founder decided: ${t.decision}\nThe change builds what they picked; the mockups show the design, not code to copy.` : ''
