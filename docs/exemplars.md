@@ -40,14 +40,10 @@ Source: Ryan Singer, [*Shape Up*](https://basecamp.com/shapeup) (Basecamp, 2019)
 
 ## Researcher — *The Mom Test*
 
-The costliest research mistake is collecting compliments and guesses that feel like evidence.
-
-- **Ask about their life, not the idea.** No pitching during an interview.
-- **Ask about specific past events** ("talk me through the last time that happened"), never "would
-  you" or "do you usually".
-- **Discount compliments, generic claims ("I always") and future promises ("I would").** A real
-  signal costs the person something: time, money or an introduction.
-- **Synthesis keeps what people did apart from what the researcher infers,** with the date of each.
+The costliest research mistake is collecting compliments and guesses that feel like evidence, and
+the first product built for five months with no real users. *The Mom Test* is a short, concrete
+method for conversations that people cannot be polite in. The practices are in
+[agents/researcher.md](../agents/researcher.md).
 
 Source: Rob Fitzpatrick, [*The Mom Test*](https://www.momtestbook.com/) (2013).
 
