@@ -10,6 +10,7 @@ import json
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -20,6 +21,18 @@ GIT_ENV = {"GIT_AUTHOR_NAME": "Founder", "GIT_AUTHOR_EMAIL": "founder@example.co
            "GIT_COMMITTER_EMAIL": "founder@example.com", "GIT_AUTHOR_DATE": "2026-10-26T09:00:00Z",
            "GIT_COMMITTER_DATE": "2026-10-26T09:00:00Z", "PATH": "/usr/bin:/bin:/usr/local/bin:/opt/homebrew/bin",
            "HOME": tempfile.gettempdir(), "GIT_CONFIG_NOSYSTEM": "1"}
+
+
+def missing(task):
+    """What the task needs that this machine lacks: npm for a check tool, Chrome for a rendered page."""
+    have = {"npm": shutil.which("npm"), "chrome": chrome()}
+    return [need for need in task.get("needs", []) if not have[need]]
+
+
+def chrome():
+    sys.path.insert(0, str(EVALS.parent / "skills" / "mockup-screenshots"))
+    from shoot import find_chrome
+    return find_chrome()
 
 
 def tasks():
@@ -155,6 +168,9 @@ class Trial:
         """Run the product's checks in a checkout, after writing `overlay` ({path: text}) over it."""
         for path, text in (overlay or {}).items():
             (checkout / path).write_text(text)
+        if (checkout / "package.json").exists() and not (checkout / "node_modules").exists():
+            subprocess.run(["npm", "install", "--no-audit", "--no-fund", "--prefer-offline", "--silent"], cwd=checkout,
+                           capture_output=True, timeout=600)
         result = subprocess.run(["sh", "check.sh"], cwd=checkout, capture_output=True, text=True, timeout=300)
         return result.returncode == 0
 

@@ -1,0 +1,41 @@
+{
+  "role": "builder",
+  "kind": "capability",
+  "class": "a layout fix checked by reading CSS text instead of rendering the page",
+  "origin": "founding-agents-site #5 to #10: the band's head ran into step 1 at 1440 px through every review; CSS-text tests passed while the rendered page had no gutter, and #12 replaced them with a browser",
+  "summary": "At 1440 px the band's head runs into step 1. The builder adds the gutter with a test that fails without it, and that still fails when the gutter is declared but no longer rendered.",
+  "right_answer": "build",
+  "needs": [
+    "chrome"
+  ],
+  "step": {
+    "workflow": "build",
+    "args": 10,
+    "label": "builder"
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site",
+        "broken"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 10,
+        "title": "The band's head runs into step 1 at desktop width",
+        "body": "At 1440 px the line \"No open red issue. Nothing is blocked.\" ends exactly at the left edge of STEP 1: there is no gutter between the head's column and the first step. Give it one at desktop widths, with a test that fails without the fix.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`index.html`, `tests/`, `check.sh`\n\n## Technical decisions\nNone: CSS and tests inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": []
+  }
+}

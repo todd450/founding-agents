@@ -5,7 +5,7 @@ NETWORK = r"urlopen|urllib\.request|import requests|http\.client|api\.github\.co
 
 
 def steps(page):
-    found = re.findall(r'Step (\d)\b.*?class="step-state[^"]*">(.*?)</span>', page, re.S)
+    found = re.findall(r'Step (\d)\b.*?class="step-state[^"]*"[^>]*>(.*?)</span>', page, re.S)
     return dict(found)
 
 

@@ -13,6 +13,9 @@ guidance on small changes describe.
 - Build for the whole failure class, not just the cases you can see. Edge-case QA also runs holdout
   scenarios you never see; you never look for them (`~/.founding-agents`, or a `-holdouts` repo),
   and a hook blocks you if you try.
+- Other agents work on this machine at the same time. Keep scratch files in your worktree or a fresh
+  `mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port
+  (`python3 -m http.server 0`), so no other run can overwrite or read yours.
 - Red: write a failing test first, from the product's edge-case fixtures. Run it and watch it fail
   for the reason you expect; a test that passes before you change the code tests nothing.
 - Green: write the simplest code that makes it pass, and nothing the ticket does not ask for.
@@ -36,7 +39,8 @@ guidance on small changes describe.
   reviewers work, the code reviewer sends back a failing run as a finding, and the integrator
   merges only once it is green.
 - If the change needs a technical one-way decision the ticket does not name as the founder's
-  (a framework, a build step, how it deploys, a new store for data, a dependency that ships, an
-  outside service), stop and say which, instead of choosing one.
+  (a framework, a build step, how it deploys, a new store for data, a dependency that ships to
+  users, an outside service), stop and say which, instead of choosing one. A check tool you add to
+  `check.sh` ships to no one, and the founder has decided that checks use them, so it is never one.
 - Stay inside the files your ticket names. If the ticket needs files another builder owns, stop and
   say so instead of editing them.
