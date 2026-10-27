@@ -1,6 +1,6 @@
 {
   "name": "founding-agents",
-  "version": "0.24.0",
+  "version": "0.25.0",
   "description": "A reusable team of Claude Code agents that builds products alongside one founder",
   "author": {
     "name": "Todd Holloway"

@@ -219,6 +219,20 @@ of this (see Sources).
   be opened at any width; the phone and desktop screenshots, taken with headless Chrome by the
   `mockup-screenshots` skill, let the founder compare options in the issue without opening
   anything. The branch is never merged, so mockups never become product code by accident.
+- **Every PR that changes the screen carries before-and-after screenshots.** Decided on 27 Oct
+  2026, from Ramp's background agent, Inspect, which puts screenshots in its PRs so a change can
+  be judged without opening it. The founder reviews PRs from GitHub's phone app, and the website's
+  #5 merged with a layout gap the reviewer missed: the diff read well and the tests passed, but
+  nobody looked at the page. The builder serves `main` and its branch, shoots each page the change
+  shows on at phone and desktop width with the `mockup-screenshots` skill, which now takes a served
+  page's URL and a folder, and commits only the screenshots on a `screenshots/issue-<n>` branch
+  started empty, so like the mockups they never land in the product. The description shows them
+  the way `propose`'s queue item does; a change with nothing on screen says "No visible change."
+  QA shoots the same pages from the branch and sends back a visible change with no screenshots, a
+  page left out, or an after screenshot that does not match what it sees, since pictures only the
+  builder checks show what the builder hoped. Fix rounds retake them, so the founder sees the
+  change that merges. Builder and QA got the `Skill` tool for it, and a test now holds that every
+  agent told to use a skill has the tool. Not yet run on a real product.
 - **Technical one-way doors reach the founder before they are built in.** Decided by the founder on
   26 Oct 2026, after the website's "no build step or framework" was settled by an aside in a brief
   ("the architect confirms that, not the founder"), with no architect to confirm it, and written
@@ -695,6 +709,7 @@ One number per cost in the first table, and one for the founder's attention:
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
   [claude-code-merge-queue](https://github.com/funador/claude-code-merge-queue)
+- Screenshots in every PR — Ramp, [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent)
 - Evals — Anthropic, [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) (Jan 2026)
 - Learning from runs — Anthropic, [Getting started with loops](https://claude.com/blog/getting-started-with-loops);
   Ramp, [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent)
