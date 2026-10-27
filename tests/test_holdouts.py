@@ -1,4 +1,4 @@
-"""Only the reviewer reads the holdout scenarios, and setup gives them a home outside the product."""
+"""Only edge-case QA reads the holdout scenarios, and setup gives them a home outside the product."""
 
 import json
 import subprocess
@@ -33,11 +33,11 @@ class GuardTest(unittest.TestCase):
         ):
             self.assertEqual(guard(tool, tool_input), 2, tool_input)
 
-    def test_blocks_every_agent_but_the_reviewer(self):
+    def test_blocks_every_agent_but_qa(self):
         read = {"file_path": "/Users/f/.founding-agents/holdouts/o/site/README.md"}
-        for agent in ("founding-agents:architect", "founding-agents:designer", "reviewer"):
+        for agent in ("founding-agents:architect", "founding-agents:code-reviewer", "founding-agents:security-reviewer", "qa"):
             self.assertEqual(guard("Read", read, agent=agent), 2, agent)
-        self.assertEqual(guard("Read", read, agent="founding-agents:reviewer"), 0)
+        self.assertEqual(guard("Read", read, agent="founding-agents:qa"), 0)
 
     def test_the_founders_own_session_sets_them_up_and_writes_them(self):
         self.assertEqual(guard("Bash", {"command": "gh repo create o/site-holdouts --private"}, agent=None), 0)

@@ -100,8 +100,8 @@ change itself.
 
 Edge-case scenarios the builders never see, so a change that passes every visible test still has
 to handle each failure class. They live in a private `<product>-holdouts` repo, cloned to
-`~/.founding-agents/holdouts/<owner>/<name>`, outside every product folder and worktree. Only the
-reviewer reads them; the plugin's `guard_holdouts` hook blocks every other agent.
+`~/.founding-agents/holdouts/<owner>/<name>`, outside every product folder and worktree. Only
+edge-case QA reads them; the plugin's `guard_holdouts` hook blocks every other agent.
 
 1. **Dry run.** `python3 <this skill's directory>/holdouts.py` says whether the repo and its clone
    exist and what it would do.
@@ -109,7 +109,7 @@ reviewer reads them; the plugin's `guard_holdouts` hook blocks every other agent
 3. **Apply.** Rerun with `--apply`. It creates the repo if missing, clones it (or pulls an existing
    clone), and seeds a README with the scenario format and one folder per failure class.
 4. **Tell the founder** the scenarios are theirs to write: a few per class that matter for this
-   product, in the format the README gives. The reviewer adds more where a change touches a class
+   product, in the format the README gives. QA adds more where a change touches a class
    with none. Write them in the founder's own session, never through an agent, so no builder's
    context ever holds them.
 
@@ -143,5 +143,5 @@ gh label create red --color B60205 --description "A scheduled check failed; noth
 
 The plugin's hooks need `python3` on the machine. The merge guard (`hooks/guard_main.py`) blocks
 every agent but the integrator from pushing to `main` or merging; branch protection is the hard
-gate behind it. The holdout guard (`hooks/guard_holdouts.py`) blocks every agent but the reviewer
+gate behind it. The holdout guard (`hooks/guard_holdouts.py`) blocks every agent but QA
 from the holdout scenarios.

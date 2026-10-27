@@ -1,7 +1,7 @@
 # Fixtures
 
-The visible edge-case scenarios. Builders write their tests from these, and the reviewer runs them
-on every change. The Founding Agents reviewer also runs holdout scenarios kept outside this repo,
+The visible edge-case scenarios. Builders write their tests from these, and edge-case QA runs them
+on every change. The Founding Agents QA agent also runs holdout scenarios kept outside this repo,
 which builders never see, so a change has to handle each whole failure class, not just these cases.
 
 One folder per failure class, made when it gets its first scenario:
