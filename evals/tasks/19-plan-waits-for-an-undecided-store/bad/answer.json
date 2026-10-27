@@ -1,0 +1,24 @@
+{
+  "output": {
+    "decisions": [],
+    "issues": [
+      {
+        "number": 23,
+        "title": "Add the sign-up form",
+        "after": []
+      }
+    ],
+    "plan_url": "https://github.com/todd450/founding-agents-site/issues/22#issuecomment-1",
+    "stopped_because": ""
+  },
+  "posted": [
+    {
+      "kind": "issue create",
+      "number": 23,
+      "title": "Add the sign-up form",
+      "body": "Part of #22.\\n\\n## Technical decisions\\nNone.",
+      "labels": [],
+      "comments": []
+    }
+  ]
+}

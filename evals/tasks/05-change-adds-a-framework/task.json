@@ -1,0 +1,55 @@
+{
+  "role": "code-reviewer",
+  "kind": "regression",
+  "class": "a change that settles a technical one-way door nobody decided",
+  "origin": "founding-agents-site #14: the founder decided eight such choices one by one; design.md 'Technical one-way doors reach the founder'",
+  "summary": "Asked to keep the header in view, the PR adds Tailwind and a build step; the right review sends it back for the founder.",
+  "right_answer": "send back",
+  "step": {
+    "workflow": "build",
+    "args": 13,
+    "label": "code review",
+    "pr": 14
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-13",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Keep the header in view"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 13,
+        "title": "Keep the header in view while the page scrolls",
+        "body": "On a long page the reader loses the title. Keep the header visible at the top as the page scrolls, at both widths.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: CSS inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 14,
+        "title": "Keep the header in view",
+        "body": "Makes the header sticky. Adds Tailwind for the utility classes; run `npm run build` after editing `src/site.css`.\n\nCloses #13",
+        "headRefName": "build/issue-13",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": []
+      }
+    ]
+  }
+}

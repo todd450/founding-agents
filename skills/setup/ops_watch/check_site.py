@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Ops watch's site check: the GitHub Pages deploy is green and every link on the site resolves.
+"""Ops watch's site check: the deploy is up and every link on the site resolves.
+
+A product on GitHub Pages is checked through the Pages API, then its address is crawled. A product
+served elsewhere names its address, in the repository variable OPS_WATCH_URL or with --url; its
+deploy check is then that the address answers, and the Pages API is not asked.
 
 A failure opens one `red` issue, which stays the only one and is kept current while the check
 stays red; the next green run closes it. The run itself passes either way, since the issue is the
@@ -192,19 +196,26 @@ def report_issue(repo, problems, run, gh=gh):
     return True
 
 
+def site_problems(repo, address=None, deploy=deploy_problems, crawl=broken_links):
+    """The address checked and its problems: a named address is crawled as it is, otherwise the
+    Pages deploy is checked and the address Pages reports is crawled."""
+    if address:
+        return address, crawl(address)
+    url, problems = deploy(repo)
+    return url, problems + (crawl(url) if url else [])
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY"), help="owner/name")
-    parser.add_argument("--url", help="check this address instead of the Pages one")
+    parser.add_argument("--url", default=os.environ.get("OPS_WATCH_URL") or None,
+                        help="the live address, for a product not on GitHub Pages; skips the Pages API")
     parser.add_argument("--dry-run", action="store_true", help="print the result; leave issues alone")
     args = parser.parse_args(argv)
     if not args.repo:
         parser.error("--repo is needed outside GitHub Actions")
 
-    url, problems = deploy_problems(args.repo)
-    url = args.url or url
-    if url:
-        problems += broken_links(url)
+    url, problems = site_problems(args.repo, args.url)
 
     print(f"Red: {len(problems)} problem(s)" if problems else f"Green: {url} is up and its links resolve")
     for problem in problems:
