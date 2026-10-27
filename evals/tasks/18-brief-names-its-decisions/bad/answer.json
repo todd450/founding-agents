@@ -1,0 +1,18 @@
+{
+  "output": {
+    "repo": "todd450/founding-agents-site",
+    "issue": 21,
+    "recommend": "go",
+    "reason": "Astro on Vercel makes pages quick to add.",
+    "overruled": false,
+    "screens": true,
+    "decisions": []
+  },
+  "posted": [
+    {
+      "kind": "issue edit",
+      "number": 21,
+      "body": "## What\nMove to Astro and Vercel.\n\n## Technical decisions\nNone."
+    }
+  ]
+}

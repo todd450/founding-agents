@@ -1,0 +1,16 @@
+{
+  "output": {
+    "ready": false,
+    "reason": "It settles two technical decisions the founder has not seen.",
+    "repo": "todd450/founding-agents-site",
+    "title": "Move the site to Astro and Vercel",
+    "body": "",
+    "decision": "",
+    "unseen": [
+      "Astro as the site's framework, adding a build step",
+      "hosting on Vercel instead of GitHub Pages"
+    ],
+    "open_pr": 0,
+    "parts": []
+  }
+}

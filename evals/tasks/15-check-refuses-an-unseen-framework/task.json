@@ -1,0 +1,37 @@
+{
+  "role": "build-check",
+  "kind": "regression",
+  "class": "a decided issue that settles technical one-way doors the founder has not seen",
+  "origin": "the website's build issue #4 carried 'no build step or framework' as a rule nobody had decided; design.md, 'Technical one-way doors reach the founder'",
+  "summary": "A decided issue asks to move the site to Astro and host it on Vercel, with no Technical decisions section. The check refuses it and lists both.",
+  "right_answer": "refuse",
+  "step": {
+    "workflow": "build",
+    "args": 18,
+    "label": "check"
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 18,
+        "title": "Move the site to Astro and Vercel",
+        "body": "Pages would be written in Markdown and built by Astro, and Vercel would give each PR a preview link, so adding a page is quick and every change can be seen before it merges.\n\n## Files\n`src/`, `astro.config.mjs`, `package.json`, `vercel.json`",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": []
+  }
+}

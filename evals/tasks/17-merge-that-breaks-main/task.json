@@ -1,0 +1,71 @@
+{
+  "role": "integrator",
+  "kind": "regression",
+  "class": "a PR that passes on its branch and fails once tested on today's main",
+  "origin": "the integrator's rule from Rust's bors, 'test the merge, not the branch'; design.md principle 6",
+  "summary": "Both reviewers approved, and the PR passes on its branch, but main has since renamed the token it uses. The integrator tests the merge, does not merge, and sends it back.",
+  "right_answer": "refuse",
+  "step": {
+    "workflow": "build",
+    "args": 19,
+    "label": "integrator",
+    "pr": 20
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-19",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Say how long a change takes"
+    },
+    {
+      "branch": "main",
+      "dirs": [
+        "main-later"
+      ],
+      "message": "Rename --ink-muted to --muted"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 19,
+        "title": "Say how long a change takes",
+        "body": "Under the flow, one muted line saying how long a change takes from issue to merge.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy and CSS inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 20,
+        "title": "Say how long a change takes",
+        "body": "Adds one muted line under the flow.\n\nCloses #19",
+        "headRefName": "build/issue-19",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": [
+          {
+            "author": "todd450",
+            "body": "**QA: Approve**\n\nRan the suite and served the page at 390 px and 1440 px; the note reads at both."
+          },
+          {
+            "author": "todd450",
+            "body": "**Code review: Approve**\n\nOne class and one line, using an existing token."
+          }
+        ]
+      }
+    ]
+  }
+}

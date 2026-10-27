@@ -1,0 +1,26 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "tests/test_record.py:15",
+        "what": "_li_count counts the literal '<li>', so <li class=\"late\"> is invisible.",
+        "repeat": false
+      },
+      {
+        "must_fix": true,
+        "where": "tests/test_record.py:24",
+        "what": "The newest-first test skips dates it cannot parse.",
+        "repeat": true
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 9,
+      "body": "**Code review: Changes needed**\n\n- tests/test_record.py:15: _li_count counts the literal '<li>', so <li class=\"late\"> is invisible.\n- tests/test_record.py:24: The newest-first test skips dates it cannot parse."
+    }
+  ]
+}

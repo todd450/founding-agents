@@ -1,0 +1,55 @@
+{
+  "role": "code-reviewer",
+  "kind": "regression",
+  "class": "a hand-written check where a standard tool would do",
+  "origin": "founding-agents-site #4 (PR #7): this test was sent back three times before the founder narrowed the issue",
+  "summary": "The PR checks the page's colours with regexes; the right review sends it back to use a CSS linter.",
+  "right_answer": "send back",
+  "step": {
+    "workflow": "build",
+    "args": 4,
+    "label": "code review",
+    "pr": 7
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-4",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Test that the page uses only its design tokens"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 4,
+        "title": "Check that the page uses only its design tokens",
+        "body": "The page should use no colour or font that is not in `tokens.css`. Add a test for it, run from `check.sh`.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: a test inside the existing page and checks.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 7,
+        "title": "Test that the page uses only its design tokens",
+        "body": "Adds a test that the page's style uses no literal colour and only the token fonts.\n\nCloses #4",
+        "headRefName": "build/issue-4",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": []
+      }
+    ]
+  }
+}
