@@ -1,6 +1,6 @@
 {
   "role": "code-reviewer",
-  "kind": "regression",
+  "kind": "capability",
   "class": "a hand-written check where a standard tool would do",
   "origin": "founding-agents-site #4 (PR #7): this test was sent back three times before the founder narrowed the issue",
   "summary": "The PR checks the page's colours with regexes; the right review sends it back to use a CSS linter.",
