@@ -1,6 +1,7 @@
-# Ops watch: every night, check that the GitHub Pages deploy is green and every link on the site
-# resolves. A failure opens one `red` issue; the next green run closes it. Installed by the
-# Founding Agents `setup` skill, which also copies .github/ops-watch/check_site.py.
+# Ops watch: every night, check that the deploy is up and every link on the site resolves. A
+# product served off GitHub Pages sets the repository variable OPS_WATCH_URL to its live address.
+# A failure opens one `red` issue; the next green run closes it. Installed by the Founding Agents
+# `setup` skill, which also copies .github/ops-watch/check_site.py.
 name: ops-watch
 on:
   schedule:
@@ -21,3 +22,4 @@ jobs:
       - run: python3 .github/ops-watch/check_site.py
         env:
           GH_TOKEN: ${{ github.token }}
+          OPS_WATCH_URL: ${{ vars.OPS_WATCH_URL }}
