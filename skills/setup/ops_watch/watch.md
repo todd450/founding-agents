@@ -8,6 +8,14 @@ does not have. Each check is red only when someone has to act.
   for none>
 - **Weekly budget:** <dollars of API-equivalent cost across the week's run reports; leave blank
   until the founder sets one>
+- **The one metric:** <the number that shows whether the product works for the people it is for,
+  as the founder decided it, and where to read it inside this repo, such as `metrics.md` or a
+  standing issue the founder updates; leave blank until there is one>
+- **Other evidence of use:** <analytics, sign-ups, replies or support emails, and where in this
+  repo they are kept; leave blank for none>
+
+The check-backs on shipped briefs read the last two. The routine reaches only this repo, so a
+number kept elsewhere (a dashboard, an analytics service) counts once the founder copies it in.
 
 ## Checks
 

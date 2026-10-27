@@ -1,0 +1,55 @@
+{
+  "role": "code-reviewer",
+  "kind": "capability",
+  "class": "a test that pins today's wording instead of a behaviour",
+  "origin": "founding-agents-site #6 and #10 (PRs #9 and #11): these tests merged, and #12 later removed them",
+  "summary": "The PR's record tests assert exact words from the prose; the right review sends them back to test what must stay true.",
+  "right_answer": "send back",
+  "step": {
+    "workflow": "build",
+    "args": 6,
+    "label": "code review",
+    "pr": 9
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    },
+    {
+      "branch": "build/issue-6",
+      "dirs": [
+        "pr"
+      ],
+      "message": "Add the rename to the record"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 6,
+        "title": "Site 3 of 3: the record of this build",
+        "body": "Add this build's entries to the record, newest first, keeping the parts that do not flatter the team. Tests for the record.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Technical decisions\nNone: copy and tests inside the existing page.",
+        "labels": [
+          "decided"
+        ],
+        "comments": []
+      }
+    ],
+    "prs": [
+      {
+        "number": 9,
+        "title": "Add the rename to the record",
+        "body": "Adds the repo's rename to the record, with tests that the record keeps it and the unflattering parts.\n\nCloses #6",
+        "headRefName": "build/issue-6",
+        "baseRefName": "main",
+        "state": "OPEN",
+        "comments": []
+      }
+    ]
+  }
+}

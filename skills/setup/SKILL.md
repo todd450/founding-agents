@@ -1,12 +1,13 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the optimiser's or librarian's weekly routine, or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the optimiser's or librarian's weekly routine, the check-backs on shipped briefs, or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
 This version covers CI, branch protection, ops watch's site check and daily routine, the
-optimiser's and the librarian's weekly routines, the holdout scenarios, the product's `CLAUDE.md`
+optimiser's and the librarian's weekly routines, the check-backs on shipped briefs, the holdout
+scenarios, the product's `CLAUDE.md`
 and fixtures, and the labels (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
@@ -51,9 +52,11 @@ founder (a paid plan, or making the repo public). Change neither.
 
 ## Ops watch's site check
 
-For a product served by GitHub Pages. A nightly GitHub Actions run checks that the latest Pages
-deploy is green and that every link on the site resolves, the site's own pages and the links they
-make to other sites. A failure opens one `red` issue, which GitHub notifies the founder of; it is
+A nightly GitHub Actions run checks that the deploy is up and that every link on the site resolves,
+the site's own pages and the links they make to other sites. For a product on GitHub Pages it asks
+the Pages API whether the latest deploy is green. A product served elsewhere sets the repository
+variable `OPS_WATCH_URL` to its live address (`gh variable set OPS_WATCH_URL --body <address>`),
+and the check then crawls that address instead of asking Pages. A failure opens one `red` issue, which GitHub notifies the founder of; it is
 kept current while the check stays red and closed by the next green run. The run passes either
 way, and fails only when the check itself cannot run.
 
@@ -80,18 +83,33 @@ the next green run closes it. Routines do not load plugins, so the instructions 
 product: `.github/ops-watch/routine.md`, which setup keeps current, and the product's own
 `.github/ops-watch/watch.md`.
 
-1. **Dry run.** `python3 <this skill's directory>/install_kit.py ops-routine` shows the two files.
+The same run checks back on shipped briefs. Two weeks after a brief's last issue closes (or as
+long as the brief says), it posts on the brief what "how we'll know" said, what actually happened
+and a verdict: worked, didn't, or can't tell yet. A "didn't" opens a `needs-founder` item asking
+whether to keep, change or remove what was built; it is never red, since it must not stop merges.
+`.github/ops-watch/check_back.py`, which setup keeps current, finds what is due, posts every
+check-back in the same shape and counts the share of shipped briefs that worked; the routine
+only reads the evidence and judges.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py ops-routine` shows the three
+   files.
 2. **Fill in `watch.md` with the founder:** the product's address, a weekly budget if they want
    one, and a check for each thing the product has that can quietly fail (backups, production
-   errors, a release). Leave out what it does not have.
+   errors, a release). Then the one metric and any other evidence of use, and where in the repo to
+   read them: the routine reaches only this repo, so a number kept elsewhere counts once the
+   founder copies it in. With none yet, every check-back says "can't tell yet", which is the honest
+   answer. Leave out what the product does not have.
 3. **Apply on a branch.** Rerun with `--apply`, commit, open a PR, and wait for the merge.
 4. **Ask for a clear yes** to create the routine, since it runs every day on the founder's plan.
 5. **Create it** with the `schedule` skill: a daily task on this repo, at an odd minute such as
    7:23, on Haiku (or the cheapest model the model selector offers; say which), with the prompt
-   "Follow .github/ops-watch/routine.md in this repo." It needs the founder's GitHub connection
-   for the repo, from the Claude GitHub App or `/web-setup`.
-6. **Run it once now** and read its last lines: one per check, green, red or not run. A check that
-   could not run is a setup problem to fix, not a red.
+   "Follow .github/ops-watch/routine.md in this repo." Use the cloud environment, the tools
+   `Bash`, `Read`, `Glob` and `Grep` only, and no connectors: a routine created through the API
+   gets every claude.ai connector the founder has (mail, drive and the rest) unless they are
+   cleared, and ops watch needs none of them. It needs the founder's GitHub connection for the
+   repo, from the Claude GitHub App or `/web-setup`.
+6. **Run it once now** and read its last lines: one per check, green, red or not run, then any
+   check-backs and the score. A check that could not run is a setup problem to fix, not a red.
 
 Rerun step 1 whenever the plugin's copy changes; the routine reads the file, so it needs no
 change itself.
@@ -112,7 +130,8 @@ adds `decided` to the ones to build. Neither changes the product itself.
    plan.
 4. **Create them** with the `schedule` skill: weekly tasks on this repo, early on a Monday at odd
    minutes a few hours apart, on Sonnet, with the prompts "Follow .github/optimiser/routine.md in
-   this repo." and "Follow .github/librarian/routine.md in this repo."
+   this repo." and "Follow .github/librarian/routine.md in this repo." Use the cloud environment,
+   the tools `Bash`, `Read`, `Glob` and `Grep` only, and no connectors, as for ops watch.
 5. **Run each once now** and read its last lines. A measure it could not take is a setup problem
    to fix.
 
@@ -151,13 +170,15 @@ the visible edge-case scenarios builders write their tests from.
 ## Labels
 
 `build` takes only issues labelled `decided`, the founder's yes; `needs-founder` is the decision
-queue; an open `red` issue stops merges; `research` holds what users said and did. Create them once, skipping any that exist:
+queue; an open `red` issue stops merges; `research` holds what users said and did; `librarian`
+holds a finding `build` saw come back unfixed, for the librarian to turn into a check. Create them once, skipping any that exist:
 
 ```
 gh label create needs-founder --color FBCA04 --description "Waiting on the founder's decision"
 gh label create decided --color 0E8A16 --description "The founder said yes; ready to build"
 gh label create red --color B60205 --description "A scheduled check failed; nothing merges until it is fixed"
 gh label create research --color 5319E7 --description "A question about users, with the researcher's guide and synthesis"
+gh label create librarian --color 1D76DB --description "A mistake a run made twice, for the librarian to turn into a check"
 ```
 
 ## Needs

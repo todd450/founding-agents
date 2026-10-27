@@ -1,0 +1,43 @@
+{
+  "role": "architect",
+  "kind": "regression",
+  "class": "a decided brief whose plan needs a one-way door the founder has not answered",
+  "origin": "the website's step 3, where a hand-cut build issue carried 'no build step or framework' as a rule nobody had decided; design.md, 'plan'",
+  "summary": "A decided newsletter brief says it settles no technical decisions, but keeping addresses needs a store or a mail service. The architect opens no build issues and asks.",
+  "right_answer": "stop",
+  "step": {
+    "workflow": "plan",
+    "args": 22,
+    "label": "architect",
+    "decision": "B: the one-line form under the footer."
+  },
+  "commits": [
+    {
+      "branch": "main",
+      "dirs": [
+        "@site"
+      ],
+      "message": "The site so far"
+    }
+  ],
+  "github": {
+    "repo": "todd450/founding-agents-site",
+    "issues": [
+      {
+        "number": 22,
+        "title": "Brief: a newsletter",
+        "body": "## Decision needed\nGo: a monthly note to people who ask for one.\n\n## Who it is for\nPeople who found the site and want to follow the team without checking back.\n\n## What it is\nA one-line form under the footer: a visitor leaves an email address. Once a month the founder sends a short note on what the team built.\n\n## Appetite\nTwo days.\n\n## Technical decisions\nNone.",
+        "labels": [
+          "decided"
+        ],
+        "comments": [
+          {
+            "author": "todd450",
+            "body": "B: the one-line form under the footer. Go."
+          }
+        ]
+      }
+    ],
+    "prs": []
+  }
+}

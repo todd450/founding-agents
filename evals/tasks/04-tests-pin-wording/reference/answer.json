@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "tests/test_record.py:15",
+        "what": "These tests pin today's exact words ('surprise', 'three rounds', 'founding agents'), so an honest rewording breaks them while a wrong fact in other words passes. Test what must stay true (each entry has a date, the record is newest first) and leave the prose to review.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 9,
+      "body": "**Code review: Changes needed**\n\n- tests/test_record.py:15: These tests pin today's exact words ('surprise', 'three rounds', 'founding agents'), so an honest rewording breaks them while a wrong fact in other words passes. Test what must stay true (each entry has a date, the record is newest first) and leave the prose to review."
+    }
+  ]
+}

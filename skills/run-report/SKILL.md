@@ -16,6 +16,13 @@ Run from the product repo's folder:
   newest session that ran a sweep.
 - `--budget <dollars>` flags a run that cost more, above the table. The workflows pass their own
   budget.
+- `--outcome merged` or `--outcome stopped` records how the run ended, above the table. `build`
+  passes it.
+- `python3 <this skill's directory>/report.py --runs` reads every `build` run report on the repo
+  and prints the share of runs that ended in a merge without the founder, the share that merged
+  only after an earlier run on the issue stopped, and the share that stopped. `--since <date>`
+  counts only reports from that date. Use it when the founder asks how often `build` gets a change
+  merged on its own.
 - Leave out `--post` to print the table only; `--session <path to a .jsonl>` reports on one session
   log directly.
 

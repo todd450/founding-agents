@@ -3,6 +3,8 @@
 
 `report.py --workflow build --issue 10` finds the newest session in this product that ran
 `/founding-agents:build 10` and prints a Markdown table; `--post` also comments it on the issue.
+`report.py --runs` reads every `build` run report on the repo and gives the share that ended in a
+merge without the founder, and the share that stopped.
 Costs are API-equivalent at list prices: on a Pro or Max plan the run uses the weekly limit, not
 dollars, so the figure is for comparing runs and roles, not a bill.
 """
@@ -94,7 +96,11 @@ def tokens(n):
     return f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n / 1e3:.0f}K"
 
 
-def table(rows, title, budget=None):
+# How a run ended, as its report says it.
+OUTCOMES = {"merged": "merged", "stopped": "stopped for the founder"}
+
+
+def table(rows, title, budget=None, outcome=None):
     stamps = [s for row in rows.values() for s in row["stamps"]]
     total = sum(row["cost"] for row in rows.values())
     lines = [f"**Run report** · {title} · {minutes(stamps):.0f} min · ${total:.2f} at API prices", "",
@@ -103,6 +109,8 @@ def table(rows, title, budget=None):
     if budget is not None and total > budget:
         lines[1:1] = ["", f"**Over budget:** ${total:.2f} against ${budget:.2f} for one run. Look at which role "
                           "took it before the next run of this kind."]
+    if outcome:
+        lines[1:1] = ["", f"**Outcome:** {OUTCOMES[outcome]}"]
     for (role, model), row in sorted(rows.items(), key=lambda kv: -kv[1]["cost"]):
         lines.append(f"| {role} | {model} | {minutes(row['stamps']):.0f} min | {row['calls']} | "
                      f"{tokens(row['new'])} | {tokens(row['cached'])} | {tokens(row['out'])} | ${row['cost']:.2f} |")
@@ -113,6 +121,58 @@ def table(rows, title, budget=None):
                   "limit instead. Time is from each role's first to last model call. The step that "
                   "posts this report is not in it."]
     return "\n".join(lines)
+
+
+BUILD_REPORT = re.compile(r"\*\*Run report\*\* · `build` #(\d+)")
+OUTCOME = re.compile(r"^\*\*Outcome:\*\* (merged|stopped)", re.M)
+
+
+def build_runs(comments):
+    """Counts `build` runs by how they ended, oldest first. A run merged without the founder when it
+    merged and was the first run on its issue: a merged run closes its issue, so a second run means
+    the founder stepped in after the first one stopped."""
+    counts = {"merged alone": 0, "merged after a stop": 0, "stopped": 0, "unrecorded": 0}
+    seen = set()
+    for comment in sorted(comments, key=lambda c: c["created_at"]):
+        run = BUILD_REPORT.match(comment["body"])
+        if not run:
+            continue
+        issue, ended = run.group(1), OUTCOME.search(comment["body"])
+        if not ended:
+            counts["unrecorded"] += 1
+        elif ended.group(1) == "stopped":
+            counts["stopped"] += 1
+        else:
+            counts["merged after a stop" if issue in seen else "merged alone"] += 1
+        seen.add(issue)
+    return counts
+
+
+def runs_table(counts, since=None):
+    total = counts["merged alone"] + counts["merged after a stop"] + counts["stopped"]
+    when = f" since {since}" if since else ""
+    left_out = (f" {counts['unrecorded']} report(s) from before outcomes were recorded are left out."
+                if counts["unrecorded"] else "")
+    if not total:
+        return f"**Build runs**{when} · none with a recorded outcome yet.{left_out}"
+    share = lambda n: f"{100 * n / total:.0f}%"
+    lines = [f"**Build runs**{when} · {total} with a recorded outcome", "",
+             "| Ended | Runs | Share |", "|---|---|---|",
+             f"| Merged without the founder | {counts['merged alone']} | {share(counts['merged alone'])} |",
+             f"| Merged after an earlier run stopped | {counts['merged after a stop']} | {share(counts['merged after a stop'])} |",
+             f"| Stopped for the founder | {counts['stopped']} | {share(counts['stopped'])} |", "",
+             f"A run merged without the founder when it merged and was the first `build` run on its issue.{left_out}"]
+    return "\n".join(lines)
+
+
+def run_reports(since=None):
+    """Every `build` run report commented on this repo, through REST so it also works in the cloud."""
+    path = "repos/{owner}/{repo}/issues/comments?per_page=100" + (f"&since={since}" if since else "")
+    pick = '.[] | select(.body | startswith("**Run report** · `build`")) | {created_at, body} | @json'
+    out = subprocess.run(["gh", "api", "--paginate", path, "--jq", pick], capture_output=True, text=True)
+    if out.returncode != 0:
+        raise RuntimeError(out.stderr.strip())
+    return [json.loads(line) for line in out.stdout.splitlines() if line.strip()]
 
 
 def project_logs(folder):
@@ -146,8 +206,19 @@ def main(argv=None):
     parser.add_argument("--session", type=Path, help="a session log to report on instead of finding one")
     parser.add_argument("--post", action="store_true", help="comment the report on the issue")
     parser.add_argument("--budget", type=float, help="dollars one run should stay under; the report flags a run over it")
+    parser.add_argument("--outcome", choices=sorted(OUTCOMES), help="how the run ended, recorded in the report")
+    parser.add_argument("--runs", action="store_true",
+                        help="the share of build runs that merged without the founder, and that stopped")
+    parser.add_argument("--since", help="with --runs, only reports from this date (YYYY-MM-DD)")
     args = parser.parse_args(argv)
 
+    if args.runs:
+        try:
+            print(runs_table(build_runs(run_reports(args.since)), args.since))
+        except RuntimeError as error:
+            print(f"Could not read the run reports: {error}", file=sys.stderr)
+            return 1
+        return 0
     if args.session:
         session = args.session
     else:
@@ -161,7 +232,7 @@ def main(argv=None):
             return 1
 
     title = f"`{args.workflow}` #{args.issue}" if args.workflow else session.stem
-    report = table(summarise(session), title, args.budget)
+    report = table(summarise(session), title, args.budget, args.outcome)
     print(report)
     if args.post:
         if not args.issue:

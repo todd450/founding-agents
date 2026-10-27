@@ -1,0 +1,3 @@
+#!/bin/sh
+# The eval trials put this first on PATH, so an agent's `gh` reaches the stand-in, never GitHub.
+exec python3 "$(dirname "$0")/../gh.py" "$@"

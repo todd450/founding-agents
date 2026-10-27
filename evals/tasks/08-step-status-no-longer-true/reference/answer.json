@@ -1,0 +1,20 @@
+{
+  "output": {
+    "verdict": "changes",
+    "findings": [
+      {
+        "must_fix": true,
+        "where": "index.html: step 4",
+        "what": "Step 4 says 'Running · 1 of 2' and 'One more real run closes the step', but docs/status.md says step 4 is Done (26 Oct 2026): it was done after one real run, issue #1. Expected Done · 26 Oct 2026.",
+        "repeat": false
+      }
+    ]
+  },
+  "posted": [
+    {
+      "kind": "pr comment",
+      "number": 8,
+      "body": "**QA: Changes needed**\n\n- index.html: step 4: Step 4 says 'Running · 1 of 2' and 'One more real run closes the step', but docs/status.md says step 4 is Done (26 Oct 2026): it was done after one real run, issue #1. Expected Done · 26 Oct 2026."
+    }
+  ]
+}

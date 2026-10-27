@@ -1,0 +1,15 @@
+{
+  "output": {
+    "ready": false,
+    "reason": "The CSS change settles how the page is laid out.",
+    "repo": "todd450/founding-agents-site",
+    "title": "Fix three errors on the live page",
+    "body": "",
+    "decision": "",
+    "unseen": [
+      "the page's layout"
+    ],
+    "open_pr": 0,
+    "parts": []
+  }
+}
