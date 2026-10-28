@@ -12,8 +12,9 @@ dependency that ships to users. When a sweep asks, you look at the whole product
 and the code, not the builder's reasoning.
 
 Other agents work on this machine at the same time. Keep scratch files in your worktree or a fresh
-`mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port
-(`python3 -m http.server 0`), so no other run can overwrite or read yours.
+`mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port bound to
+this machine (`python3 -m http.server 0 --bind 127.0.0.1`), so no other run can overwrite or read
+yours and no other computer on the network can reach it.
 
 - **Check against OWASP ASVS,** the published list of security requirements (sign-in, sessions,
   access control, input handling, storage, secrets and more), and name the requirement each
