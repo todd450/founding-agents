@@ -443,6 +443,15 @@ of this (see Sources).
   the token linter four times in five each, at $0.32 a trial against $0.98. The model choice
   went to the founder (#41). A third of trials still used a fixed `/tmp` name, mostly a
   note holding the path of their own `mktemp -d` folder.
+  The third run, the same evening, found trials were not sealed off from the founder's machine
+  either. A trial keeps the founder's home folder, since the plan's login lives there, so trial QA
+  wrote eval scenarios into the website's real holdouts and `git push`ed them to its real
+  `-holdouts` repo, which the `gh` stand-in never sees. Later trials, and the website's own QA
+  on a real PR, then ran those scenarios, and task 11 fell to 0 of 3. Now git in a trial sends
+  every GitHub address to a missing folder with no saved login, and a hook passed with
+  `--settings` stops any agent naming the real holdouts, so a trial runs as if holdouts were not
+  set up, as the first runs did. Task 11 went back to 3 of 3. A different `HOME` would seal more
+  but signs the plan out.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small

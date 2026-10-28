@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -36,6 +37,10 @@ from workflow_harness import run_workflow  # noqa: E402
 TOOLS = "Bash,Read,Edit,Write,Grep,Glob,Skill"
 TIMEOUT = 25 * 60
 BUDGET = 5  # dollars at API prices one trial may spend before claude stops it
+SECRETS = {"ANTHROPIC_API_KEY", "GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN"}
+GITHUB = ("https://github.com/", "http://github.com/", "git@github.com:", "ssh://git@github.com/", "git://github.com/")
+FENCE = {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [
+    {"type": "command", "command": f"python3 {shlex.quote(str(EVALS / 'fence.py'))}"}]}]}}
 
 
 def replies(task):
@@ -104,7 +109,7 @@ def extract(text, schema, env):
 def command(call, model):
     cmd = ["claude", "-p", prompt(call), "--output-format", "json", "--json-schema", json.dumps(call["schema"]),
            "--model", model, "--plugin-dir", str(PLUGIN), "--setting-sources", "project,local",
-           "--allowedTools", TOOLS, "--max-budget-usd", str(BUDGET)]
+           "--allowedTools", TOOLS, "--max-budget-usd", str(BUDGET), "--settings", json.dumps(FENCE)]
     if call["agentType"]:
         cmd += ["--agent", call["agentType"]]
     if call["effort"]:
@@ -113,10 +118,20 @@ def command(call, model):
 
 
 def environment(folder):
-    """The trial's environment: the gh stand-in first on PATH, an empty GitHub login, and never an API key."""
-    env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+    """The trial's environment: the gh stand-in first on PATH, an empty GitHub login, and never an API key.
+
+    git sends every GitHub address to a folder that does not exist and forgets the founder's saved
+    logins, so nothing the agent pushes or clones can reach GitHub: on 27 Oct 2026 trial QA pushed
+    to the website's real holdouts repo with `git push`, which the gh stand-in never sees."""
+    env = {k: v for k, v in os.environ.items() if k not in SECRETS and not k.startswith("GIT_CONFIG")}
     env.update({"PATH": f"{EVALS / 'bin'}:{env.get('PATH', '')}", "EVAL_GH_STATE": str(folder / "github.json"),
-                "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1", "TMPDIR": str(folder / "tmp")})
+                "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1", "TMPDIR": str(folder / "tmp"),
+                "GIT_TERMINAL_PROMPT": "0"})
+    nowhere = (folder / "no-github").as_uri() + "/"
+    config = [("credential.helper", "")] + [(f"url.{nowhere}.insteadOf", url) for url in GITHUB]
+    env["GIT_CONFIG_COUNT"] = str(len(config))
+    for i, (key, value) in enumerate(config):
+        env[f"GIT_CONFIG_KEY_{i}"], env[f"GIT_CONFIG_VALUE_{i}"] = key, value
     return env
 
 
