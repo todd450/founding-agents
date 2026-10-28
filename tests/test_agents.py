@@ -77,6 +77,26 @@ class ProportionTest(unittest.TestCase):
         self.assertIn("gh pr update-branch", integrator)
         self.assertIn("Merge on that green result, without rerunning them", integrator)
 
+    def test_where_a_merge_deploys_the_founder_merges_and_a_refusal_is_never_worked_around(self):
+        # On Half Badger auto mode refused three merges that deploy to production, then let a fourth through.
+        integrator = self.read("integrator")
+        self.assertIn("Where a merge deploys to production, the founder merges.", integrator)
+        self.assertIn("A merge Claude Code refuses is the founder's.", integrator)
+        self.assertIn("Do not run `gh pr merge`", integrator)
+
+    def test_the_architect_writes_pass_marks_reviewers_can_check_and_only_real_dependencies(self):
+        architect = self.read("architect")
+        self.assertIn('"Build after" only for a real dependency', architect)
+        self.assertIn('"Matches #<n>: <what stays the same>"', architect)
+        self.assertIn('goes under "The founder checks"', architect)
+        self.assertIn("binds to `127.0.0.1`", architect)
+
+    def test_every_agent_that_serves_the_product_binds_it_to_this_machine(self):
+        for name in ("builder", "qa", "code-reviewer", "security-reviewer"):
+            text = self.read(name)
+            self.assertIn("python3 -m http.server 0 --bind 127.0.0.1", text, name)
+            self.assertNotIn("http.server 0`", text, name)
+
 
 if __name__ == "__main__":
     unittest.main()

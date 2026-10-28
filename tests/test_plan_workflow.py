@@ -49,9 +49,25 @@ class PlanWorkflowTest(unittest.TestCase):
 
     def test_each_issue_says_what_brief_it_is_part_of_its_files_and_its_decisions(self):
         prompt = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][1]["prompt"]
-        for part in ("Part of #7.", "Build after #<n>.", "## Files", "no two issues own the same file",
+        for part in ("Part of #7.", "Build after #<n>: <what of #<n>", "## Files", "no two issues own the same file",
                      "## Technical decisions", "technical one-way door"):
             self.assertIn(part, prompt)
+
+    def test_the_architect_links_consistency_apart_from_dependency(self):
+        # Half Badger's #6 to #9 were chained partly to stay consistent, so parallel builders idled.
+        prompt = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][1]["prompt"]
+        self.assertIn("Matches #<n>: <what stays the same in both>", prompt)
+        self.assertIn('Write "Build after" only for a real dependency', prompt)
+
+    def test_pass_marks_the_reviewers_cannot_check_go_to_the_founder(self):
+        # Half Badger's #2 needed a dashboard click and a preview behind Vercel's login.
+        prompt = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][1]["prompt"]
+        self.assertIn("## The founder checks", prompt)
+        self.assertIn("with no dashboard, login or account", prompt)
+
+    def test_a_preview_command_binds_to_this_machine_and_serves_no_secret(self):
+        prompt = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][1]["prompt"]
+        self.assertIn("binds to 127.0.0.1, and serves a folder that holds no secret", prompt)
 
     def open_decision(self, **replies):
         return run_workflow("plan", {"check": [READY], "architect": [{**PLANNED, "issues": [], "plan_url": "",

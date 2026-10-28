@@ -18,21 +18,38 @@ from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 
-# $ per million tokens: input, output, cache write (5 min), cache write (1 hour), cache read.
-# List prices as of 6 Oct 2026; Haiku's double above 100K-token prompts, which these runs stay under.
+# $ per million tokens: input, output, cache write (5 min), cache write (1 hour), cache read, by the
+# model a call names, longest prefix first. A model alias such as `opus` resolves to whichever model
+# Claude Code picks, so a run is priced by the model it actually ran: on 27 Oct 2026 a headless
+# `build` asked for `opus` and ran `claude-opus-5`, and pricing every Opus call at Opus 5.5's rate
+# reported $7.08 where Claude Code counted $11.10. These match Claude Code's own `total_cost_usd`
+# for that run to the cent (Sonnet 5 included, at $3/$15). Haiku 5.5 doubles above 100K-token
+# prompts, which these runs stay under.
 PRICES = {
-    "opus": (4.00, 20.00, 5.00, 8.00, 0.20),
-    "sonnet": (2.00, 10.00, 2.50, 4.00, 0.20),
-    "haiku": (0.10, 0.50, 0.125, 0.20, 0.01),
+    "claude-opus-5-5": (4.00, 20.00, 5.00, 8.00, 0.20),
+    "claude-opus-5": (5.00, 25.00, 6.25, 10.00, 0.50),
+    "claude-opus-4": (5.00, 25.00, 6.25, 10.00, 0.50),
+    "claude-sonnet-5-5": (2.00, 10.00, 2.50, 4.00, 0.20),
+    "claude-sonnet-5": (3.00, 15.00, 3.75, 6.00, 0.30),
+    "claude-sonnet-4": (3.00, 15.00, 3.75, 6.00, 0.30),
+    "claude-haiku-5-5": (0.10, 0.50, 0.125, 0.20, 0.01),
+    "claude-haiku-4-5": (1.00, 5.00, 1.25, 2.00, 0.10),
 }
 
 
+def priced(model):
+    """The PRICES key for a model id, or None for a model the table does not know."""
+    return next((key for key in sorted(PRICES, key=len, reverse=True) if (model or "").startswith(key)), None)
+
+
 def family(model):
-    return next((name for name in PRICES if name in (model or "")), "other")
+    """The model as the table shows it: `opus-5`, `sonnet-5-5`; the id itself when it is not priced."""
+    key = priced(model)
+    return key.removeprefix("claude-") if key else (model or "other")
 
 
 def cost(model, usage):
-    prices = PRICES.get(family(model))
+    prices = PRICES.get(priced(model))
     if not prices:
         return 0.0
     w1h = (usage.get("cache_creation") or {}).get("ephemeral_1h_input_tokens", 0)
@@ -71,12 +88,13 @@ def transcripts(session):
 
 
 def summarise(session):
-    rows = defaultdict(lambda: {"calls": 0, "new": 0, "cached": 0, "out": 0, "cost": 0.0, "stamps": []})
+    rows = defaultdict(lambda: {"calls": 0, "new": 0, "cached": 0, "out": 0, "cost": 0.0, "stamps": [], "priced": True})
     for path, role in transcripts(session):
         if not path.exists():
             continue
         for stamp, model, usage in calls(path):
             row = rows[(role, family(model))]
+            row["priced"] = row["priced"] and priced(model) is not None
             row["calls"] += 1
             row["new"] += usage.get("input_tokens", 0) + usage.get("cache_creation_input_tokens", 0)
             row["cached"] += usage.get("cache_read_input_tokens", 0)
@@ -96,8 +114,9 @@ def tokens(n):
     return f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n / 1e3:.0f}K"
 
 
-# How a run ended, as its report says it.
-OUTCOMES = {"merged": "merged", "stopped": "stopped for the founder"}
+# How a run ended, as its report says it. A run is ready when every change it built was approved
+# and only the founder's merge is left, as where a merge deploys to production.
+OUTCOMES = {"merged": "merged", "ready": "ready for the founder's merge", "stopped": "stopped for the founder"}
 
 
 def table(rows, title, budget=None, outcome=None):
@@ -109,6 +128,10 @@ def table(rows, title, budget=None, outcome=None):
     if budget is not None and total > budget:
         lines[1:1] = ["", f"**Over budget:** ${total:.2f} against ${budget:.2f} for one run. Look at which role "
                           "took it before the next run of this kind."]
+    unpriced = sorted({model for (_, model), row in rows.items() if not row["priced"]})
+    if unpriced:
+        lines[1:1] = ["", f"**Not priced:** {', '.join(unpriced)}. The run-report skill has no price for "
+                          "this model, so its calls are counted but left out of the cost."]
     if outcome:
         lines[1:1] = ["", f"**Outcome:** {OUTCOMES[outcome]}"]
     for (role, model), row in sorted(rows.items(), key=lambda kv: -kv[1]["cost"]):
@@ -124,14 +147,14 @@ def table(rows, title, budget=None, outcome=None):
 
 
 BUILD_REPORT = re.compile(r"\*\*Run report\*\* · `build` #(\d+)")
-OUTCOME = re.compile(r"^\*\*Outcome:\*\* (merged|stopped)", re.M)
+OUTCOME = re.compile(r"^\*\*Outcome:\*\* (merged|ready|stopped)", re.M)
 
 
 def build_runs(comments):
     """Counts `build` runs by how they ended, oldest first. A run merged without the founder when it
     merged and was the first run on its issue: a merged run closes its issue, so a second run means
     the founder stepped in after the first one stopped."""
-    counts = {"merged alone": 0, "merged after a stop": 0, "stopped": 0, "unrecorded": 0}
+    counts = {"merged alone": 0, "merged after a stop": 0, "ready": 0, "stopped": 0, "unrecorded": 0}
     seen = set()
     for comment in sorted(comments, key=lambda c: c["created_at"]):
         run = BUILD_REPORT.match(comment["body"])
@@ -140,8 +163,8 @@ def build_runs(comments):
         issue, ended = run.group(1), OUTCOME.search(comment["body"])
         if not ended:
             counts["unrecorded"] += 1
-        elif ended.group(1) == "stopped":
-            counts["stopped"] += 1
+        elif ended.group(1) in ("stopped", "ready"):
+            counts[ended.group(1)] += 1
         else:
             counts["merged after a stop" if issue in seen else "merged alone"] += 1
         seen.add(issue)
@@ -149,7 +172,7 @@ def build_runs(comments):
 
 
 def runs_table(counts, since=None):
-    total = counts["merged alone"] + counts["merged after a stop"] + counts["stopped"]
+    total = counts["merged alone"] + counts["merged after a stop"] + counts["ready"] + counts["stopped"]
     when = f" since {since}" if since else ""
     left_out = (f" {counts['unrecorded']} report(s) from before outcomes were recorded are left out."
                 if counts["unrecorded"] else "")
@@ -160,6 +183,7 @@ def runs_table(counts, since=None):
              "| Ended | Runs | Share |", "|---|---|---|",
              f"| Merged without the founder | {counts['merged alone']} | {share(counts['merged alone'])} |",
              f"| Merged after an earlier run stopped | {counts['merged after a stop']} | {share(counts['merged after a stop'])} |",
+             f"| Ready, left for the founder's merge | {counts['ready']} | {share(counts['ready'])} |",
              f"| Stopped for the founder | {counts['stopped']} | {share(counts['stopped'])} |", "",
              f"A run merged without the founder when it merged and was the first `build` run on its issue.{left_out}"]
     return "\n".join(lines)
@@ -188,13 +212,28 @@ def first_prompt(session):
     return ""
 
 
+def asked_for_this_report(session, workflow, issue):
+    """Whether one of the session's steps was asked to post this report. A run started on an idea in
+    words names no issue in its first prompt: `propose` opens the issue partway through, so only the
+    report step's own prompt ties the session to it."""
+    asked = re.compile(rf"--workflow {workflow} --issue {issue}\b")
+    for path in session.with_suffix("").glob("subagents/**/agent-*.jsonl"):
+        if asked.search(first_prompt(path)):
+            return True
+    return False
+
+
 def find_session(logs, workflow, issue):
-    """The newest session whose first prompt ran this workflow on this issue. A sweep names a kind,
-    not an issue, so for a sweep it is the newest session that ran one."""
-    wanted = re.compile(rf"founding-agents:{workflow}\b" if workflow == "sweep" else
-                        rf"founding-agents:{workflow}\b.*?(?:<command-args>|\s)#?{issue}\b", re.S)
+    """The newest session whose first prompt ran this workflow on this issue, or that ran this
+    workflow and asked for this report. A sweep names a kind, not an issue, so for a sweep it is the
+    newest session that ran one."""
+    ran = re.compile(rf"founding-agents:{workflow}\b")
+    on_issue = re.compile(rf"founding-agents:{workflow}\b.*?(?:<command-args>|\s)#?{issue}\b", re.S)
     for session in sorted(logs.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
-        if wanted.search(first_prompt(session)):
+        prompt = first_prompt(session)
+        if not ran.search(prompt):
+            continue
+        if workflow == "sweep" or on_issue.search(prompt) or asked_for_this_report(session, workflow, issue):
             return session
     return None
 

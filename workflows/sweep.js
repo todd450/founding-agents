@@ -169,7 +169,7 @@ const found = await agent(
 
 Bring at most ${MAX} findings, the most worth fixing first, ranked by what the founder gets for the fix's size. Fewer is fine, and none is fine when nothing is worth a builder's time.${open}
 
-Each finding's pass marks say what the reviewer checks to call its fix done: ${k.marks} Make them specific to the finding.
+Each finding's pass marks say what the reviewer checks to call its fix done: ${k.marks} Make them specific to the finding, and each one the reviewers can check before the merge from the branch, a server bound to 127.0.0.1, the public site and gh, with no dashboard, login or account.
 
 Name every ${ONE_WAY}, that a fix would settle, such as adding a dependency or an outside service, with the realistic options, the one you recommend and why, and what reversing it would cost. Most fixes settle none: where a helper lives, which list a check reads, or how a test is shaped is the builder's to choose and cheap to change, and an option you advise against does not make the choice a one-way door.
 
