@@ -167,17 +167,21 @@ def session_log(session_id):
 
 
 FIXED = re.compile(r"(?<![\w$}/.-])/tmp/[\w.-]+|http\.server\s+(?!0\b)\d{2,5}\b")
+# Killing by a pattern (`pkill -f "http.server 0"`) also stops every other run's process that matches.
+KILLS = re.compile(r"""\b(?:pkill|killall)(?:\s+-\w+)*\s+(?:"[^"]*"|'[^']*'|[^\s;&|)]+)"""
+                   r"|\bkill\b[^;&|\n]*\$\(\s*(?:pgrep|pidof)\b[^)]*\)|\b(?:pgrep|pidof)\b[^;&|\n]*\|\s*xargs\s+kill\b")
 
 
 def shared(log):
-    """Fixed /tmp paths and fixed ports the trial's agent used: places another run could also use."""
+    """Fixed /tmp paths, fixed ports and pattern kills the trial's agent used: things another run also has."""
     if not log:
         return []
-    found = set()
+    found, kills = set(), set()
     for record in summarise_records(log):
         found |= set(FIXED.findall(record))
+        kills |= set(KILLS.findall(str((json.loads(record) or {}).get("command") or "")))
     # A mktemp template, or the random name mktemp made from it, is the agent's own.
-    return sorted(f for f in found if not re.search(r"XXX|[-.][A-Za-z0-9]{6,}$|^/tmp/\.+$", f))
+    return sorted({f for f in found if not re.search(r"XXX|[-.][A-Za-z0-9]{6,}$|^/tmp/\.+$", f)} | kills)
 
 
 def summarise_records(log):
@@ -290,14 +294,16 @@ def markdown(results, trials):
     if extracted:
         lines += ["", f"In {extracted} of {len(results)} trials the agent's reply had no usable JSON block, so Haiku "
                       "read the result from its final report."]
-    used = [r for r in results if r.get("shared")]
-    if used:
-        common = defaultdict(int)
-        for r in used:
-            for place in r["shared"]:
-                common[place] += 1
-        top = ", ".join(f"`{p}`" for p, _ in sorted(common.items(), key=lambda kv: -kv[1])[:5])
-        lines += ["", f"{len(used)} of {len(results)} trials used a fixed /tmp path or port another run could also use: {top}."]
+    for what, kill in (("used a fixed /tmp path or port another run could also use", False),
+                       ("stopped a process by a pattern another run's process could also match", True)):
+        used = [[p for p in r.get("shared") or [] if bool(KILLS.fullmatch(p)) == kill] for r in results]
+        if any(used):
+            common = defaultdict(int)
+            for places in used:
+                for place in places:
+                    common[place] += 1
+            top = ", ".join(f"`{p}`" for p, _ in sorted(common.items(), key=lambda kv: -kv[1])[:5])
+            lines += ["", f"{sum(map(bool, used))} of {len(results)} trials {what}: {top}."]
     lines += ["", "Pass rate is the share of trials that passed every check; pass^k is the share of tasks "
                   "where all k trials passed. Regression tasks are ones the team got right on the website "
                   "and should stay near 100%; capability tasks are ones it got wrong. Cost is API-equivalent at "

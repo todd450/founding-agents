@@ -242,6 +242,15 @@ class ResultTest(unittest.TestCase):
         used = "cp index.html /tmp/index.html.bak; d=$(mktemp -d); cd $TMPDIR/x; python3 -m http.server 8777; python3 -m http.server 0"
         self.assertEqual(run.FIXED.findall(used), ["/tmp/index.html.bak", "http.server 8777"])
 
+    def test_flags_killing_by_a_pattern_but_not_by_its_own_pid(self):
+        commands = ['python3 -u -m http.server 0 > /var/folders/x/tmp.Ab12Cd/server.log 2>&1 & echo $!',
+                    'kill 48213', 'pkill -f "http.server 0"; ls', "killall python3",
+                    "kill $(pgrep -f http.server)"]
+        log = Path(tempfile.mkdtemp()) / "session.jsonl"
+        log.write_text("\n".join(json.dumps({"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Bash", "input": {"command": c}}]}}) for c in commands))
+        self.assertEqual(run.shared(log), ['kill $(pgrep -f http.server)', 'killall python3', 'pkill -f "http.server 0"'])
+
     def test_pass_rate_counts_trials_and_pass_k_counts_tasks_whose_every_trial_passed(self):
         def result(name, passed):
             return {"task": name, "role": "qa", "model": "opus", "kind": "regression", "passed": passed,
