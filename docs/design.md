@@ -146,32 +146,20 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Planning: one-way doors and build issues
 
-- **Technical one-way doors reach the founder before they are built in.** A one-way door costs a
-  lot to reverse once code or people depend on it: a framework or none, a build step, how the
-  product deploys, its stack, how it stores data, a dependency that ships to users, an outside
-  service, an interface others rely on. The product lead names each one a brief settles, even one
-  taken for granted; the architect lists those each build issue settles; and the founder answers
-  them in a queue item with options, a recommendation and the cost of reversing. `build`'s check
-  refuses an issue that settles one the founder has not said yes to, the builder stops rather than
-  choose one, and the code reviewer sends back a change that makes one. A check tool run from
-  `check.sh` ships to no one, so adding one is never a one-way door, and where a helper lives or
-  which list a check reads is the builder's call.
-- **`plan`: the architect cuts a decided brief into build issues.** `/founding-agents:plan
-  <brief>`. A Haiku check refuses a brief without `decided` or one already cut; the architect, on
-  Opus, lists the one-way doors the plan needs. If the founder has answered them all, it opens the
-  build issues, each saying "Part of #<brief>", the files it owns (no two share one), its risk
-  tier, any "Build after #<n>" and the decisions it settles, and posts the plan on the brief. If
-  any is unanswered it opens nothing, posts one queue item, and moves `decided` off the brief, so
-  adding it again is the founder's yes. The founder does not label each build issue; their
-  attention goes to the decisions, not to approving cuts.
-- **Pass marks are ones the reviewers can check, or the founder's by name.** Reviewers check from
-  the PR's branch, a server on `127.0.0.1`, the public site and `gh`. A pass mark needing a
-  dashboard, a login, an account or the live site after the deploy goes under "The founder
-  checks", with when, and no reviewer sends a change back for one. Sweeps follow the same rule.
-- **"Build after" is only for a real dependency; consistency is "Matches".** An issue builds after
-  another only when it cannot be built or checked without that one merged, and says what it needs.
-  Issues that must look or read alike say "Matches #<n>" and both carry the shared thing (the exact
-  marker, the wording); `build` never waits on that line.
+- **Technical one-way doors reach the founder before they are built in.** A one-way door is a
+  choice that costs a lot to reverse once code or people depend on it, such as a framework, a build
+  step, how the product deploys or stores data, or a dependency that ships to users. The product
+  lead and the architect name each one, the founder answers it in a queue item, and `build`, the
+  builder and the code reviewer each refuse one the founder has not said yes to. A check tool run
+  from `check.sh` is never one.
+- **`plan`: the architect cuts a decided brief into build issues.** Once the founder has answered
+  every one-way door the plan needs, each issue names the files it owns (no two share one), its
+  risk tier and the decisions it settles. If any is unanswered, it opens nothing and asks.
+- **Pass marks are ones the reviewers can check, or the founder's by name.** A pass mark that needs
+  a dashboard, a login or the live site goes under "The founder checks", and no reviewer sends a
+  change back for it.
+- **"Build after" is only for a real dependency.** Issues that must merely look or read alike say
+  "Matches #<n>" instead, and `build` never waits on that.
 
 ### Building
 
