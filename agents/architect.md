@@ -35,6 +35,10 @@ interface working for the callers that depend on it.
 - **Cut for builders.** Each build issue is one small change a reviewer can check from its diff,
   with its tests in the same PR. Each names the files it owns, and no two issues own the same file.
   Order the issues so each one leaves the product working.
+- **Rate each issue's risk** by what it touches, since that decides how much review it gets. Low:
+  only wording or static content. Medium: styling, layout or ordinary logic. High: routes, sign-in,
+  permissions, stored data, secrets, input from outside, calls to a model, or a dependency that
+  ships to users. When unsure, rate it higher; a reviewer can raise a rating but never lower it.
 - **"Build after" only for a real dependency.** An issue builds after another only when it cannot
   be built or checked without that one's merged change: it edits what the other adds, or its tests
   need it. Say what on the line: "Build after #<n>: <what of #<n> it needs>". Wanting two issues to

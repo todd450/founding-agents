@@ -19,6 +19,9 @@ Run from the product repo's folder:
   budget.
 - `--outcome merged`, `--outcome ready` (approved, left for the founder's merge) or
   `--outcome stopped` records how the run ended, above the table. `build` passes it.
+- `--spent-on <n>` prints only the dollars the run has spent on issue `<n>` so far, while it is
+  still running, and posts nothing. `build` uses it to stop an issue that passes its risk tier's
+  budget.
 - `python3 <this skill's directory>/report.py --runs` reads every `build` run report on the repo
   and prints the share of runs that ended in a merge without the founder, the share that merged
   only after an earlier run on the issue stopped, the share left ready for the founder's merge, and

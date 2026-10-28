@@ -9,18 +9,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
 READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs.", "decision": "",
-         "unseen": [], "open_pr": 0, "awaiting_merge": False, "security": False, "parts": []}
-PR = {"pr_number": 4, "pr_url": "https://github.com/o/r/pull/4", "stopped_because": ""}
+         "unseen": [], "open_pr": 0, "awaiting_merge": False, "risk": "medium", "parts": []}
+PR = {"pr_number": 4, "pr_url": "https://github.com/o/r/pull/4", "head": "aaa1111", "stopped_because": ""}
 APPROVE = {"verdict": "approve", "findings": []}
-CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "where": "slug.py:3", "what": "empty title crashes",
-                                       "repeat": False}]}
+CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "reach": "anyone", "review_would_see": False,
+                                               "where": "slug.py:3", "what": "empty title crashes", "repeat": False}]}
 REPEATED = {"verdict": "changes", "findings": [{**CHANGES["findings"][0], "repeat": True}]}
 MERGED = {"merged": True, "merge_commit": "abc1234", "founder": False, "reason": ""}
 # Where a merge deploys to production, or auto mode refuses it, the merge is the founder's.
 FOUNDERS = {"merged": False, "merge_commit": "", "founder": True, "reason": "merging to main deploys to production"}
-CODE_OK = {**APPROVE, "security": False}
-INSECURE = {"verdict": "changes", "findings": [{"must_fix": True, "where": "api.py:9", "what": "any user reads any draft",
-                                         "repeat": False}]}
+CODE_OK = APPROVE
+INSECURE = {"verdict": "changes", "findings": [{"must_fix": True, "reach": "user", "review_would_see": False,
+                                                "where": "api.py:9", "what": "any user reads any draft", "repeat": False}]}
+HIGH = {**READY, "risk": "high"}
 
 
 def with_code_review(replies):
@@ -151,7 +152,7 @@ class BuildWorkflowTest(unittest.TestCase):
                                  "run report": [{"comment_url": "https://github.com/o/r/issues/12#c1", "reason": ""}]})
         report = run["calls"][-1]
         self.assertEqual((report["label"], report["model"]), ("run report", "haiku"))
-        self.assertIn("--workflow build --issue 12 --budget 5 --outcome merged --post", report["prompt"])
+        self.assertIn("--workflow build --issue 12 --budget 12 --outcome merged --post", report["prompt"])
         self.assertEqual(run["result"]["report"], "https://github.com/o/r/issues/12#c1")
 
     def test_a_stalled_run_still_posts_its_report_and_says_it_stopped(self):
@@ -218,10 +219,10 @@ class BuildWorkflowTest(unittest.TestCase):
 
     def test_the_check_and_the_code_reviewer_flag_the_same_changes_for_security(self):
         root = Path(__file__).resolve().parent.parent
-        words = re.search(r"const SECURITY = '([^']+)'", (root / "workflows" / "build.js").read_text()).group(1)
+        words = re.search(r"high: it touches ([^.]+)\.", (root / "workflows" / "build.js").read_text()).group(1)
         code = " ".join((root / "agents" / "code-reviewer.md").read_text().split())
         security = " ".join((root / "agents" / "security-reviewer.md").read_text().split())
-        self.assertIn(f"Say whether the diff touches {words}.", code)
+        self.assertIn(f"high when it touches {words}.", code)
         self.assertIn(f"You look at changes that touch {words}.", security)
 
     def test_the_builder_leaves_ci_to_the_code_reviewer_and_the_integrator(self):
@@ -251,23 +252,26 @@ class BuildWorkflowTest(unittest.TestCase):
         # earlier in the same round as a repeat, and the run stopped a round early.
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, APPROVE],
                                  "integrator": [MERGED]})
-        second = [call["prompt"] for call in run["calls"] if call["label"].startswith(("qa", "code review"))][2:]
-        for prompt in second:
+        qa, code = [call["prompt"] for call in run["calls"] if call["label"].startswith(("qa", "code review"))][2:]
+        for prompt in (qa, code):
             self.assertIn("a finding only they raised is not a repeat", prompt)
             self.assertIn("Nor is one an earlier round marked as a Nit", prompt)
-            self.assertIn("The previous round's must-fix findings", prompt)
-            self.assertIn("- QA: slug.py:3: empty title crashes", prompt)
+        # Each reviewer is given its own findings from last time, not the other reviewers'.
+        self.assertIn("Your findings last time:\n- slug.py:3: empty title crashes", qa)
+        self.assertIn("You raised nothing last time.", code)
 
     def test_a_continued_pr_gets_the_rule_but_no_list_it_cannot_know(self):
         run = self.run_workflow({"check": [{**READY, "open_pr": 9}], "builder": [{**PR, "pr_number": 9}],
                                  "qa": [APPROVE], "integrator": [MERGED]})
         qa = next(call["prompt"] for call in run["calls"] if call["label"].startswith("qa"))
         self.assertIn("a finding only they raised is not a repeat", qa)
-        self.assertNotIn("The previous round's must-fix findings", qa)
+        self.assertNotIn("Your findings last time", qa)
+        self.assertIn("If you reviewed this PR before", qa)
+        self.assertIn("gh pr view <number> --json commits", qa)
 
     def test_qa_and_code_review_run_side_by_side_and_both_must_approve(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [APPROVE, APPROVE],
-                                    "code review": [{**CODE_OK, **CHANGES, "security": False}, CODE_OK],
+                                    "code review": [CHANGES, CODE_OK],
                                     "integrator": [MERGED]})
         labels = self.labels(run)
         self.assertEqual(labels.index("code review #12, round 1"), labels.index("qa #12, round 1") + 1)
@@ -275,13 +279,16 @@ class BuildWorkflowTest(unittest.TestCase):
         second = next(call["prompt"] for call in run["calls"] if call["label"] == "builder #12, round 2")
         self.assertIn("- Code review: slug.py:3: empty title crashes", second)
 
-    def test_the_check_says_from_the_issue_whether_it_needs_a_security_review(self):
-        prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
-        self.assertIn("Return security true when what the issue asks for touches routes, sign-in", prompt)
-        self.assertIn("a dependency that ships to users", prompt)
+    def test_the_check_reads_the_issues_risk_or_rates_it(self):
+        check = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]
+        self.assertIn('Take the tier its "Risk" section names', check["prompt"])
+        self.assertIn("return your rating when it is higher than the section's", check["prompt"])
+        self.assertIn("high: it touches routes, sign-in", check["prompt"])
+        self.assertEqual(check["schema"]["properties"]["risk"]["enum"], ["low", "medium", "high"])
+        self.assertIn("risk", check["schema"]["required"])
 
     def test_an_issue_that_needs_it_gets_its_security_review_beside_qa_and_code_review(self):
-        run = self.run_workflow({"check": [{**READY, "security": True}], "builder": [PR], "qa": [APPROVE],
+        run = self.run_workflow({"check": [HIGH], "builder": [PR], "qa": [APPROVE],
                                  "security review": [APPROVE], "integrator": [MERGED]},
                                 slow={"qa": 30, "code review": 30, "security review": 30})
         reviews = [e for e in run["events"] if " #12, round 1" in e and not e.endswith("builder #12, round 1")]
@@ -291,13 +298,13 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"]["status"], "merged")
 
     def test_a_security_review_the_issue_asked_for_runs_once_even_when_code_review_flags_the_diff(self):
-        run = self.run_workflow({"check": [{**READY, "security": True}], "builder": [PR], "qa": [APPROVE],
-                                 "code review": [{**CODE_OK, "security": True}], "security review": [APPROVE],
+        run = self.run_workflow({"check": [HIGH], "builder": [PR], "qa": [APPROVE],
+                                 "code review": [{**CODE_OK, "risk": "high"}], "security review": [APPROVE],
                                  "integrator": [MERGED]})
         self.assertEqual([label for label in self.labels(run) if label.startswith("security")], ["security review #12, round 1"])
 
     def test_findings_from_the_early_security_review_go_back_to_the_builder(self):
-        run = self.run_workflow({"check": [{**READY, "security": True}], "builder": [PR, PR], "qa": [APPROVE, APPROVE],
+        run = self.run_workflow({"check": [HIGH], "builder": [PR, PR], "qa": [APPROVE, APPROVE],
                                  "security review": [INSECURE, APPROVE], "integrator": [MERGED]})
         second = next(call["prompt"] for call in run["calls"] if call["label"] == "builder #12, round 2")
         self.assertIn("- Security: api.py:9: any user reads any draft", second)
@@ -306,17 +313,17 @@ class BuildWorkflowTest(unittest.TestCase):
 
     def test_a_late_security_review_that_returns_nothing_stops_the_run(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE],
-                                 "code review": [{**CODE_OK, "security": True}]})
+                                 "code review": [{**CODE_OK, "risk": "high"}]})
         self.assertEqual(run["result"]["status"], "stopped in review")
 
     def test_an_early_security_review_that_returns_nothing_stops_the_run(self):
-        run = self.run_workflow({"check": [{**READY, "security": True}], "builder": [PR], "qa": [APPROVE]})
+        run = self.run_workflow({"check": [HIGH], "builder": [PR], "qa": [APPROVE]})
         self.assertEqual(run["result"]["status"], "stopped in review")
         self.assertNotIn("integrator, PR #4", self.labels(run))
 
     def test_a_diff_the_issue_did_not_flag_gets_a_security_review_as_soon_as_code_review_flags_it(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE],
-                                 "code review": [{**CODE_OK, "security": True}], "security review": [INSECURE]},
+                                 "code review": [{**CODE_OK, "risk": "high"}], "security review": [INSECURE]},
                                 slow={"code review": 10, "qa": 80})
         events = run["events"]
         self.assertLess(events.index("end code review #12, round 1"), events.index("start security review #12, round 1"))
@@ -378,12 +385,213 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("Name the issue", self.run_workflow({}, args=None)["error"])
 
 
+def reviewers(run, round_=1):
+    """Each review of a round, as (label prefix, model)."""
+    return [(c["label"].split(" #")[0], c["model"]) for c in run["calls"]
+            if c["label"].endswith(f"round {round_}") and not c["label"].startswith("builder")]
+
+
+TRUSTED = {"must_fix": True, "reach": "trusted", "review_would_see": True, "where": "facts.json",
+           "what": "a fact written with a javascript: link renders as a link", "repeat": False}
+
+
+@unittest.skipUnless(HAVE_NODE, "needs node")
+class RiskTierTest(unittest.TestCase):
+    """Each issue's risk decides which reviewers it gets and on which model; reviewers only raise it."""
+
+    def run_workflow(self, replies, args=12, slow=None):
+        return run_workflow("build", replies, args, slow)
+
+    def test_a_low_risk_issue_gets_code_review_alone_on_sonnet(self):
+        run = self.run_workflow({"check": [{**READY, "risk": "low"}], "builder": [PR], "code review": [APPROVE],
+                                 "integrator": [MERGED]})
+        self.assertEqual(reviewers(run), [("code review", "sonnet")])
+        self.assertEqual(run["result"]["status"], "merged")
+        self.assertIn("--budget 5 ", run["calls"][-1]["prompt"])
+
+    def test_a_medium_risk_issue_gets_qa_and_code_review_on_opus(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "code review": [APPROVE],
+                                 "integrator": [MERGED]})
+        self.assertEqual(reviewers(run), [("qa", "opus"), ("code review", "opus")])
+
+    def test_a_high_risk_issue_gets_all_three_on_opus(self):
+        run = self.run_workflow({"check": [HIGH], "builder": [PR], "qa": [APPROVE], "code review": [APPROVE],
+                                 "security review": [APPROVE], "integrator": [MERGED]})
+        self.assertEqual(reviewers(run), [("qa", "opus"), ("code review", "opus"), ("security review", "opus")])
+        self.assertIn("--budget 20 ", run["calls"][-1]["prompt"])
+
+    def test_an_issue_with_no_known_risk_gets_the_most_review(self):
+        run = self.run_workflow({"check": [{**READY, "risk": "unsure"}], "builder": [PR], "qa": [APPROVE],
+                                 "code review": [APPROVE], "security review": [APPROVE], "integrator": [MERGED]})
+        self.assertEqual([r for r, _ in reviewers(run)], ["qa", "code review", "security review"])
+
+    def test_a_reviewer_that_raises_the_tier_brings_in_its_reviewers_at_once(self):
+        run = self.run_workflow({"check": [{**READY, "risk": "low"}], "builder": [PR],
+                                 "code review": [{**APPROVE, "risk": "high"}], "qa": [APPROVE],
+                                 "security review": [APPROVE], "integrator": [MERGED]})
+        self.assertEqual(reviewers(run), [("code review", "sonnet"), ("qa", "opus"), ("security review", "opus")])
+        self.assertEqual(run["result"]["status"], "merged")
+        self.assertIn("--budget 20 ", run["calls"][-1]["prompt"])
+
+    def test_the_raised_tier_holds_for_the_next_round(self):
+        run = self.run_workflow({"check": [{**READY, "risk": "low"}], "builder": [PR, PR],
+                                 "code review": [{**CHANGES, "risk": "medium"}, APPROVE], "qa": [APPROVE, APPROVE],
+                                 "integrator": [MERGED]})
+        self.assertEqual(reviewers(run, 2), [("qa", "opus"), ("code review", "opus")])
+
+    def test_a_reviewer_cannot_lower_the_tier(self):
+        run = self.run_workflow({"check": [HIGH], "builder": [PR, PR], "qa": [{**CHANGES, "risk": "low"}, APPROVE],
+                                 "code review": [{**APPROVE, "risk": "low"}] * 2, "security review": [APPROVE] * 2,
+                                 "integrator": [MERGED]})
+        self.assertEqual(reviewers(run, 2), [("qa", "opus"), ("code review", "opus"), ("security review", "opus")])
+
+    def test_build_and_plan_rate_risk_in_the_same_words(self):
+        root = Path(__file__).resolve().parent.parent / "workflows"
+        risk = [re.search(r"^const RISK = '(.+)'$", (root / name).read_text(), re.M) for name in ("build.js", "plan.js")]
+        self.assertTrue(all(risk))
+        self.assertEqual(risk[0].group(1), risk[1].group(1))
+        self.assertIn("medium: styling, layout or ordinary logic", risk[0].group(1))
+
+
+@unittest.skipUnless(HAVE_NODE, "needs node")
+class ReReviewTest(unittest.TestCase):
+    """From the second round each reviewer checks what changed and its own findings, not the whole PR."""
+
+    def second_round(self):
+        return run_workflow("build", {"check": [HIGH], "builder": [PR, {**PR, "head": "bbb2222"}],
+                                      "qa": [CHANGES, APPROVE], "code review": [APPROVE] * 2,
+                                      "security review": [APPROVE] * 2, "integrator": [MERGED]}, 12)
+
+    def prompt(self, run, label):
+        return next(c["prompt"] for c in run["calls"] if c["label"] == label)
+
+    def test_a_reviewer_reviews_only_the_diff_since_its_last_review(self):
+        qa = self.prompt(self.second_round(), "qa #12, round 2")
+        self.assertIn("`git diff aaa1111..bbb2222`", qa)
+        self.assertIn("Review only what changed since then", qa)
+        self.assertIn("Leave alone what has not changed since your last review", qa)
+
+    def test_a_reviewer_is_given_its_own_earlier_findings(self):
+        run = self.second_round()
+        self.assertIn("Your findings last time:\n- slug.py:3: empty title crashes", self.prompt(run, "qa #12, round 2"))
+        self.assertIn("You raised nothing last time.", self.prompt(run, "security review #12, round 2"))
+
+    def test_the_first_round_reviews_the_whole_pr(self):
+        qa = self.prompt(self.second_round(), "qa #12, round 1")
+        self.assertNotIn("Review only what changed", qa)
+
+    def test_a_reviewer_that_joins_later_reviews_the_whole_pr(self):
+        run = run_workflow("build", {"check": [READY], "builder": [PR, PR], "qa": [CHANGES, APPROVE],
+                                     "code review": [APPROVE, {**APPROVE, "risk": "high"}], "security review": [APPROVE],
+                                     "integrator": [MERGED]}, 12)
+        security = self.prompt(run, "security review #12, round 2")
+        self.assertNotIn("Review only what changed", security)
+        self.assertIn("Review only what changed", self.prompt(run, "code review #12, round 2"))
+
+    def test_the_builder_returns_the_commit_its_branch_ends_at(self):
+        builder = self.second_round()["calls"][1]
+        self.assertIn("head", builder["schema"]["required"])
+
+
+@unittest.skipUnless(HAVE_NODE, "needs node")
+class ReachTest(unittest.TestCase):
+    """Every finding says who can reach it, and the workflow holds the severity rule itself."""
+
+    def run_workflow(self, replies):
+        return run_workflow("build", {"check": [READY], "builder": [PR, PR], "code review": [APPROVE] * 2,
+                                      "integrator": [MERGED], **replies}, 12)
+
+    def test_every_finding_must_say_who_can_reach_it(self):
+        qa = next(c for c in self.run_workflow({"qa": [APPROVE]})["calls"] if c["label"].startswith("qa"))
+        finding = qa["schema"]["properties"]["findings"]["items"]
+        self.assertIn("reach", finding["required"])
+        self.assertIn("review_would_see", finding["required"])
+        self.assertEqual(finding["properties"]["reach"]["enum"], ["anyone", "user", "outside", "trusted", "none"])
+
+    def test_a_must_fix_only_a_trusted_writer_reaches_where_review_sees_it_is_a_nit(self):
+        # On the website's #35, QA held a PR for a link only the founder's own facts could carry.
+        run = self.run_workflow({"qa": [{"verdict": "changes", "findings": [TRUSTED]}]})
+        self.assertEqual(run["result"]["status"], "merged")
+        self.assertNotIn("builder #12, round 2", [c["label"] for c in run["calls"]])
+        integrator = next(c["prompt"] for c in run["calls"] if c["label"].startswith("integrator"))
+        self.assertIn("Count that review as an approval", integrator)
+        self.assertIn("- QA: facts.json: a fact written with a javascript: link", integrator)
+        self.assertIn("left for the founder", integrator)
+
+    def test_an_ordinary_slip_by_a_trusted_writer_stays_must_fix(self):
+        slip = {**TRUSTED, "review_would_see": False, "what": "an empty fact breaks the page"}
+        run = self.run_workflow({"qa": [{"verdict": "changes", "findings": [slip]}, APPROVE]})
+        self.assertIn("builder #12, round 2", [c["label"] for c in run["calls"]])
+
+    def test_what_anyone_can_reach_stays_must_fix(self):
+        run = self.run_workflow({"qa": [{"verdict": "changes", "findings": [{**TRUSTED, "reach": "anyone"}]}, APPROVE]})
+        self.assertIn("builder #12, round 2", [c["label"] for c in run["calls"]])
+
+    def test_the_builder_sees_a_trusted_only_finding_as_a_nit_beside_real_ones(self):
+        both = {"verdict": "changes", "findings": [TRUSTED, CHANGES["findings"][0]]}
+        run = self.run_workflow({"qa": [both, APPROVE]})
+        builder = next(c["prompt"] for c in run["calls"] if c["label"] == "builder #12, round 2")
+        self.assertIn("- Nit: QA: facts.json:", builder)
+        self.assertIn("\n- QA: slug.py:3: empty title crashes", builder)
+
+    def test_a_trusted_only_repeat_does_not_stop_the_run(self):
+        run = self.run_workflow({"qa": [CHANGES, {"verdict": "changes", "findings": [{**TRUSTED, "repeat": True}]}]})
+        self.assertEqual(run["result"]["status"], "merged")
+
+
+@unittest.skipUnless(HAVE_NODE, "needs node")
+class BudgetTest(unittest.TestCase):
+    """An issue that passes its tier's budget stops for the founder, the way three rounds do."""
+
+    def run_workflow(self, spent, ticket=READY, rounds=3, **replies):
+        base = {"check": [ticket], "builder": [PR] * rounds, "qa": [CHANGES] * (rounds - 1) + [APPROVE],
+                "code review": [APPROVE] * rounds, "integrator": [MERGED], "spend": [{"dollars": d} for d in spent]}
+        return run_workflow("build", {**base, **replies}, 12)
+
+    def labels(self, run):
+        return [c["label"] for c in run["calls"]]
+
+    def test_an_issue_past_its_budget_stops_before_another_round(self):
+        run = self.run_workflow([13.0])
+        self.assertEqual(run["result"]["status"], "over its medium-risk budget, $13.00 against $12; the founder decides")
+        self.assertEqual(run["result"]["pr"], PR["pr_url"])
+        self.assertEqual(run["result"]["findings"][0]["what"], "empty title crashes")
+        self.assertNotIn("builder #12, round 2", self.labels(run))
+        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
+
+    def test_an_issue_within_its_budget_goes_on(self):
+        run = self.run_workflow([6.0, 11.0])
+        self.assertEqual(run["result"]["status"], "merged")
+
+    def test_each_tier_has_its_own_budget(self):
+        self.assertIn("over its low-risk budget",
+                      self.run_workflow([6.0], ticket={**READY, "risk": "low"},
+                                        **{"code review": [CHANGES, APPROVE]})["result"]["status"])
+        self.assertEqual(self.run_workflow([19.0, 19.5], ticket=HIGH, **{"security review": [APPROVE] * 3})
+                         ["result"]["status"], "merged")
+
+    def test_the_spend_is_read_from_the_runs_logs_on_haiku(self):
+        spend = next(c for c in self.run_workflow([1.0, 2.0])["calls"] if c["label"].startswith("spend"))
+        self.assertEqual((spend["label"], spend["model"]), ("spend #12", "haiku"))
+        self.assertIn("run-report skill", spend["prompt"])
+        self.assertIn("--workflow build --issue 12 --spent-on 12", spend["prompt"])
+
+    def test_a_spend_it_cannot_read_does_not_stop_the_run(self):
+        self.assertEqual(self.run_workflow([])["result"]["status"], "merged")
+
+    def test_spend_is_read_only_before_another_round(self):
+        approved = self.run_workflow([], rounds=1)
+        self.assertFalse([label for label in self.labels(approved) if label.startswith("spend")])
+        third = self.run_workflow([1.0, 1.0], **{"qa": [CHANGES] * 3})
+        self.assertEqual([label for label in self.labels(third) if label.startswith("spend")], ["spend #12", "spend #12"])
+
+
 def part(n, *after):
     return {"number": n, "after": list(after)}
 
 
 def built(n):
-    return {"pr_number": 100 + n, "pr_url": f"https://github.com/o/r/pull/{100 + n}", "stopped_because": ""}
+    return {"pr_number": 100 + n, "pr_url": f"https://github.com/o/r/pull/{100 + n}", "head": f"c{n}", "stopped_because": ""}
 
 
 @unittest.skipUnless(HAVE_NODE, "needs node")
@@ -459,6 +667,15 @@ class BuildBriefTest(unittest.TestCase):
         by_issue = {r["issue"]: r for r in run["result"]["issues"]}
         self.assertEqual(by_issue[43], {"issue": 43, "status": "not started", "reason": "a red issue is open"})
         self.assertNotIn("builder #43, round 1", self.labels(run))
+
+    def test_a_briefs_report_budget_is_its_issues_budgets_added_up(self):
+        run = self.run_brief(**{"check #43": [{**READY, "risk": "low"}]})
+        self.assertIn("--budget 29 ", run["calls"][-1]["prompt"])
+
+    def test_spend_on_a_briefs_issue_is_read_from_the_briefs_run(self):
+        run = self.run_brief(**{"builder #21": [built(21), built(21)], "qa": [CHANGES] + [APPROVE] * 3})
+        spend = next(c["prompt"] for c in run["calls"] if c["label"].startswith("spend"))
+        self.assertIn("--workflow build --issue 7 --spent-on 21", spend)
 
     def test_the_check_recognises_a_brief_by_the_issues_cut_from_it(self):
         prompt = self.run_brief()["calls"][0]["prompt"]

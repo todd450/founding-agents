@@ -105,6 +105,18 @@ def summarise(session):
     return rows
 
 
+def spent_on(session, issue):
+    """Dollars a run's agents have spent on one issue so far. Every task `build` gives an agent for an
+    issue names it ("issue #12"), so an agent counts when its first prompt does; a brief's run builds
+    several issues in one session, and this tells them apart."""
+    names = re.compile(rf"\bissue #{issue}\b")
+    total = 0.0
+    for path, role in transcripts(session):
+        if role != "main session" and path.exists() and names.search(first_prompt(path)):
+            total += sum(cost(model, usage) for _, model, usage in calls(path))
+    return total
+
+
 def minutes(stamps):
     times = [datetime.fromisoformat(s.replace("Z", "+00:00")) for s in stamps]
     return (max(times) - min(times)).total_seconds() / 60 if times else 0.0
@@ -246,6 +258,8 @@ def main(argv=None):
     parser.add_argument("--post", action="store_true", help="comment the report on the issue")
     parser.add_argument("--budget", type=float, help="dollars one run should stay under; the report flags a run over it")
     parser.add_argument("--outcome", choices=sorted(OUTCOMES), help="how the run ended, recorded in the report")
+    parser.add_argument("--spent-on", type=int, metavar="ISSUE",
+                        help="print only the dollars the run has spent on this issue so far")
     parser.add_argument("--runs", action="store_true",
                         help="the share of build runs that merged without the founder, and that stopped")
     parser.add_argument("--since", help="with --runs, only reports from this date (YYYY-MM-DD)")
@@ -270,6 +284,9 @@ def main(argv=None):
             print(f"No session in {project_logs(folder)} ran {args.workflow} on #{args.issue}.", file=sys.stderr)
             return 1
 
+    if args.spent_on:
+        print(f"{spent_on(session, args.spent_on):.2f}")
+        return 0
     title = f"`{args.workflow}` #{args.issue}" if args.workflow else session.stem
     report = table(summarise(session), title, args.budget, args.outcome)
     print(report)
