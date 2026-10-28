@@ -13,9 +13,9 @@ brief into build issues, asking the founder first about any technical decision t
 open, and `/founding-agents:build <brief>` builds them two to four at a time. Every role now
 exists: edge-case QA, code and security review in `build`; ops watch, the optimiser and the
 librarian as routines `setup` creates. For a sprint,
-`/founding-agents:sweep codebase|tests|security` runs the optimiser, the test auditor or the
-security reviewer and puts up to five findings to the founder for `build`. None of the newer
-roles has run on the website yet.
+`/founding-agents:sweep codebase|tests|security` runs the optimiser (for the codebase or the
+tests) or the security reviewer and puts up to five findings to the founder for `build`. None of
+the newer roles has run on the website yet.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.
