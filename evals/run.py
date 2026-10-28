@@ -16,6 +16,7 @@ import argparse
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -36,6 +37,10 @@ from workflow_harness import run_workflow  # noqa: E402
 TOOLS = "Bash,Read,Edit,Write,Grep,Glob,Skill"
 TIMEOUT = 25 * 60
 BUDGET = 5  # dollars at API prices one trial may spend before claude stops it
+SECRETS = {"ANTHROPIC_API_KEY", "GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN"}
+GITHUB = ("https://github.com/", "http://github.com/", "git@github.com:", "ssh://git@github.com/", "git://github.com/")
+FENCE = {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [
+    {"type": "command", "command": f"python3 {shlex.quote(str(EVALS / 'fence.py'))}"}]}]}}
 
 
 def replies(task):
@@ -104,7 +109,7 @@ def extract(text, schema, env):
 def command(call, model):
     cmd = ["claude", "-p", prompt(call), "--output-format", "json", "--json-schema", json.dumps(call["schema"]),
            "--model", model, "--plugin-dir", str(PLUGIN), "--setting-sources", "project,local",
-           "--allowedTools", TOOLS, "--max-budget-usd", str(BUDGET)]
+           "--allowedTools", TOOLS, "--max-budget-usd", str(BUDGET), "--settings", json.dumps(FENCE)]
     if call["agentType"]:
         cmd += ["--agent", call["agentType"]]
     if call["effort"]:
@@ -113,10 +118,20 @@ def command(call, model):
 
 
 def environment(folder):
-    """The trial's environment: the gh stand-in first on PATH, an empty GitHub login, and never an API key."""
-    env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}
+    """The trial's environment: the gh stand-in first on PATH, an empty GitHub login, and never an API key.
+
+    git sends every GitHub address to a folder that does not exist and forgets the founder's saved
+    logins, so nothing the agent pushes or clones can reach GitHub: on 27 Oct 2026 trial QA pushed
+    to the website's real holdouts repo with `git push`, which the gh stand-in never sees."""
+    env = {k: v for k, v in os.environ.items() if k not in SECRETS and not k.startswith("GIT_CONFIG")}
     env.update({"PATH": f"{EVALS / 'bin'}:{env.get('PATH', '')}", "EVAL_GH_STATE": str(folder / "github.json"),
-                "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1", "TMPDIR": str(folder / "tmp")})
+                "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1", "TMPDIR": str(folder / "tmp"),
+                "GIT_TERMINAL_PROMPT": "0"})
+    nowhere = (folder / "no-github").as_uri() + "/"
+    config = [("credential.helper", "")] + [(f"url.{nowhere}.insteadOf", url) for url in GITHUB]
+    env["GIT_CONFIG_COUNT"] = str(len(config))
+    for i, (key, value) in enumerate(config):
+        env[f"GIT_CONFIG_KEY_{i}"], env[f"GIT_CONFIG_VALUE_{i}"] = key, value
     return env
 
 
@@ -152,17 +167,21 @@ def session_log(session_id):
 
 
 FIXED = re.compile(r"(?<![\w$}/.-])/tmp/[\w.-]+|http\.server\s+(?!0\b)\d{2,5}\b")
+# Killing by a pattern (`pkill -f "http.server 0"`) also stops every other run's process that matches.
+KILLS = re.compile(r"""\b(?:pkill|killall)(?:\s+-\w+)*\s+(?:"[^"]*"|'[^']*'|[^\s;&|)]+)"""
+                   r"|\bkill\b[^;&|\n]*\$\(\s*(?:pgrep|pidof)\b[^)]*\)|\b(?:pgrep|pidof)\b[^;&|\n]*\|\s*xargs\s+kill\b")
 
 
 def shared(log):
-    """Fixed /tmp paths and fixed ports the trial's agent used: places another run could also use."""
+    """Fixed /tmp paths, fixed ports and pattern kills the trial's agent used: things another run also has."""
     if not log:
         return []
-    found = set()
+    found, kills = set(), set()
     for record in summarise_records(log):
         found |= set(FIXED.findall(record))
+        kills |= set(KILLS.findall(str((json.loads(record) or {}).get("command") or "")))
     # A mktemp template, or the random name mktemp made from it, is the agent's own.
-    return sorted(f for f in found if not re.search(r"XXX|[-.][A-Za-z0-9]{6,}$|^/tmp/\.+$", f))
+    return sorted({f for f in found if not re.search(r"XXX|[-.][A-Za-z0-9]{6,}$|^/tmp/\.+$", f)} | kills)
 
 
 def summarise_records(log):
@@ -275,14 +294,16 @@ def markdown(results, trials):
     if extracted:
         lines += ["", f"In {extracted} of {len(results)} trials the agent's reply had no usable JSON block, so Haiku "
                       "read the result from its final report."]
-    used = [r for r in results if r.get("shared")]
-    if used:
-        common = defaultdict(int)
-        for r in used:
-            for place in r["shared"]:
-                common[place] += 1
-        top = ", ".join(f"`{p}`" for p, _ in sorted(common.items(), key=lambda kv: -kv[1])[:5])
-        lines += ["", f"{len(used)} of {len(results)} trials used a fixed /tmp path or port another run could also use: {top}."]
+    for what, kill in (("used a fixed /tmp path or port another run could also use", False),
+                       ("stopped a process by a pattern another run's process could also match", True)):
+        used = [[p for p in r.get("shared") or [] if bool(KILLS.fullmatch(p)) == kill] for r in results]
+        if any(used):
+            common = defaultdict(int)
+            for places in used:
+                for place in places:
+                    common[place] += 1
+            top = ", ".join(f"`{p}`" for p, _ in sorted(common.items(), key=lambda kv: -kv[1])[:5])
+            lines += ["", f"{sum(map(bool, used))} of {len(results)} trials {what}: {top}."]
     lines += ["", "Pass rate is the share of trials that passed every check; pass^k is the share of tasks "
                   "where all k trials passed. Regression tasks are ones the team got right on the website "
                   "and should stay near 100%; capability tasks are ones it got wrong. Cost is API-equivalent at "
