@@ -3,22 +3,6 @@
 A team of agents that builds products with one founder. This doc is the spec until the agent files
 exist; after that it records the decisions behind them.
 
-## Where it comes from
-
-The founder's first product was built from June to October 2026 with many parallel Claude
-sessions: 5,410 commits in under five months, with no real users yet. Its history showed four
-costs, each of which this team is shaped to prevent:
-
-| cost | evidence in that history | what the team does instead |
-|---|---|---|
-| Built before deciding | 32 removal commits deleted 61,365 lines in eight days (16–23 Oct); pages were translated and audited days before being cut | A product lead writes a brief and the founder decides before any code |
-| Found bugs late | 731 bug-sweep and audit commits, nearly all in October; fixes outnumbered features 2:1 that month | Edge-case QA runs the failure checklist on every change before merge |
-| Many writers, one branch | Every push deployed for most of the project; the release gate arrived after 2,985 commits; about a dozen traps from a shared working tree | One worktree per builder; only the integrator merges; a gate before production |
-| Red lights left red | The nightly off-site backup failed all 28 runs since it was added | Ops watch runs on a schedule and a red result reaches the founder's phone |
-
-The fifth finding is the constraint on everything: **the founder's attention is the bottleneck.**
-545 commits record an owner decision, and they came in bursts across 21 days.
-
 ## The team
 
 Four lanes. The founder sits in the middle and is the only one who decides scope and taste.
