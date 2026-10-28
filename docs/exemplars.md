@@ -21,6 +21,7 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Builder | Kent Beck's test-driven development; Google's small changes |
 | Edge-case QA | Elisabeth Hendrickson's test heuristics |
 | Code reviewer | Google's code review guide |
+| Test auditor | Google's test sizes and flaky-test work; mutation testing |
 | Security reviewer | Trail of Bits findings, against OWASP ASVS |
 | Optimiser | Performance budgets; DRY; FinOps unit economics for token cost |
 | Integrator | Rust's bors and the Not Rocket Science Rule |
@@ -103,6 +104,17 @@ and what may be skipped. The practices are in [agents/code-reviewer.md](../agent
 Sources: Google, [The standard of code review](https://google.github.io/eng-practices/review/reviewer/standard.html)
 and [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html).
 
+## Test auditor — Google's testing and mutation testing
+
+The test auditor judges the suite itself, which nobody else does: the builder writes tests for one
+change and the reviewer runs them. Its practices are in [agents/test-auditor.md](../agents/test-auditor.md).
+Chosen by Claude when the role was added on 27 Oct 2026; the founder may swap it.
+
+Sources: Titus Winters, Tom Manshreck and Hyrum Wright, [*Software Engineering at Google*](https://abseil.io/resources/swe-book)
+(O'Reilly, 2020), chapters 11 to 14 on test size, unit tests and flaky tests; Goran Petrović and
+Marko Ivanković, [State of mutation testing at Google](https://research.google/pubs/state-of-mutation-testing-at-google/)
+(ICSE SEIP, 2018).
+
 ## Security reviewer — Trail of Bits, against OWASP ASVS
 
 ASVS turns "is it secure" into a list of requirements a finding can name, and Trail of Bits'
@@ -120,9 +132,10 @@ duplication) and what the team costs to run (tokens). Nobody owned token cost be
 found that workers, not planners, used most of the tokens (principle 3). Performance budgets turn
 "too slow" into a number CI checks; DRY gives every piece of knowledge one home; FinOps unit
 economics measures cost per merged change rather than total spend, so spend that rises with output
-is fine and cost per change that rises is not. The practices are in
+is fine and cost per change that rises is not. The weekly practices are in
 [skills/setup/optimiser/routine.md](../skills/setup/optimiser/routine.md), since the optimiser runs
-as a routine, which loads no plugin agents.
+as a routine, which loads no plugin agents; its sweep of the codebase, run on demand by `sweep`,
+is in [agents/optimiser.md](../agents/optimiser.md).
 
 Sources: Milica Mihajlija, [Performance budgets 101](https://web.dev/articles/performance-budgets-101)
 (web.dev); Andrew Hunt and David Thomas, *The Pragmatic Programmer* (1999); FinOps Foundation,

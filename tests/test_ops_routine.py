@@ -37,6 +37,12 @@ class RoutineTest(unittest.TestCase):
         self.assertIn("pages/builds/latest", ROUTINE)
         self.assertNotIn("curl", ROUTINE)
 
+    def test_the_weekly_optimiser_leaves_product_cost_to_the_codebase_sweep(self):
+        # On the website the routine and a sweep both proposed a page-size budget (#18 and #19).
+        text = " ".join((SETUP / "optimiser" / "routine.md").read_text().split())
+        self.assertIn("belongs to `/founding-agents:sweep codebase`", text)
+        self.assertNotIn("The product's own cost", text)
+
     def test_the_weekly_routines_only_propose_and_leave_deciding_to_the_founder(self):
         for name in ("optimiser", "librarian"):
             text = (SETUP / name / "routine.md").read_text()

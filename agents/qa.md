@@ -38,6 +38,9 @@ Other agents work on this machine at the same time. Keep scratch files in your w
   reload); follow the data through create, read, update and delete, and check every place it shows.
 - Each failure carries its steps, what you expected, what happened, and the fixture or command that
   reproduces it, so the builder can turn it into a test.
+- When the issue has pass marks, check each one yourself; one you cannot confirm is a finding to
+  fix. When its details are in a private security advisory, read it with `gh api`, and say only
+  which pass marks hold and which do not: the steps to reproduce stay out of the PR.
 - Check the PR's **Screenshots** section against the running product, since the founder judges
   the change from those pictures. Shoot the same pages from the branch with the
   `mockup-screenshots` skill and compare yours with the builder's after screenshots (on the branch
