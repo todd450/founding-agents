@@ -304,42 +304,22 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Finding work: sweeps and routines
 
-- **Sweeps: a workflow that finds work and hands it to `build`.** `/founding-agents:sweep
-  codebase|tests|security`, on demand. A finder (the optimiser for the codebase and the tests, the
-  security reviewer for security, on Opus) only reads and runs the product, and brings at most five
-  ranked findings, each with its evidence, the fix's size, what leaving it costs, its pass marks and
-  any one-way door. It leaves out what an open `Optimiser:` proposal covers. A script files each as
-  a `sweep` issue and posts one queue item; the founder adds `decided` to those worth fixing and the
-  rest are closed, since a sweep left to fix all it finds runs up fixes nobody chose. Pass marks by
-  kind: for the codebase, behaviour unchanged and the measured number moved; for tests, the suite
-  fails on faults planted in the code it covers; for security, a test that reproduces the exploit
-  fails before the fix and passes after. On a public repo a security finding's details go in a draft
-  security advisory and its issue carries only a summary; publishing the advisory after the merge is
-  the founder's call.
-- **The optimiser and the librarian run as weekly routines that propose, never change.** Each one's
-  instructions are a file `setup` copies into the product and keeps current, since a routine loads
-  no plugin. Each proposes at most three changes as `needs-founder` issues, built through `build`
-  after the founder's `decided`. Both run on Sonnet. The optimiser measures what the team costs to
-  run: tokens per merged change by role and model, spend without a merge and what every session
-  loads, posted weekly on one standing issue; it never proposes cutting a check or a review for
-  tokens alone. What the product costs (page weight, dead code, one thing defined in several
-  places) belongs to `sweep codebase`, so nothing reaches the queue twice. The librarian reads the
-  week's incidents, asks which check would have stopped each, and files guards or prunes.
-- **Ops watch's site check runs as a nightly GitHub Actions job, not a routine.** It needs no
-  model, so it spends no allowance and still runs when the week's limit is used up. It checks that
-  the deploy is green and every link resolves, trying a failed link once more after a pause; a
-  failure opens one `red` issue, kept current and closed by the next green run. A product not
-  served by GitHub Pages sets the repository variable `OPS_WATCH_URL` to its live address. `setup`
-  copies the script into the product, since a product's workflow cannot read this private repo.
-- **Ops watch's judgement checks run as a daily routine whose instructions live in the product.**
-  It checks that every scheduled workflow still runs and passed (covering the site check's silence,
-  including GitHub turning schedules off after 60 days), that `main` passes, that the last day's
-  merges are in what is served, the week's spend against the product's budget, and what the
-  product lists in `.github/ops-watch/watch.md`. A red opens one `red` issue per check; a check
-  that could not run is reported, never red. A cloud routine loads no plugin and its GitHub proxy
-  serves only its own repo over REST, so its prompt lives in the product and every call is
-  `gh api repos/<owner>/<repo>/…`, which a test holds. `setup` creates routines through the
-  `schedule` skill after the founder's yes, with no connectors.
+- **Sweeps find work for `build`.** `/founding-agents:sweep codebase|tests|security` runs a finder
+  (the optimiser, or the security reviewer for security) that only reads and runs the product and
+  brings at most five ranked findings, each with its evidence, size and pass marks. They go to the
+  founder as `sweep` issues in one queue item; the founder decides which to fix, and the rest are
+  closed. On a public repo a security finding's details go in a private draft advisory.
+- **Routines propose, never change.** The optimiser measures what the team costs to run, and the
+  librarian asks which check would have stopped each of the week's incidents. Each runs weekly and
+  files at most three `needs-founder` proposals, built through `build` like any change; neither
+  proposes cutting a check or a review for tokens alone. A routine loads no plugin, so its
+  instructions are a file `setup` copies into the product and keeps current.
+- **Ops watch is a nightly check with no model, plus a daily routine.** The nightly GitHub Actions
+  job checks the deploy and every link, so it runs even when the week's limit is used up. The daily
+  routine checks that scheduled jobs still run, `main` passes, merges are live, spend is within the
+  product's budget, and whatever the product lists in `.github/ops-watch/watch.md`. A failing check
+  opens one `red` issue that the next green run closes; a check that could not run is reported,
+  never red.
 
 ### Cost, models and evals
 
