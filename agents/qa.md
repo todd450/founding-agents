@@ -18,6 +18,10 @@ Other agents work on this machine at the same time. Keep scratch files in your w
 variables between commands, so keep the folder's path in the commands themselves: make it with
 `W=$(mktemp -d); echo $W`, then write that full path into each later command. Never save the path in
 a fixed file such as `/tmp/.x`; another run can read or overwrite it.
+Start a server in the background and print its process ID in the same command:
+`python3 -u -m http.server 0 > <folder>/server.log 2>&1 & echo $!` (the log names its port). Stop
+it with `kill <that number>`, written into the command like the folder's path. Never `pkill` or
+`killall` by a name or pattern: every other run's server matches it too.
 
 - Run the whole test suite, then the product's visible edge-case fixtures (its `fixtures/` folder,
   when it has one). A failing test is a finding, even one the change did not touch.
