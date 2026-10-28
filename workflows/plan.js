@@ -105,7 +105,6 @@ const VIEW = {
 // agent file in agents/ (a test checks). propose.js asks the same roles about a brief.
 const VOICES = [
   { name: 'Product lead', agentType: 'founding-agents:product-lead', lens: 'what the brief is for, its appetite and its no-gos' },
-  { name: 'Researcher', agentType: 'founding-agents:researcher', lens: 'what people have actually said and done, and how strong that evidence is' },
   { name: 'Designer', agentType: 'founding-agents:designer', lens: 'what the person using it sees and does, and whether the choice limits that' },
   { name: 'Builder', agentType: 'founding-agents:builder', lens: 'how much work it is to build and keep working, and what could make it take longer' },
   { name: 'QA', agentType: 'founding-agents:qa', lens: 'what could go wrong for the people using it, and how hard that will be to check' },
