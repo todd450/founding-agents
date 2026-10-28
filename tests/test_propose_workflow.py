@@ -19,8 +19,22 @@ def option(letter, stars):
             "desktop": f"{base}-desktop.png"}
 
 
-DESIGN = {"branch": "propose/issue-7", "stopped_because": "", "recommended": "B", "why": "B shows the whole journey.",
-          "options": [option("A", 3), option("B", 6)]}
+def spec(letter, stars):
+    return {"letter": letter, "name": f"Option {letter}", "stars": stars, "what": f"{letter} at the key moment.",
+            "distinct": f"{letter} is the {stars}-star one.", "cost": f"{stars} days"}
+
+
+def files(*letters):
+    paths = ["mockups/issue-7/storyboard.md"]
+    for letter in letters:
+        o = option(letter, 0)
+        paths += [o["html"], o["phone"], o["desktop"]]
+    return {"files": paths}
+
+
+DESIGN = {"stopped_because": "", "recommended": "B", "why": "B shows the whole journey.",
+          "options": [spec("A", 3), spec("B", 6)]}
+PUSHED = {"stopped_because": ""}
 POSTED = {"comment_url": "https://github.com/o/site/issues/7#issuecomment-1"}
 
 
@@ -37,12 +51,16 @@ VOICES = ["researcher", "architect", "builder", "qa", "code reviewer", "security
 TEAM = view(option="B", why="Everyone agrees B is worth its six days.")
 
 
-def replies(lead=GO, design=DESIGN, views=None, team=TEAM):
+def replies(lead=GO, design=DESIGN, views=None, team=TEAM, built=None, branch=None):
     views = views or {}
     out = {"product lead": [lead], "team": [team], "queue": [POSTED]}
     out.update({voice: [views.get(voice, view(option="B" if design else ""))] for voice in VOICES})
     if design:
-        out["designer"] = [design]
+        letters = [o["letter"] for o in design["options"]]
+        built = built or {}
+        out["storyboard"] = [design]
+        out.update({f"option {letter}": [built.get(letter, PUSHED)] for letter in letters})
+        out["design check"] = [branch or files(*[l for l in letters if not built.get(l, PUSHED)["stopped_because"]])]
     return out
 
 
@@ -69,11 +87,15 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertIn("open it as a new issue", prompt)
         self.assertIn("a pricing page", prompt)
 
-    def test_each_role_runs_as_its_plugin_agent_and_the_designer_in_a_worktree(self):
+    def test_each_role_runs_as_its_plugin_agent_and_each_designer_in_a_worktree(self):
         run = run_workflow("propose", replies(), 7)
-        lead, designer = self.call(run, "product lead"), self.call(run, "designer")
+        lead = self.call(run, "product lead")
         self.assertEqual((lead["agentType"], lead["model"]), ("founding-agents:product-lead", "opus"))
-        self.assertEqual((designer["agentType"], designer["isolation"]), ("founding-agents:designer", "worktree"))
+        for label in ["storyboard", "option A", "option B"]:
+            designer = self.call(run, label)
+            self.assertEqual((designer["agentType"], designer["isolation"], designer["model"]),
+                             ("founding-agents:designer", "worktree", "opus"))
+        self.assertEqual(self.call(run, "design check")["model"], "haiku")
         for voice in VOICES:
             self.assertEqual((self.call(run, voice)["agentType"], self.call(run, voice)["model"]),
                              (f"founding-agents:{voice.replace(' ', '-')}", "sonnet"))
@@ -142,7 +164,8 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_an_overruled_no_go_gets_mockups_and_keeps_the_honest_recommendation(self):
         run = run_workflow("propose", replies(lead={**NO_GO, "overruled": True}), 7)
         self.assertEqual(self.labels(run),
-                         ["product lead", "designer", *VOICES, "team", "queue item", "tidy worktrees", "run report"])
+                         ["product lead", "storyboard", "option A", "option B", "design check", *VOICES, "team", "queue item",
+                          "tidy worktrees", "run report"])
         item = self.queue_item(run)
         self.assertIn("- **Product lead:** no-go.", item)
         self.assertIn("You overruled the no-go", item)
@@ -155,6 +178,76 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"]["reason"], "Chrome is missing")
         self.assertNotIn("queue item", self.labels(run))
         self.assertNotIn("team", self.labels(run))
+        self.assertNotIn("option A", self.labels(run))
+
+    def test_the_options_are_built_at_the_same_time_after_the_storyboard(self):
+        run = run_workflow("propose", replies(), 7, slow={"option": 200})
+        events = run["events"]
+        self.assertLess(events.index("end storyboard"), events.index("start option A"))
+        self.assertLess(events.index("start option B"), events.index("end option A"))
+        self.assertLess(max(events.index("end option A"), events.index("end option B")), events.index("start design check"))
+
+    def test_the_storyboard_commits_only_itself_and_each_option_only_its_own_files(self):
+        run = run_workflow("propose", replies(), 7)
+        storyboard = self.call(run, "storyboard")["prompt"]
+        self.assertIn("`mockups/issue-7/storyboard.md`", storyboard)
+        self.assertIn("Do not build the pages", storyboard)
+        self.assertIn("screenshots can be taken", storyboard)
+        self.assertIn("removing anything an earlier run left in `mockups/issue-7`", storyboard)
+        a = self.call(run, "option A")["prompt"]
+        self.assertIn("`mockups/issue-7/a.html`", a)
+        self.assertIn("What sets it apart: A is the 3-star one.", a)
+        self.assertIn("B. Option B, 6 stars", a)
+        self.assertIn("git switch --detach FETCH_HEAD", a)
+        self.assertIn("git push origin HEAD:propose/issue-7", a)
+        self.assertIn("git pull --rebase origin propose/issue-7", a)
+        self.assertNotIn("b.html", a)
+
+    def test_the_queue_item_takes_its_paths_from_the_branch_and_links_the_storyboard(self):
+        item = self.queue_item(run_workflow("propose", replies(), 7))
+        self.assertIn("https://github.com/o/site/blob/propose/issue-7/mockups/issue-7/storyboard.md", item)
+        self.assertIn("https://github.com/o/site/blob/propose/issue-7/mockups/issue-7/a-desktop.png?raw=true", item)
+        self.assertNotIn("not built", item)
+
+    def test_an_option_that_was_not_built_is_left_out_while_two_remain(self):
+        three = {**DESIGN, "options": [spec("A", 3), spec("B", 6), spec("C", 9)]}
+        run = run_workflow("propose", replies(design=three, built={"C": {"stopped_because": "the push never landed"}}), 7)
+        item = self.queue_item(run)
+        self.assertIn("### B. Option B (recommended): 6 stars", item)
+        self.assertNotIn("### C.", item)
+        self.assertIn("not offered: option C: the push never landed.", item)
+        self.assertNotIn("C. Option C", self.call(run, "builder")["prompt"])
+        self.assertEqual(run["result"]["options"], ["A", "B"])
+
+    def test_an_option_missing_from_the_branch_is_left_out_whatever_its_designer_said(self):
+        three = {**DESIGN, "options": [spec("A", 3), spec("B", 6), spec("C", 9)]}
+        item = self.queue_item(run_workflow("propose", replies(design=three, branch=files("A", "B")), 7))
+        self.assertNotIn("### C.", item)
+        self.assertIn("option C: it is not on the branch", item)
+
+    def test_an_option_that_stopped_is_left_out_even_with_an_earlier_runs_page_on_the_branch(self):
+        three = {**DESIGN, "options": [spec("A", 3), spec("B", 6), spec("C", 9)]}
+        r = replies(design=three, built={"C": {"stopped_because": "a blank screenshot"}}, branch=files("A", "B", "C"))
+        self.assertNotIn("### C.", self.queue_item(run_workflow("propose", r, 7)))
+
+    def test_fewer_than_two_options_built_stops_in_design_with_the_reasons(self):
+        run = run_workflow("propose", replies(built={"A": {"stopped_because": "Chrome is missing"}}), 7)
+        self.assertEqual(run["result"]["status"], "stopped in design")
+        self.assertIn("fewer than two options; option A: Chrome is missing", run["result"]["reason"])
+        self.assertNotIn("queue item", self.labels(run))
+
+    def test_a_pick_that_was_not_built_stops_in_design(self):
+        three = {**DESIGN, "options": [spec("A", 3), spec("B", 6), spec("C", 9)]}
+        run = run_workflow("propose", replies(design=three, built={"B": {"stopped_because": "a blank screenshot"}}), 7)
+        self.assertEqual(run["result"]["status"], "stopped in design")
+        self.assertIn("the designer's pick was not built; option B: a blank screenshot", run["result"]["reason"])
+
+    def test_a_branch_with_more_than_mockups_stops_in_design(self):
+        branch = files("A", "B")
+        branch["files"].append("src/index.html")
+        run = run_workflow("propose", replies(branch=branch), 7)
+        self.assertEqual(run["result"]["status"], "stopped in design")
+        self.assertEqual(run["result"]["reason"], "the branch holds more than mockups: src/index.html")
 
     def test_the_report_goes_on_the_issue_the_product_lead_shaped(self):
         run = run_workflow("propose", replies(), "a pricing page")
