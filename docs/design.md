@@ -706,8 +706,8 @@ of this (see Sources).
   the table; `build` passes its issues' risk-tier budgets instead, which also stop it (below). Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
   spend waits for the optimiser.
 - **Whether the plugin pays is measured against changes made without it.** Asked for by the founder
-  on 27 Oct 2026: the measures below judge the team on its own, and say nothing about whether a
-  plain Claude session would have done as well. The `compare-changes` skill reads merged PRs and
+  on 27 Oct 2026, since nothing else says whether a plain Claude session would have done as well.
+  The `compare-changes` skill reads merged PRs and
   compares the two groups on cost, time to merge and fixes needed within two weeks. A PR from
   `build`'s branch counts as with the plugin; any other change needs a `with-plugin` or
   `without-plugin` label, since nothing else on GitHub tells them apart. Cost is the run reports on
@@ -867,15 +867,6 @@ of this (see Sources).
   lessons in fayerman-source/agent-team, GSD's rule that the orchestrator never writes code, and a
   local merge queue for the integrator. Products that use the team turn the overlapping plugins off.
 
-## Still open
-
-- **Each change's share of the week:** on a plan the budget is a share of the weekly limit, not
-  dollars, and Anthropic publishes no numbers for the limits. Set it after measuring the first ten
-  changes from their run reports; the optimiser owns it once it exists.
-- **Can a routine run `build` overnight, and know how much of the week is left?** Running decided
-  issues while the founder is away would use allowance that otherwise expires, but nothing
-  documented shows a routine starting a plugin workflow or reading the plan's remaining limit.
-
 ## Build order
 
 Each step runs on a real change in a real product before the next one starts.
@@ -883,8 +874,7 @@ Each step runs on a real change in a real product before the next one starts.
 **The first product is the Founding Agents website** ([todd450/founding-agents-site](https://github.com/todd450/founding-agents-site), named `agent-team-site` until 26 Oct 2026),
 decided by the founder on 24 Oct 2026. It is a test bed: a small real product that gives every build
 step a real change to run on, not a launch to outside users. A fresh product also shows the team
-from its first commit, with no history it has to work around. Whether the team does its job shows
-up in the measures below. The plugin repo stays
+from its first commit, with no history it has to work around. The plugin repo stays
 private, since the founder is the only user for now. A website bends the order in two places:
 
 - **The decide lane comes before `build`** (step 4 before step 3): nothing on a site can be built
@@ -928,24 +918,6 @@ private, since the founder is the only user for now. A website bends the order i
    in the team table now has an agent or a routine. The same day a test auditor joined the
    optimiser and the security reviewer as the finders `sweep` runs; it is done once a sweep of each
    kind has run on the website and its findings have gone through `build`.
-
-## How we'll know it works
-
-One number for each cost the team is shaped to prevent, one for the founder's attention, and one
-for whether people want what the team built, which the other five cannot show:
-
-| cost | measure | should |
-|---|---|---|
-| Built before deciding | lines deleted within two weeks of being written | fall |
-| Found bugs late | bugs found after merge, against bugs found before | mostly be found before |
-| Many writers, one branch | merges made by neither the integrator nor the founder from a "Ready for your merge" item | be zero |
-| Red lights left red | age of the oldest open `red` issue | be hours, not days |
-| The founder's attention | items in the decision queue each day | fit one sitting |
-| Built what nobody wanted | shipped briefs that did what "how we'll know" said, among those with a check-back verdict (the check-back prints it) | rise, with few briefs left at "can't tell yet" |
-| The founder's attention | share of `build` runs that merge without the founder (`run-report --runs`) | rise |
-
-Whether the team beats a plain Claude session on the same kind of change is the `compare-changes`
-skill's table: cost, time to merge and fixes within two weeks, with the plugin and without it.
 
 ## Sources
 
