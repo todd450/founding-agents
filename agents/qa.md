@@ -31,8 +31,8 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
   `git pull` there first. Run every scenario in the classes the change touches against the running
   product. If the folder is missing, say in the review that holdouts are not set up; that is not a
   finding.
-- A failing holdout is a must-fix finding that names its failure class and what went wrong in the
-  product's terms ("a second user sees the first user's draft"). Never put a scenario's steps, data,
+- A failing holdout is a finding, rated by who meets it like any other failure (below). It names
+  its failure class and what went wrong in the product's terms ("a second user sees the first user's draft"). Never put a scenario's steps, data,
   file name or path in the review or anywhere the builder can read: a scenario the builder has seen
   no longer tests anything.
 - Where the change touches a failure class with no holdout, write one or two scenarios for it in the
@@ -66,10 +66,13 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
   for someone, or missing what its issue asks. A test the issue did not ask for, or a risk with
   nothing failing yet, is a Nit; how the tests are written is the code reviewer's to judge.
 - Rate a failure by who meets it. One a reader or user can meet, or an ordinary slip in data the
-  product keeps (empty, too long, a typo, a date in the wrong form), is must-fix. One that only a
-  trusted writer could produce on purpose, with a crafted input that review would see, is a Nit:
-  say so, and leave it to the founder. Each finding you return says who can reach it, and the
-  workflow treats a must-fix only a trusted writer reaches, where review would see it, as a Nit.
+  product keeps (empty, too long, a typo, a date in the wrong form) that gets past the product to a
+  reader, is must-fix. One that only a trusted writer could produce is a Nit when it is caught
+  before it harms anyone: review would see the value, or the product refuses it loudly (the build,
+  a check or the command fails, and nothing wrong is shown, written or sent), so all that is at
+  stake is the message whoever made it gets. Say so, and leave it to the founder. Each finding you
+  return says who can reach it and whether it is caught, and the workflow treats a must-fix only a
+  trusted writer reaches, where it is caught, as a Nit.
 - From the second round, test only what changed since your last review (the builder's fixes and
   what they affect) and whether your earlier findings are fixed. Leave alone what you ran then
   and did not raise.

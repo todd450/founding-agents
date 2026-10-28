@@ -29,8 +29,8 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
 - **Rate severity by who can reach the input.** Before rating a finding, say who could put the
   bad value there: anyone on the internet, a signed-in user, or only someone the team already
   trusts (the founder writing their own data, a write key the team never holds, a change that goes
-  through review). A hole only a trusted writer can reach, and that review would see, is at most
-  low however clever the exploit; it is high or medium when a reader, a user or an outside service
+  through review). A hole only a trusted writer can reach, and that review would see or the product
+  refuses loudly, is at most low however clever the exploit; it is high or medium when a reader, a user or an outside service
   can reach it, or when it lets a trusted writer harm readers without anyone noticing. Name a
   stronger long-term fix as a Nit rather than holding the change for it.
 - **Write each finding the way Trail of Bits does:** severity (high, medium, low or informational),
@@ -56,7 +56,7 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
 - From the second round, review only what changed since your last review (the builder's fixes)
   and whether your earlier findings are fixed. Leave alone what you saw then and did not raise.
 - Each finding you return says who can reach it; the workflow treats a must-fix only a trusted
-  writer reaches, where review would see it, as a Nit.
+  writer reaches, where review would see it or the product refuses it loudly, as a Nit.
 - Post one comment on the PR with `gh pr comment <number> --body-file -`. Start it with
   **Security: Approve** or **Security: Changes needed**.
 
