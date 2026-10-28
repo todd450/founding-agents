@@ -1,8 +1,10 @@
 """The eval tasks are sound: each builds a trial, its reference answer passes its grader, and its
 known-bad answer fails it, so no grader passes everything or nothing. No model is called."""
 
+import html
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -79,6 +81,58 @@ class TaskTest(unittest.TestCase):
                 trial.make(task, folder)
                 checkout = trial.Trial(task, folder).branch(task["github"]["prs"][0]["headRefName"])
                 self.assertTrue(trial.Trial(task, folder).suite(checkout))
+
+    def test_a_change_qa_should_approve_carries_the_screenshots_qa_asks_for(self):
+        # QA sends back a visible change with no screenshots (27 Oct 2026); task 11 then failed every trial on it.
+        for name in trial.tasks():
+            task = trial.load(name)
+            if task["step"]["label"] != "qa" or task["right_answer"] != "approve":
+                continue
+            with self.subTest(name):
+                body, branch = task["github"]["prs"][0]["body"], f"screenshots/issue-{task['step']['args']}"
+                named = re.findall(rf"/blob/{branch}/([\w/.-]+\.png)\?raw=true", body)
+                self.assertIn("## Screenshots", body)
+                self.assertEqual({path.split("/")[0] for path in named}, {"before", "after"})
+                folder = Path(self.folder.name) / f"{name}-shots"
+                trial.make(task, folder)
+                shots = trial.Trial(task, folder).branch(branch)
+                self.assertEqual(sorted(p.relative_to(shots).as_posix() for p in shots.rglob("*.png")), sorted(named))
+                self.assertEqual(trial.git(folder / "origin.git", "merge-base", "main", branch, check=False), "")
+
+    @unittest.skipUnless(trial.chrome(), "needs Chrome")
+    def test_the_correct_page_holds_when_its_head_line_doubles(self):
+        # QA reads a max-content head column as a flaw: one long red line pushed the steps off the page.
+        task = trial.load("11-a-correct-page")
+        page = (task["dir"] / "pr" / "index.html").read_text().replace(
+            "No open red issue. Nothing is blocked.",
+            "One red issue is open: #41, the nightly site check failed and nothing merges until it is fixed.")
+        for width in (860, 1440):
+            with self.subTest(width):
+                found = self.rendered(page, width)
+                self.assertFalse(found["scrolls"])
+                self.assertGreaterEqual(found["gap"], 12)
+                self.assertEqual(found["split"], 0)
+
+    def rendered(self, page, width):
+        """The band at `width`: whether the page scrolls sideways, the space between the head's text and
+        step 1's, and how many dates break across lines."""
+        script = """<script>addEventListener('load', () => {
+          const right = [...document.querySelector('.band-head').children].flatMap(el => {
+            const r = document.createRange(); r.selectNodeContents(el); return [...r.getClientRects()].map(b => b.right); });
+          const r = document.createRange(); r.selectNodeContents(document.querySelector('.step h3'));
+          document.body.dataset.found = JSON.stringify({
+            scrolls: document.documentElement.scrollWidth > innerWidth,
+            gap: Math.round(Math.min(...[...r.getClientRects()].map(b => b.left)) - Math.max(...right)),
+            split: [...document.querySelectorAll('.band time')].filter(t => t.getClientRects().length > 1).length});
+        });</script>"""
+        folder = Path(self.folder.name) / f"band-{width}"
+        folder.mkdir()
+        (folder / "tokens.css").write_text((EVALS / "fixtures" / "site" / "tokens.css").read_text())
+        (folder / "index.html").write_text(page.replace("</body>", script + "</body>"))
+        dom = subprocess.run([trial.chrome(), "--headless=new", "--disable-gpu", f"--window-size={width},900",
+                              "--virtual-time-budget=3000", "--dump-dom", (folder / "index.html").as_uri()],
+                             capture_output=True, text=True, timeout=60).stdout
+        return json.loads(html.unescape(re.search(r'data-found="([^"]*)"', dom).group(1)))
 
     def test_the_integrator_task_fails_only_once_merged(self):
         task = trial.load("17-merge-that-breaks-main")
