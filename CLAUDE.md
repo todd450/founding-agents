@@ -2,7 +2,7 @@
 
 A reusable team of Claude Code agents (roles, workflows, hooks, routines) that builds products with
 one founder. Read [docs/design.md](docs/design.md) before changing anything; it holds the roles,
-the flow and the open decisions.
+the flow and the decisions.
 
 - This file stays short: a map, not an encyclopedia. A lesson that must hold becomes a test, a lint
   rule or a hook; its evidence goes in `docs/`.
