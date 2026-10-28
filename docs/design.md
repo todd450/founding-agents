@@ -702,7 +702,12 @@ of this (see Sources).
   reviewer and QA took 16.5 minutes and $7.20, against about an hour and $65 for the full run with
   Sonnet added. Eighteen at once hit no limit, so that is the runner's default. The full run,
   three trials each, still goes before a release, since one trial shows a change did not break an
-  agent but cannot tell a reliable one from a lucky one.
+  agent but cannot tell a reliable one from a lucky one. A release is the point before a product
+  moves onto a new plugin version, not a version bump, which every PR makes. And a product's real
+  run failing adds a task from that failure and runs its role's tasks, since every task that has
+  paid off so far came from one. The founder chose this on 27 Oct 2026 over running no evals on a
+  PR at all (#49, closed): one trial of the touched roles costs about $7, while the reruns that
+  raised the question were three trials of whole roles at $40–60 each.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and for the code reviewer on a low-risk change, and Haiku

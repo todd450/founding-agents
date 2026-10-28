@@ -19,7 +19,10 @@ touches before its version bump, one trial each, all at once: for a change to th
 `python3 evals/run.py --role code-reviewer --role qa --trials 1`, about a quarter of an hour, since
 the wait is the slowest trial. A model change adds `--model <role>=<model>` for the role it moves.
 The full run, every task three times, goes before a release, off a PR's path: one trial shows a change
-did not break an agent, three tell a reliable one from a lucky one (`docs/design.md` says why).
+did not break an agent, three tell a reliable one from a lucky one (`docs/design.md` says why). A
+release is the point before a product moves onto a new plugin version, not a version bump, which
+every PR makes. A product's real run failing adds a task from that failure, and that role's tasks
+run.
 
 ## How a trial runs
 
