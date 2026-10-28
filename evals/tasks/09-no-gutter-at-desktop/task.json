@@ -27,6 +27,14 @@
         "pr"
       ],
       "message": "Site 2 of 3: the status band"
+    },
+    {
+      "branch": "screenshots/issue-29",
+      "orphan": true,
+      "dirs": [
+        "shots"
+      ],
+      "message": "Screenshots"
     }
   ],
   "github": {
@@ -46,7 +54,7 @@
       {
         "number": 30,
         "title": "Site 2 of 3: the status band",
-        "body": "Adds the status band: four steps with their state and date, the red line, and a column layout from 860 px.\n\nCloses #29",
+        "body": "Adds the status band: four steps with their state and date, the red line, and a column layout from 860 px.\n\n## Screenshots\n\n### Home\n\n<img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-29/before/home-phone.png?raw=true\" width=\"195\" alt=\"Home before, on a phone\"> <img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-29/after/home-phone.png?raw=true\" width=\"195\" alt=\"Home after, on a phone\">\n\n<img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-29/before/home-desktop.png?raw=true\" width=\"560\" alt=\"Home before, on a desktop\">\n<img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-29/after/home-desktop.png?raw=true\" width=\"560\" alt=\"Home after, on a desktop\">\n\nCloses #29",
         "headRefName": "build/issue-29",
         "baseRefName": "main",
         "state": "OPEN",
