@@ -237,7 +237,12 @@ of this (see Sources).
   page left out, or an after screenshot that does not match what it sees, since pictures only the
   builder checks show what the builder hoped. Fix rounds retake them, so the founder sees the
   change that merges. Builder and QA got the `Skill` tool for it, and a test now holds that every
-  agent told to use a skill has the tool. Not yet run on a real product.
+  agent told to use a skill has the tool. Not yet run on a real product. The rule sent back every
+  eval page QA should approve, since no fixture PR had screenshots, so the QA tasks' PRs now carry
+  them on an empty `screenshots/issue-<n>` branch, as a builder's do. Making them showed that
+  headless Chrome 156 lays a page out at least 500 px wide, so every 390 px phone shot was a crop
+  with cut-off text; the skill now shoots a phone inside a frame of its width. Task 11 went from 0
+  of 3 to 3 of 3, and builder and QA passed all 33 trials.
 - **Technical one-way doors reach the founder before they are built in.** Decided by the founder on
   26 Oct 2026, after the website's "no build step or framework" was settled by an aside in a brief
   ("the architect confirms that, not the founder"), with no architect to confirm it, and written
