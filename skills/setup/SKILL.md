@@ -192,7 +192,7 @@ holds a finding `build` saw come back unfixed, for the librarian to turn into a 
 gh label create needs-founder --color FBCA04 --description "Waiting on the founder's decision"
 gh label create decided --color 0E8A16 --description "The founder said yes; ready to build"
 gh label create red --color B60205 --description "A scheduled check failed; nothing merges until it is fixed"
-gh label create research --color 5319E7 --description "A question about users, with the researcher's guide and synthesis"
+gh label create research --color 5319E7 --description "A question about users, with what they said and did"
 gh label create librarian --color 1D76DB --description "A mistake a run made twice, for the librarian to turn into a check"
 ```
 

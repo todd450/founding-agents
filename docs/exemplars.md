@@ -15,7 +15,6 @@ practice gives an agent something concrete to do, and gives the founder words to
 | role | learns from |
 |---|---|
 | Product lead | Basecamp's *Shape Up* |
-| Researcher | *The Mom Test* |
 | Designer | Airbnb |
 | Architect | Amazon's one-way and two-way doors; Stripe's API compatibility |
 | Builder | Kent Beck's test-driven development; Google's small changes |
@@ -38,15 +37,6 @@ sitting. *Shape Up* is a whole method for a small team built on a fixed amount o
 flexible scope. The practices are in [agents/product-lead.md](../agents/product-lead.md).
 
 Source: Ryan Singer, [*Shape Up*](https://basecamp.com/shapeup) (Basecamp, 2019).
-
-## Researcher — *The Mom Test*
-
-The costliest research mistake is collecting compliments and guesses that feel like evidence, and
-the first product built for five months with no real users. *The Mom Test* is a short, concrete
-method for conversations that people cannot be polite in. The practices are in
-[agents/researcher.md](../agents/researcher.md).
-
-Source: Rob Fitzpatrick, [*The Mom Test*](https://www.momtestbook.com/) (2013).
 
 ## Designer — Airbnb
 

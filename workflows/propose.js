@@ -112,7 +112,6 @@ const VIEW = {
 // The roles who each recommend after the product lead and the designer, each from what its job
 // knows; every one is an agent file in agents/ (a test checks).
 const VOICES = [
-  { name: 'Researcher', agentType: 'founding-agents:researcher', lens: 'what people have actually said and done, and how strong that evidence is' },
   { name: 'Architect', agentType: 'founding-agents:architect', lens: 'how it fits what is already built, and which choices would be costly to undo' },
   { name: 'Builder', agentType: 'founding-agents:builder', lens: 'how much work it is to build and keep working, and what could make it take longer' },
   { name: 'QA', agentType: 'founding-agents:qa', lens: 'what could go wrong for the people using it, and how hard that will be to check' },
