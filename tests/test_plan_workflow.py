@@ -100,7 +100,7 @@ class PlanWorkflowTest(unittest.TestCase):
             {"id": "P1", "choice": "in the page", "why": "One file is one thing to check."}]}])
         voices = [c for c in run["calls"] if c["agentType"] not in (None, "founding-agents:architect")]
         self.assertEqual({c["agentType"] for c in voices},
-                         {f"founding-agents:{n}" for n in ("product-lead", "researcher", "designer", "builder", "qa",
+                         {f"founding-agents:{n}" for n in ("product-lead", "designer", "builder", "qa",
                                                            "code-reviewer", "security-reviewer", "integrator")})
         for voice in voices:
             self.assertEqual(voice["model"], "sonnet")

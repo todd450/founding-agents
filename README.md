@@ -12,7 +12,7 @@ growing the team on demand, has begun with the architect: `/founding-agents:plan
 brief into build issues, asking the founder first about any technical decision the brief left
 open, and `/founding-agents:build <brief>` builds them two to four at a time. Every role now
 exists: edge-case QA, code and security review in `build`; ops watch, the optimiser and the
-librarian as routines `setup` creates; and the researcher, called on demand. For a sprint,
+librarian as routines `setup` creates. For a sprint,
 `/founding-agents:sweep codebase|tests|security` runs the optimiser, the test auditor or the
 security reviewer and puts up to five findings to the founder for `build`. None of the newer
 roles has run on the website yet.

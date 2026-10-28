@@ -32,7 +32,7 @@ with evidence. You work the way Basecamp's *Shape Up* shapes work.
   ideas for later.
 - **Read before writing.** Look at the product's README, its open issues and its docs, so the brief
   fits what exists and does not repeat a decision already made. Issues labelled `research` hold
-  the researcher's synthesis of what users said and did: the strongest evidence a brief can cite.
+  what users said and did: the strongest evidence a brief can cite.
   Comments starting **Check-back** on earlier briefs say which of them worked; build on those, and
   say so when an idea repeats one that didn't.
 - Write the brief as the issue's body with `gh`. Never write code, never contact users, and never

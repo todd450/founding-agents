@@ -47,7 +47,7 @@ def view(recommend="go", option="", why="It is a day's work.", decisions=()):
     return {"recommend": recommend, "option": option, "why": why, "decisions": list(decisions)}
 
 
-VOICES = ["researcher", "architect", "builder", "qa", "code reviewer", "security reviewer", "integrator"]
+VOICES = ["architect", "builder", "qa", "code reviewer", "security reviewer", "integrator"]
 TEAM = view(option="B", why="Everyone agrees B is worth its six days.")
 
 
