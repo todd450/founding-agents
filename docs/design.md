@@ -111,6 +111,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   watch first raises it, and the routines arrive with the roles that run them.
 - **Generic vs product.** The plugin holds the edge-case checklist, which names failure classes;
   each product supplies its own fixtures and holdouts, and keeps its own rules in its own repo.
+- **The plugin repo stays private** while the founder is its only user.
 - **Each person runs the team on their own login.** Anthropic's terms cover one subscriber's
   ordinary use through `claude -p`, a `claude setup-token` token for CI, and routines. The plugin
   never ships or shares a token; anyone else signs in with their own account or an API key.
@@ -398,56 +399,25 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ## Build order
 
-Each step runs on a real change in a real product before the next one starts.
-
-**The first product is the Founding Agents website** ([todd450/founding-agents-site](https://github.com/todd450/founding-agents-site), named `agent-team-site` until 26 Oct 2026),
-decided by the founder on 24 Oct 2026. It is a test bed: a small real product that gives every build
-step a real change to run on, not a launch to outside users. A fresh product also shows the team
-from its first commit, with no history it has to work around. The plugin repo stays
-private, since the founder is the only user for now. A website bends the order in two places:
-
-- **The decide lane comes before `build`** (step 4 before step 3): nothing on a site can be built
-  until its words and look are decided. On 25 Oct 2026 the founder chose to build step 3's agents
-  and workflow first anyway, tested on a throwaway repo; step 3 is done only once it has run on
-  three to five website issues, which come out of the decide lane.
-- **Ops watch's first check is the site itself:** a nightly check that the Pages deploy is green
-  and every link resolves, since a new site runs no scheduled job of its own yet.
+Each new role or workflow runs on a real change in a real product before the next one is built on
+it. A small real product makes a good test bed: it gives every step a real change to run on, and a
+fresh one shows the team from its first commit, with no history to work around.
 
 1. **Guardrails.** Branch protection, the plugin hook and a first `setup`. Done when a builder's
-   push to `main` is blocked. Done on 24 Oct 2026 on the website: its `main` needs a pull request
-   with admins included, and the hook blocked a builder session's push.
-2. **Ops watch.** Day one, as the team table says. Its first check is a scheduled job the product
-   runs, or for a new product a check of the product itself. Done on 25 Oct 2026 on the website:
-   Pages serves the README as a placeholder, the nightly site check is installed through `setup`,
-   its first run on GitHub was green, and a red run by hand opened one `red` issue, updated it and
-   closed it on green.
-3. **`build` with three roles:** one builder (own worktree, tests first from the visible fixtures),
-   one reviewer combining QA and code review (read only; runs the visible fixtures and the
-   holdouts), and the integrator. Run it on three to five real issues. Done on 26 Oct 2026 on the
-   website, without holdouts, which were built on 27 Oct 2026 and have not run there yet: four issues cut by hand from the decided
-   brief went through `build` to merge. #4 was sent back three times on a test the issue asked
-   for that needed a CSS linter, and merged once the founder narrowed it; #5 merged after one
-   send-back, with a stale step status and a layout gap the reviewer missed; #6 was sent back
-   three times on Sonnet and merged in one round once the builder moved to Opus; #10, which fixed
-   the errors found by reading the live page after #6, merged in one round. Two gaps showed:
-   `build` could not continue an open PR unless its issue said so (fixed on 26 Oct 2026, above),
-   and nothing cut a decided brief into build issues; the architect's `plan` now does.
-4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. Done
-   on 26 Oct 2026 on the website: on its brief the product lead
-   recommended go on a smaller test-bed site and rewrote the brief to match, the designer pushed
-   three options at 2, 5 and 7 stars to `propose/issue-1`, and one `needs-founder` queue item
-   carried them with their costs.
-5. **Grow on demand:** the architect for schema or shared changes (built as `plan` on 27 Oct 2026,
-   not yet run on the website); two to four parallel builders once one is routine (built into
-   `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser and
-   librarian as their kind of work appears. QA and code review became two roles,
-   with the security reviewer beside them, on 27 Oct 2026, and the optimiser and librarian became
-   weekly routines the same day; ops watch
-   took on check-backs on shipped briefs the same day. None has run on the website yet. Every role
-   in the team table now has an agent or a routine. The same day the optimiser and the security
-   reviewer became the finders `sweep` runs, the optimiser for both the codebase and the tests; it
-   is done once a sweep of each kind has run on the website and its findings have gone through
-   `build`.
+   push to `main` is blocked.
+2. **Ops watch,** on day one. Its first check is a scheduled job the product runs, or for a new
+   product a check of the product itself.
+3. **`build` with three roles:** one builder, one reviewer and the integrator, run on three to five
+   real issues.
+4. **The decide lane:** the product lead and the designer as `propose`, feeding `needs-founder`. A
+   product that can build nothing until its words and look are decided, such as a website, takes
+   this step before step 3.
+5. **Grow on demand:** the architect's `plan`, parallel builders, review split into QA, code and
+   security review, the optimiser and the librarian, and `sweep`, each once its kind of work
+   appears.
+
+Every step is built. Still to run on a real product: a `tests` or `security` sweep, risk tiers and
+the check-back.
 
 ## Sources
 
