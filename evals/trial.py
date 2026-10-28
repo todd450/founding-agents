@@ -128,10 +128,13 @@ class Trial:
         return [e for e in self.state["posted"] if kind is None or e["kind"] == kind]
 
     def findings(self, pattern=".", must_fix=None, repeat=None):
-        """The returned findings whose text matches `pattern`, and whose flags match when given."""
+        """The returned findings whose text matches `pattern`, and whose flags match when given. A finding
+        is must-fix as `build` counts it: one only a trusted writer reaches, where review would see it,
+        is a Nit whatever the reviewer called it."""
         found = []
         for f in self.output.get("findings", []):
-            if must_fix is not None and bool(f.get("must_fix")) != must_fix:
+            held = bool(f.get("must_fix")) and not (f.get("reach") == "trusted" and f.get("review_would_see"))
+            if must_fix is not None and held != must_fix:
                 continue
             if repeat is not None and bool(f.get("repeat")) != repeat:
                 continue

@@ -30,9 +30,9 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
 | Build | **Architect** | each new surface; any schema or shared change | the plan builders work from, with the day-one defaults set | plans, schema review |
 | | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
-| | **Edge-case QA** | every change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
-| Check | **Code reviewer** | every change | correctness and simplification; sees the diff, not the builder's reasoning | read only |
-| | **Security reviewer** | changes to routes, permissions, storage, model calls or shipped dependencies; a `security` sweep | findings | read only |
+| | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
+| Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
+| | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
 | | **Optimiser** | weekly, for team cost; a `codebase` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places (sweep) | proposes builder tasks |
 | | **Test auditor** | a `tests` sweep | missing cases, slow or flaky tests, tests of wording, hand-written checks a standard tool does | proposes builder tasks |
 | Ship & run | **Integrator** | the only merger | rebase, run checks, gate production, cut releases | `main` and production |
@@ -52,7 +52,8 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 2. **Designer** mocks it up → each role recommends, then the team → founder picks.
 3. **Architect** writes the plan and cuts it into build issues → **builders** build, each in its own
    worktree.
-4. **Edge-case QA** and **code review** run in parallel.
+4. The reviewers the issue's risk calls for run in parallel: **code review** always, **edge-case QA** from
+   medium, the **security reviewer** at high.
 5. **Integrator** merges and gates production → **ops watch** watches it run.
 6. Two weeks after a brief's last issue merges (or as long as the brief says), **ops watch**
    checks whether it did what "how we'll know" said; a "didn't" goes back to the founder as keep,
@@ -347,6 +348,58 @@ of this (see Sources).
   Playwright were left out: they would save under 10 seconds a run, CI now runs while review
   does, and the slow part, apt, is the product's own `check.sh` choice. A product whose CI wait starts to
   matter can run its job in Playwright's container image instead, which is its own decision.
+- **Review is proportional to risk.** Decided by the founder on 27 Oct 2026, after the website's
+  #35 (a facts table only the founder writes) took 13 review rounds over 7 runs, about 9 hours and
+  $122, while #26 merged in 16 minutes. Three Opus reviewers looked at every change whatever it
+  touched, every round re-read the whole PR and found something new, and QA held #35 for a Nit
+  after the severity rule above was already in its instructions. Prose had not held it, so four
+  changes put it in the workflow:
+  - **Risk tiers.** The architect rates each issue it cuts low, medium or high by what it touches,
+    in a `## Risk` section; `build`'s check reads it, or rates an issue nobody rated, and keeps its
+    own rating when that is higher. Low is wording or static content only; medium is styling,
+    layout or ordinary logic; high touches routes, sign-in, permissions, stored data, secrets,
+    outside input, model calls or a dependency that ships. When unsure, the higher; an unknown
+    rating counts as high. Low gets code review alone, on Sonnet; medium code review and QA on Opus;
+    high all three on Opus. The builder stays on Opus at every tier (#41). Every reviewer rates the
+    diff too, and a rating above the issue's raises the tier at once: the reviewers it adds start as
+    soon as that review returns, and later rounds keep the new tier. Nothing lowers it. This
+    replaces the check's and the code reviewer's `security` flag, which did the same for one
+    reviewer. The brief put styling in low. The product lead, designer, QA, code reviewer,
+    integrator and test auditor recommended medium: low gets no QA, QA is the role that checks the
+    screenshots, and every miss that reached `main` on the website was visual (#5's layout gap,
+    #9's gutter). The architect, builder and optimiser preferred low for the savings, since most
+    website issues are copy and styling. The team and the founder chose medium. On models the
+    optimiser recommended medium on Sonnet, the larger saving; the team kept Opus there, because
+    Sonnet has no eval data as a reviewer, so it is tried first where a miss costs least. The
+    designer's QA on low was not taken.
+  - **Re-review only what changed.** From the second round a reviewer is given the commit it last
+    reviewed (the builder now returns its branch's head) and its own findings from then, and
+    reviews only `git diff <then>..<now>`, what those fixes affect, and whether its findings are
+    fixed. What it saw then and did not raise is left alone. A reviewer that joins after a raise
+    reviews the whole PR; on a PR continued from an earlier run, a reviewer finds its last review's
+    commit on the PR.
+  - **The severity rule is in the schema.** Every finding says who can reach it: anyone, a
+    signed-in user, an outside service, only someone trusted, or none, for findings about the code,
+    its tests or CI. A trusted-only finding also says whether review would see the value. The
+    workflow treats a must-fix that only a trusted writer reaches, where review would see it, as a
+    Nit: the builder gets it as one, it is never a repeat, and a reviewer whose only must-fix
+    findings were these counts as approving. Its PR comment still says "Changes needed", so the
+    integrator is told why, and posts those findings on the PR as left for the founder. An ordinary
+    slip in kept data, or harm a trusted writer could do unseen, stays must-fix. The eval graders
+    count must-fix findings the same way.
+  - **A budget per issue that stops the run.** At API prices, per issue per run: $5 for low, $12
+    for medium, $20 for high, at the tier the issue ends on. After a send-back, before the next
+    round, a Haiku step runs `report.py --spent-on <issue>`, which adds up this run's agents whose
+    task names the issue, so it works for a brief's issues too. Past the budget the run stops for
+    the founder with the PR and its findings, as three send-backs do, and running `build` again is
+    the founder's go-ahead to spend another budget. An approved change merges whatever it cost, and
+    a spend that cannot be read does not stop the run. The numbers come from brief #14: one round
+    of one high-risk issue with all three Opus reviewers cost $8.69, so a second round fits and a
+    runaway like its $31.20 run stops. The builder, QA, the security reviewer, the product lead and
+    the integrator recommended these; the optimiser wanted $4, $8 and $12, so that every send-back
+    on medium or high reaches the founder, which the others thought would fill the queue with
+    routine fixes. A brief's run report flags the sum of its issues' budgets.
+  Not yet run on a real product.
 - **The optimiser and the librarian run as weekly routines that propose, never change.** Built on
   27 Oct 2026, the same way as ops watch's daily routine: each one's instructions are a file
   `setup` copies into the product (`.github/optimiser/routine.md`, `.github/librarian/routine.md`)
@@ -563,7 +616,7 @@ of this (see Sources).
   reviewer was the largest cost in five of the six builds. Until the optimiser exists these
   reports are the measure of tokens per merged change. Each workflow passes a budget of $5 a run,
   above the website's typical build and below its stalls, and the report flags a run over it above
-  the table. Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
+  the table; `build` passes its issues' risk-tier budgets instead, which also stop it (below). Agents post with the founder's login, so the flag notifies nobody; ops watch's red on
   spend waits for the optimiser.
 - **Whether the plugin pays is measured against changes made without it.** Asked for by the founder
   on 27 Oct 2026: the measures below judge the team on its own, and say nothing about whether a
@@ -629,8 +682,8 @@ of this (see Sources).
   but signs the plan out.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
-  builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
-  steps.
+  builders, Sonnet 5.5 for the integrator and for the code reviewer on a low-risk change, and Haiku
+  5.5 for ops watch and the workflows' small steps.
 - **Builders run on Opus, an exception to principle 3.** The founder's choice on 26 Oct 2026, after
   the first website builds on Sonnet; on #5 the Sonnet builder was sent back once and still shipped
   a step status the issue had said to check against the repo. The cost is the shared limit:

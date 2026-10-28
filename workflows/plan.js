@@ -19,6 +19,10 @@ if (!issue) throw new Error('Name the decided brief to plan, e.g. /founding-agen
 // What counts as a technical one-way door; build.js, propose.js, plan.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
+// How much review a change gets follows what it could break, so the architect rates each issue it
+// cuts and build reads the rating. build.js and plan.js keep the same words (a test checks).
+const RISK = 'low: only wording or static content, with nothing that changes layout, styling or behaviour; medium: styling, layout or ordinary logic; high: it touches routes, sign-in, permissions, stored data, secrets, input from outside, calls to a model, or a dependency that ships to users. When unsure, rate it higher'
+
 // Dollars at API prices one run should stay under; the run report flags a run over it.
 const BUDGET = 5
 
@@ -60,8 +64,9 @@ const PLAN = {
           number: { type: 'integer' },
           title: { type: 'string' },
           after: { type: 'array', items: { type: 'integer' }, description: 'issues it builds after' },
+          risk: { type: 'string', enum: ['low', 'medium', 'high'], description: `the risk its "Risk" section names. ${RISK}` },
         },
-        required: ['number', 'title', 'after'],
+        required: ['number', 'title', 'after', 'risk'],
       },
     },
     plan_url: { type: 'string', description: 'the plan comment on the brief; empty when there are decisions' },
@@ -166,7 +171,12 @@ Build after #<n>. (only when it builds on another issue)
 ## Technical decisions
 <each one-way door it settles, with the founder's choice: "<decision>: <choice>, decided on #${issue}". "None." when it settles none>
 
-Then post the plan on #${issue} with \`gh issue comment ${issue} --body-file -\`: the one-way doors and how each was decided, the day-one defaults the product has and which issue sets up the rest, and the issues in order. Return the issues and the plan comment's URL.`,
+## Risk
+<low, medium or high, and what it touches that makes it so>
+
+Rate each issue's risk from what it touches; it decides how much review the change gets, and a reviewer can raise it but never lower it. ${RISK}.
+
+Then post the plan on #${issue} with \`gh issue comment ${issue} --body-file -\`: the one-way doors and how each was decided, the day-one defaults the product has and which issue sets up the rest, and the issues in order with each one's risk. Return the issues and the plan comment's URL.`,
   { label: 'architect', phase: 'Plan', agentType: 'founding-agents:architect', model: 'opus', schema: PLAN },
 )
 if (!plan) throw new Error('The architect returned nothing')
@@ -240,6 +250,6 @@ return await report({
   issue,
   status: 'planned',
   plan: plan.plan_url,
-  issues: plan.issues.map(i => `#${i.number} ${i.title}${i.after.length ? ` (after ${i.after.map(n => `#${n}`).join(', ')})` : ''}`),
+  issues: plan.issues.map(i => `#${i.number} ${i.title}${i.after.length ? ` (after ${i.after.map(n => `#${n}`).join(', ')})` : ''}, ${i.risk} risk`),
   next: `/founding-agents:build ${issue}`,
 })
