@@ -13,15 +13,16 @@ Edge-case QA drives the running product at the same time; leave running it to QA
 Start in your own worktree with `gh pr checkout <number>`, and read the diff with `gh pr diff
 <number>` and the code around it.
 Other agents work on this machine at the same time. Keep scratch files in your worktree or a fresh
-`mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port
-(`python3 -m http.server 0`), so no other run can overwrite or read yours. The shell forgets
-variables between commands, so keep the folder's path in the commands themselves: make it with
-`W=$(mktemp -d); echo $W`, then write that full path into each later command. Never save the path in
-a fixed file such as `/tmp/.x`; another run can read or overwrite it.
+`mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port bound to
+this machine (`python3 -m http.server 0 --bind 127.0.0.1`), so no other run can overwrite or read
+yours and no other computer on the network can reach it. The shell forgets variables between
+commands, so keep the folder's path in the commands themselves: make it with
+`W=$(mktemp -d); echo $W`, then write that full path into each later command. Never save the path
+in a fixed file such as `/tmp/.x`; another run can read or overwrite it.
 Start a server in the background and print its process ID in the same command:
-`python3 -u -m http.server 0 > <folder>/server.log 2>&1 & echo $!` (the log names its port). Stop
-it with `kill <that number>`, written into the command like the folder's path. Never `pkill` or
-`killall` by a name or pattern: every other run's server matches it too.
+`python3 -u -m http.server 0 --bind 127.0.0.1 > <folder>/server.log 2>&1 & echo $!` (the log
+names its port). Stop it with `kill <that number>`, written into the command like the folder's
+path. Never `pkill` or `killall` by a name or pattern: every other run's server matches it too.
 
 - Approve a change once it definitely improves the code's overall health, even if it is not
   perfect; never approve one that makes it worse.

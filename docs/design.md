@@ -35,7 +35,7 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Security reviewer** | changes to routes, permissions, storage, model calls or shipped dependencies; a `security` sweep | findings | read only |
 | | **Optimiser** | weekly, for team cost; a `codebase` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places (sweep) | proposes builder tasks |
 | | **Test auditor** | a `tests` sweep | missing cases, slow or flaky tests, tests of wording, hand-written checks a standard tool does | proposes builder tasks |
-| Ship & run | **Integrator** | the only merger | rebase, run checks, gate production, cut releases | `main` and production |
+| Ship & run | **Integrator** | the only agent that merges | rebase, run checks, gate production, cut releases; where a merge deploys to production, readies it for the founder's merge | `main` and production |
 | | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
 | | **Librarian** | after each incident; a weekly prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
 
@@ -53,13 +53,14 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 3. **Architect** writes the plan and cuts it into build issues → **builders** build, each in its own
    worktree.
 4. **Edge-case QA** and **code review** run in parallel.
-5. **Integrator** merges and gates production → **ops watch** watches it run.
+5. **Integrator** merges and gates production, or, where a merge deploys to production, readies
+   the PR for the founder to merge → **ops watch** watches it run.
 6. Two weeks after a brief's last issue merges (or as long as the brief says), **ops watch**
    checks whether it did what "how we'll know" said; a "didn't" goes back to the founder as keep,
    change or remove.
 
 The founder sees steps 1 and 2, step 3 only when the plan needs a technical decision the brief
-left open, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
+left open, step 5 when a merge is the release, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
 starts with the context it needs.
 
 ## Principles
@@ -104,7 +105,8 @@ screen, one design-token source that generates every copy.
   Actions schedules instead, which `setup` installs in the product.
 - **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` before a version
   bump that changes an agent, skill, workflow or model.
-- **Hard rules** → a plugin hook (only the integrator pushes to `main` or merges) and GitHub branch
+- **Hard rules** → plugin hooks (only the integrator pushes to `main` or merges; only QA reads the
+  holdouts; a local preview binds to this machine and serves no secret) and GitHub branch
   protection (nothing merges without passing checks).
 
 ## Decisions
@@ -290,7 +292,8 @@ of this (see Sources).
   the brief so that adding it again is the founder's yes to the new decisions. The founder does not
   label each build issue: `build` accepts an issue cut from a decided brief, and waits until every
   issue it builds after is closed. The founder's attention goes to the decisions, not to approving
-  cuts. Not yet run on a real product; schema review of a builder's change, the architect's other
+  cuts. First run on Half Badger on 27 Oct 2026, where its pass marks and "Build after" lines
+  needed the founder's hand (below); schema review of a builder's change, the architect's other
   job, is left until a product has a schema.
 - **`plan`'s queue item carries every role's choice and the team's.** Done on 27 Oct 2026, after
   the founder asked for each role's recommendation on every decision put to them. When the
@@ -312,7 +315,8 @@ of this (see Sources).
   two issues the same files (principle 5); the builder stops rather than edit a file another
   issue owns. One run report goes on the brief. Two builders is the default because builders and
   reviewers all run on Opus, so four at once spends the week's Opus allowance four times as fast,
-  and pacing to the weekly limit is not built yet. Not yet run on a real product.
+  and pacing to the weekly limit is not built yet. First run on Half Badger on 27 Oct 2026, where
+  every merge stalled on the founder (below).
   Agents running at once share one machine: on 27 Oct 2026 eval trials run side by side
   overwrote each other's `/tmp/index.html.bak`, and one QA reviewed another trial's checkout
   through `/tmp/qa-pr8`. So the builder, QA and the code and security reviewers keep scratch
@@ -376,6 +380,52 @@ of this (see Sources).
   Playwright were left out: they would save under 10 seconds a run, CI now runs while review
   does, and the slow part, apt, is the product's own `check.sh` choice. A product whose CI wait starts to
   matter can run its job in Playwright's container image instead, which is its own decision.
+- **Where a merge deploys to production, the founder merges; the integrator readies it.** Decided
+  on 27 Oct 2026 after the first run on a second product, Half Badger, a private plain-HTML site on
+  Vercel where every merge to `main` deploys to production. The plan assumed the integrator can
+  always merge. In headless `--permission-mode auto`, Claude Code's own checking model refused the
+  integrator's `gh pr merge` on PRs #10, #12 and #14 as a merge without review that deploys (the
+  reviewers are agents), then let #16 through with no founder yes and no security review. That
+  refusal is principle 8's per-action approval working, so the team never works around it, and a
+  gate that holds three times in four is no gate. So the integrator decides by the product, not by
+  the refusal: where the product's `CLAUDE.md` says merging deploys, or GitHub lists a deployment
+  to a production environment, it brings the PR up to date, waits for its checks to pass on what
+  the merge will be, and stops short of the merge. Elsewhere it merges as before, and a merge
+  Claude Code still refuses goes the same way. Either way `build` posts a script-built `Ready for
+  your merge` item on the PR the moment the integrator stops, labelled `needs-founder`, naming which
+  reviewers approved and saying so when no security review ran; on Half Badger each approved PR
+  waited for the whole run to end, about 30 minutes for #14. The run goes on with every issue that
+  does not build after it, and those that do start on the next run once the founder has merged; a
+  run that ends with only merges left for the founder reports `ready`, apart from `merged` and
+  `stopped`. The cost is a tap per PR for most products, since most deploy on merge. A product that
+  releases from a step the founder starts (a promoted deploy, a staging branch) has merges that
+  deploy nothing, and the integrator merges there again; choosing that is the product's own
+  one-way door. The alternative, an allow rule the founder adds so the integrator's merges pass,
+  was left out: it would take the founder's eyes off every release to save the tap.
+- **Pass marks are ones the reviewers can check, or the founder's by name.** Decided the same day.
+  The architect wrote two pass marks for Half Badger's #2 that no agent could check: one needed
+  Web Analytics turned on in Vercel's dashboard, the other a preview URL behind Vercel's login,
+  which answers agents with a redirect. #2 went back three times on them. Reviewers check from the
+  PR's branch, a server bound to `127.0.0.1`, the public site and `gh`; a pass mark needing a
+  dashboard, a login, an account or the live site after the deploy goes in the issue under "The
+  founder checks", with when, and reviewers never send a change back for one. The `Ready for your
+  merge` item points the founder at that section. A sweep's pass marks follow the same rule.
+- **"Build after" is only for a real dependency; consistency is "Matches".** Decided the same day.
+  The architect chained Half Badger's #6, #7, #8 and #9 partly so the pages would mark projects the
+  same way, so with two builders one sat idle; the founder re-cut the chain by hand. An issue now
+  builds after another only when it cannot be built or checked without that one merged, and says
+  what it needs on the line. Two issues that must look or read alike say "Matches #<n>" and carry
+  the shared thing (the exact marker, the wording) in both, and `build` never waits on that line.
+- **A local preview binds to this machine and serves no secret, and a hook holds it.** Decided the
+  same day. Half Badger's issues said `python3 -m http.server`, and the plugin's own builder, QA
+  and reviewers said `python3 -m http.server 0`. Unbound, it listens on every network the machine
+  is on and serves every file in its folder, dotfiles too, and Half Badger kept a Vercel token in
+  `site/`, the folder it served. Every command the plugin gives now binds to `127.0.0.1`, and the
+  `guard_serve` hook refuses an unbound `http.server`, or one whose folder holds `.env*`,
+  `.vercel/`, `.netlify/` or a key, for every session, saying how to fix it. `setup` has the
+  founder state the preview command and checks the web root for secrets. A worktree holds no
+  ignored file, so builders and reviewers are seldom stopped; the founder's own checkout is where
+  secrets sit.
 - **The optimiser and the librarian run as weekly routines that propose, never change.** Built on
   27 Oct 2026, the same way as ops watch's daily routine: each one's instructions are a file
   `setup` copies into the product (`.github/optimiser/routine.md`, `.github/librarian/routine.md`)
@@ -587,7 +637,13 @@ of this (see Sources).
   Claude Code's session logs for the run and its agents, counts each model call once, and posts one
   table: each role and model's time, calls, new and cached input, output and cost, then the total.
   Cost is at API list prices, so on a plan it is API-equivalent: it compares runs and roles, while
-  the plan itself bills the weekly limit. A run that stalls posts too, because stalls are where the
+  the plan itself bills the weekly limit. Each call is priced by the model it ran, not by the
+  alias a step asked for: on Half Badger on 27 Oct 2026 every `opus` step ran `claude-opus-5`,
+  not Opus 5.5, and one `build` report priced at Opus 5.5's rate showed $7.08 where Claude Code
+  counted $11.10; priced by model it matches to the cent, and a model the table does not know is
+  named above the table rather than counted as free. The same day's first `propose`, on an idea in
+  words, posted no report: its first prompt named no issue, since the product lead opened #1
+  partway through, so the report also finds a run by its own report step's prompt. A run that stalls posts too, because stalls are where the
   cost goes: of the seven website runs, about $37 in all, the two that stalled were 43%. The
   reviewer was the largest cost in five of the six builds. Until the optimiser exists these
   reports are the measure of tokens per merged change. Each workflow passes a budget of $5 a run,
@@ -659,7 +715,12 @@ of this (see Sources).
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
-  steps.
+  steps. Opus 5.5 is pinned in full: on Half Badger's headless runs (27 Oct 2026) every step asked
+  for `opus` ran Opus 5 (`claude-opus-5`), at $5/$25 per million tokens against Opus 5.5's $4/$20.
+  A workflow step can name only an alias, so the pin is `ANTHROPIC_DEFAULT_OPUS_MODEL` set to
+  `claude-opus-5-5` in the product's `.claude/settings.json`, which `setup` writes (a plugin's own
+  settings cannot set it), and the evals set the same in each trial. Decided by the founder on
+  27 Oct 2026 (#44).
 - **Builders run on Opus, an exception to principle 3.** The founder's choice on 26 Oct 2026, after
   the first website builds on Sonnet; on #5 the Sonnet builder was sent back once and still shipped
   a step status the issue had said to check against the repo. The cost is the shared limit:
@@ -808,7 +869,7 @@ people want what the team built, which the other five cannot show:
 |---|---|---|
 | Built before deciding | lines deleted within two weeks of being written | fall |
 | Found bugs late | bugs found after merge, against bugs found before | mostly be found before |
-| Many writers, one branch | merges not made by the integrator | be zero |
+| Many writers, one branch | merges made by neither the integrator nor the founder from a "Ready for your merge" item | be zero |
 | Red lights left red | age of the oldest open `red` issue | be hours, not days |
 | The founder's attention | items in the decision queue each day | fit one sitting |
 | Built what nobody wanted | shipped briefs that did what "how we'll know" said, among those with a check-back verdict (the check-back prints it) | rise, with few briefs left at "can't tell yet" |
