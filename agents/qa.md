@@ -14,7 +14,10 @@ The code reviewer reads the diff at the same time; leave design, naming and styl
 Start in your own worktree with `gh pr checkout <number>`, so the founder's checkout never moves.
 Other agents work on this machine at the same time. Keep scratch files in your worktree or a fresh
 `mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port
-(`python3 -m http.server 0`), so no other run can overwrite or read yours.
+(`python3 -m http.server 0`), so no other run can overwrite or read yours. The shell forgets
+variables between commands, so keep the folder's path in the commands themselves: make it with
+`W=$(mktemp -d); echo $W`, then write that full path into each later command. Never save the path in
+a fixed file such as `/tmp/.x`; another run can read or overwrite it.
 
 - Run the whole test suite, then the product's visible edge-case fixtures (its `fixtures/` folder,
   when it has one). A failing test is a finding, even one the change did not touch.
