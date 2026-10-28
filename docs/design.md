@@ -323,47 +323,26 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Cost, models and evals
 
-- **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Opus 5.5 for
-  the product lead, architect, designer, QA, the code and security reviewers, the finders and the
-  builders; Sonnet 5.5 for the integrator, the optimiser and librarian, the roles' views and the
-  code reviewer on a low-risk change; Haiku 5.5 for ops watch and the workflows' small steps. Every
-  agent and step names its model, since Max otherwise runs Opus 5.5 everywhere. Opus 5.5 is pinned
-  in full with `ANTHROPIC_DEFAULT_OPUS_MODEL` in the product's `.claude/settings.json`, which
-  `setup` writes, since the `opus` alias can resolve to an older, dearer Opus.
-- **Every run reports its time, tokens and cost on its issue.** Each workflow ends with the
-  `run-report` skill, which reads Claude Code's session logs, counts each model call once, and
-  posts one table by role and model, priced by the model each call actually ran at API list
-  prices, so on a plan it is API-equivalent. A model the table does not know is named, not counted
-  as free. Stalled runs report too, since stalls are where the cost goes. Each workflow passes a
-  budget, and the report flags a run over it. A `build` report
-  says whether it ended `merged`, `ready` or `stopped`, and `report.py --runs` gives the share of
-  runs that merged without the founder.
-- **Token cost belongs to the optimiser.** Principle 3 only works if someone measures it: tokens
-  per merged change by role and model, and their cost, a share of the weekly limit on a Pro or Max
-  plan or dollars on an API key. Ops watch raises red when spend passes the product's budget.
-- **Whether the plugin pays is measured against changes made without it.** The `compare-changes`
-  skill compares merged PRs with and without the plugin on cost, time to merge and fixes needed
-  within two weeks. A PR from `build`'s branch counts as with the plugin; any other change needs a
-  `with-plugin` or `without-plugin` label. Cost comes from the run reports on the PR and the issues
-  it closes. A later fix is a guess, so the table names each one for the founder to check.
-- **Nothing falls through to paid billing by accident.** No environment meant to run on the plan
-  sets `ANTHROPIC_API_KEY`, which `claude -p` always uses when set; no run uses `--bare`, which
-  never reads the plan's login; and the pipeline uses neither fast mode nor `/code-review ultra`, which
-  bill only as usage credits. Whether usage credits are on, and their cap, is the founder's call;
-  with them off, a run that hits the limit stops and waits.
-- **Evals test the agents themselves, and a change runs them before its version bump.** The tests
-  in `tests/` run the workflows with scripted replies, so they prove the wiring, not the judgement.
-  Each task in `evals/` comes from a real run and tests one failure class, graded by a script, with
-  a reference answer that passes and a known-bad answer that fails, which `tests/test_evals.py`
-  holds both ways. Tasks the team got right are regression tasks and should stay near 100%; tasks
-  it got wrong are capability tasks. Trials run on the founder's machine with `claude -p` on the
-  plan, each in a throwaway repo with a stand-in `gh`, its own `TMPDIR`, and no way to reach GitHub
-  or the real holdouts, using each step's prompt from the workflow itself. A change that alters an
-  agent, skill or workflow, or a model choice, runs one trial of the tasks for the roles it
-  touches, all at once. The full set, three trials each, runs before a release (before a product
-  moves onto a new plugin version), since one trial shows a change did not break an agent but
-  cannot tell a reliable one from a lucky one. Evals stay out of CI, which would spend allowance on
-  every draft push. A product's real run failing adds a task from that failure.
+- **Every agent and step names its model.** Opus 5.5 plans, judges and builds: the product lead,
+  architect, designer, builders, QA, the code and security reviewers, and the finders. Sonnet 5.5
+  runs the integrator, the weekly routines, the roles' views and low-risk code review; Haiku 5.5
+  runs ops watch and the workflows' small steps. `setup` pins Opus 5.5 in full, since the `opus`
+  alias can resolve to an older, dearer Opus.
+- **Every run reports its cost.** The `run-report` skill posts each run's time, tokens and cost by
+  role and model on its issue, stalled runs included, and flags a run over its budget. The
+  optimiser tracks tokens per merged change, and ops watch raises red when spend passes the
+  product's budget.
+- **Whether the plugin pays is measured.** The `compare-changes` skill compares merged PRs made
+  with and without the plugin on cost, time to merge and fixes needed within two weeks.
+- **Nothing falls through to paid billing by accident.** No run meant for the plan sets
+  `ANTHROPIC_API_KEY` or uses `--bare`, fast mode or `/code-review ultra`. Whether usage credits
+  are on is the founder's call.
+- **Evals test the agents' judgement; `tests/` tests the wiring.** Each task in `evals/` comes from
+  a real run's failure and is graded by a script. A change to an agent, skill, workflow or model
+  runs one trial of the touched roles' tasks before its version bump. The full set, three trials
+  each, runs before a release, since one trial shows a change did not break an agent but cannot
+  tell a reliable one from a lucky one. Evals run on the founder's machine, sealed off from GitHub,
+  and stay out of CI.
 
 ## Build order
 
