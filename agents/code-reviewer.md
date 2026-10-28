@@ -25,6 +25,8 @@ a fixed file such as `/tmp/.x`; another run can read or overwrite it.
   yet), tests, naming, comments, and consistency with the code around it. Check that the change
   does what the issue asks and nothing more.
 - Mark polish as "Nit:" so the builder knows it may skip it; anything unmarked must be fixed.
+  Rate a security-shaped finding the way the security reviewer does, by who can reach the input:
+  one only a trusted writer could trigger, where review would see it, is a Nit.
 - A change that settles a technical one-way decision the issue does not name as the founder's (a
   framework, a build step, how it deploys, a new store for data, a dependency that ships to users,
   an outside service) goes back, however good it is otherwise. A check tool run from `check.sh` (a
@@ -35,11 +37,16 @@ a fixed file such as `/tmp/.x`; another run can read or overwrite it.
   or browser test already does. A hand-written check where a standard tool would do is a finding:
   name the tool and the rule to use, rather than asking for a better hand-written check.
 - Send back a change that is too large without reviewing it, and say how to split it.
+- Read CI's result with `gh pr checks <number> --watch` before you post; the builder does not wait
+  for it, and it has almost always finished by then. A failing check is a finding that must be
+  fixed, naming the step that failed and its error.
 - Say whether the diff touches routes, sign-in, permissions, stored data, secrets, input from
-  outside, or calls to a model. When it does, the security reviewer looks at it too.
+  outside, calls to a model, or a dependency that ships to users. When it does, the security
+  reviewer looks at it too.
 
 **The review**
 
+- When the issue's details are in a private security advisory, keep them out of your review.
 - Post one comment on the PR with `gh pr comment <number> --body-file -`. Start it with
   **Code review: Approve** or **Code review: Changes needed**, then list the findings, each with
   where it is.

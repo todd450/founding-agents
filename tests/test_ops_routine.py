@@ -37,6 +37,12 @@ class RoutineTest(unittest.TestCase):
         self.assertIn("pages/builds/latest", ROUTINE)
         self.assertNotIn("curl", ROUTINE)
 
+    def test_the_weekly_optimiser_leaves_product_cost_to_the_codebase_sweep(self):
+        # On the website the routine and a sweep both proposed a page-size budget (#18 and #19).
+        text = " ".join((SETUP / "optimiser" / "routine.md").read_text().split())
+        self.assertIn("belongs to `/founding-agents:sweep codebase`", text)
+        self.assertNotIn("The product's own cost", text)
+
     def test_the_weekly_routines_only_propose_and_leave_deciding_to_the_founder(self):
         for name in ("optimiser", "librarian"):
             text = (SETUP / name / "routine.md").read_text()
@@ -62,6 +68,12 @@ class RoutineTest(unittest.TestCase):
     def test_a_check_that_could_not_run_is_not_red(self):
         self.assertIn("A check you could not run is not red", ROUTINE)
 
+    def test_a_brief_that_did_not_work_goes_to_the_founder_and_is_never_red(self):
+        # A red stops merges; a feature nobody uses is a decision, not an outage.
+        section = ROUTINE.split("## Check-backs on shipped briefs", 1)[1].split("\n## ", 1)[0]
+        self.assertIn("This is never red", section)
+        self.assertNotIn("labels[]=red", section)
+
 
 class KitTest(unittest.TestCase):
     def test_installs_the_weekly_routines_where_their_prompts_point(self):
@@ -79,6 +91,10 @@ class KitTest(unittest.TestCase):
             (root / ".github/ops-watch/watch.md").write_text("- **Address:** https://o.github.io/site/\n")
             install(root, plan(root, "ops-routine"))
             self.assertEqual((root / ".github/ops-watch/routine.md").read_text(), ROUTINE)
+            # The check-back's script goes beside the routine, which runs it from there.
+            self.assertEqual((root / ".github/ops-watch/check_back.py").read_bytes(),
+                             (SETUP / "ops_watch" / "check_back.py").read_bytes())
+            self.assertIn("python3 .github/ops-watch/check_back.py due", ROUTINE)
             self.assertIn("o.github.io", (root / ".github/ops-watch/watch.md").read_text())
 
 
