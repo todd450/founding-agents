@@ -5,17 +5,29 @@ export const meta = {
   phases: [
     { title: 'Check', detail: 'the issue is decided, settles no technical decision the founder has not seen, and no red issue is open', model: 'sonnet' },
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
-    { title: 'Review', detail: 'edge-case QA and code review side by side, and a security review when the change needs one', model: 'opus' },
+    { title: 'Review', detail: "the reviewers the issue's risk needs, side by side: code review alone on Sonnet for low, with edge-case QA for medium, and a security review too for high", model: 'opus' },
     { title: 'Merge', detail: 'the integrator tests the merge and merges', model: 'sonnet' },
     { title: 'Report', detail: "the run's time, tokens, cost and whether it merged, posted on the issue", model: 'haiku' },
   ],
 }
 
 // A change the reviewers send back this many times goes to the founder instead of round four, and
-// sooner if the builder fails to fix the same finding twice.
+// sooner if the builder fails to fix the same finding twice or the issue passes its budget.
 const ROUNDS = 3
-// Dollars at API prices one run should stay under; the run report flags a run over it.
-const BUDGET = 5
+
+// How much review a change gets follows what it could break. The architect rates each issue it cuts,
+// and the check rates one it did not; a reviewer can raise the tier, never lower it. Each tier names
+// its reviewers, their model, and the dollars at API prices one run may spend on the issue before it
+// stops for the founder. build.js and plan.js keep the same words (a test checks).
+const RISK = 'low: only wording or static content, with nothing that changes layout, styling or behaviour; medium: styling, layout or ordinary logic; high: it touches routes, sign-in, permissions, stored data, secrets, input from outside, calls to a model, or a dependency that ships to users. When unsure, rate it higher'
+const TIERS = {
+  low: { reviewers: ['code'], model: 'sonnet', budget: 5 },
+  medium: { reviewers: ['qa', 'code'], model: 'opus', budget: 12 },
+  high: { reviewers: ['qa', 'code', 'security'], model: 'opus', budget: 20 },
+}
+const RANK = Object.keys(TIERS)
+// An issue whose risk is unknown gets the most review, not the least.
+const tierOf = rating => RANK.includes(rating) ? rating : 'high'
 
 // A brief's issues are built this many at a time unless the founder asks for another number, up to
 // MAX_BUILDERS. Builders and reviewers all draw on the same Opus allowance.
@@ -32,10 +44,6 @@ const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse 
 
 // A fix that changes the screen leaves the PR's before-and-after screenshots stale unless retaken.
 const RESHOOT = "If what you change alters what someone sees, retake the after screenshots and bring the PR's Screenshots section up to date."
-// What a change touches when it needs a security review. The check reads it from the issue so the
-// security reviewer starts beside QA and code review; the code reviewer reads it from the diff, for
-// a change that turns out to touch them when the issue did not say so.
-const SECURITY = 'routes, sign-in, permissions, stored data, secrets, input from outside, calls to a model, or a dependency that ships to users'
 
 const decided = t => t.decision ? `\n\nThe founder decided: ${t.decision}\nThe change builds what they picked; the mockups show the design, not code to copy.` : ''
 
@@ -50,7 +58,7 @@ const TICKET = {
     decision: { type: 'string', description: "the founder's pick and notes from the comments, with the mockup branch if there is one; empty if none" },
     unseen: { type: 'array', items: { type: 'string' }, description: 'each technical one-way door the issue settles that the founder has not seen; empty if none' },
     open_pr: { type: 'integer', description: 'the open PR that already builds this issue, which the builder continues; 0 if none. It never makes the issue unready' },
-    security: { type: 'boolean', description: `true when what the issue asks for touches ${SECURITY}` },
+    risk: { type: 'string', enum: RANK, description: `the issue's risk: the tier its "Risk" section names, or your own rating when it names none, and yours when you rate it higher. ${RISK}` },
     parts: {
       type: 'array',
       description: 'when this is a brief, each open issue the architect cut from it; empty otherwise',
@@ -64,41 +72,44 @@ const TICKET = {
       },
     },
   },
-  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen', 'open_pr', 'security', 'parts'],
+  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen', 'open_pr', 'risk', 'parts'],
 }
 const BUILT = {
   type: 'object',
   properties: {
     pr_number: { type: 'integer', description: '0 when no PR was opened' },
     pr_url: { type: 'string' },
+    head: { type: 'string', description: "the commit the PR's branch ends at after your push; empty when no PR was opened" },
     stopped_because: { type: 'string', description: 'why there is no PR, such as a proposed split; empty otherwise' },
   },
-  required: ['pr_number', 'pr_url', 'stopped_because'],
+  required: ['pr_number', 'pr_url', 'head', 'stopped_because'],
 }
 const REVIEW = {
   type: 'object',
   properties: {
     verdict: { type: 'string', enum: ['approve', 'changes'] },
+    risk: { type: 'string', enum: RANK, description: `the change's risk, from what the diff touches. ${RISK}` },
     findings: {
       type: 'array',
       items: {
         type: 'object',
         properties: {
-          must_fix: { type: 'boolean', description: 'false for a Nit, and for a finding only someone the team already trusts could trigger, where review would see it' },
+          must_fix: { type: 'boolean', description: 'false for a Nit' },
+          reach: {
+            type: 'string',
+            enum: ['anyone', 'user', 'outside', 'trusted', 'none'],
+            description: 'who can make it happen: anyone (any visitor or reader, as with an ordinary bug), user (a signed-in user), outside (an outside service, feed or model the product reads), trusted (only someone the team trusts: the founder writing their own data, a key the team never hands out, a change that goes through review), or none (it is about the code, its tests, CI or what the issue asks, not about who supplies a value)',
+          },
+          review_would_see: { type: 'boolean', description: 'for a finding only someone trusted can reach: true when it takes a deliberate, crafted value that review of the change or the data would see; false for an ordinary slip (empty, too long, a typo, a date in the wrong form) and for harm that reaches readers without anyone noticing. false for every other reach' },
           where: { type: 'string' },
           what: { type: 'string', description: 'steps, expected, happened, and how to reproduce; for a holdout scenario, only its failure class and what went wrong, never its steps or data' },
           repeat: { type: 'boolean', description: "true only when a review from an earlier round, posted before the PR's latest push, raised it and it is still not fixed; never for one only this round's other reviewers raised" },
         },
-        required: ['must_fix', 'where', 'what', 'repeat'],
+        required: ['must_fix', 'reach', 'review_would_see', 'where', 'what', 'repeat'],
       },
     },
   },
-  required: ['verdict', 'findings'],
-}
-const CODE_REVIEW = {
-  ...REVIEW,
-  properties: { ...REVIEW.properties, security: { type: 'boolean', description: `true when the diff touches ${SECURITY}` } },
-  required: [...REVIEW.required, 'security'],
+  required: ['verdict', 'risk', 'findings'],
 }
 const MERGED = {
   type: 'object',
@@ -134,9 +145,18 @@ const TIDIED = {
   required: ['removed', 'kept'],
 }
 
+const SPENT = {
+  type: 'object',
+  properties: { dollars: { type: 'number', description: 'the figure the script printed; -1 when it printed none' } },
+  required: ['dollars'],
+}
+
 // A run that got past its first step removes the worktrees whose work is on GitHub, then posts its
-// time, tokens, cost and whether it ended in a merge on the issue, stalled runs too.
+// time, tokens, cost and whether it ended in a merge on the issue, stalled runs too. Its budget is
+// the budgets of the issues it built, at the tier each ended on.
 const report = async result => {
+  const built = (result.issues || [result]).filter(r => r.risk)
+  const budget = built.length ? built.reduce((sum, r) => sum + TIERS[r.risk].budget, 0) : TIERS.low.budget
   phase('Report')
   const tidied = await agent(
     'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
@@ -144,7 +164,7 @@ const report = async result => {
   )
   const ended = result.status === 'merged' || (result.issues && result.issues.length && result.issues.every(r => r.status === 'merged')) ? 'merged' : 'stopped'
   const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --budget ${BUDGET} --outcome ${ended} --post\`. Return the comment's URL, or why it was not posted.`,
+    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --budget ${budget} --outcome ${ended} --post\`. Return the comment's URL, or why it was not posted.`,
     { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
   )
   return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted', worktrees_kept: tidied ? tidied.kept : [] }
@@ -160,52 +180,91 @@ const check = n => agent(
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${n} is that issue. A red scheduled check stops other work until it is fixed.
 - Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` or \`plan\` queue item on this issue or on the brief it is part of, with the founder's choice; the \`decided\` label on the issue or its brief is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
 - \`gh pr list --state open --json number,headRefName,body\`: an open PR on the branch \`build/issue-${n}\`, or one whose description closes #${n}, already builds it. Return its number as open_pr, or 0. An open PR is never a reason to stop: it does not make the issue unready, because the builder continues that PR from its reviews; only the checks above and below decide ready.
-- Return security true when what the issue asks for touches ${SECURITY}, so its security review starts beside the other reviews; false when it plainly touches none of them, such as copy, layout or a test.
+- Return its risk, which decides how much review it gets. Take the tier its "Risk" section names when it has one; rate it yourself when it has none, and return your rating when it is higher than the section's. ${RISK}.
 Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments on the issue, or on the brief it is part of, hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-<the issue or brief the mockups were made for>\`) as the decision.`,
   { label: `check #${n}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
 )
 
-// Edge-case QA and code review side by side, with the security review beside them when the check
-// says the issue needs one, or straight after code review when the code reviewer finds the diff
-// needs one. Each posts its own comment on the PR; the change is approved only when all approve.
+// The reviewers, in the order a round starts them.
+const REVIEWERS = {
+  qa: { name: 'QA', ask: 'Test', label: 'qa', agentType: 'founding-agents:qa' },
+  code: { name: 'Code review', ask: 'Review', label: 'code review', agentType: 'founding-agents:code-reviewer' },
+  security: { name: 'Security', ask: 'Check the security of', label: 'security review', agentType: 'founding-agents:security-reviewer' },
+}
+
+// The severity rule, held by the workflow rather than left to each reviewer: a must-fix only someone
+// the team trusts can reach, with a crafted value review would see, is a Nit whatever the reviewer
+// called it. On the website's #35 QA held the PR for one after the rule was in its instructions.
+const trustedOnly = f => f.must_fix && f.reach === 'trusted' && f.review_would_see
+
 // A repeat is a finding an earlier round raised that the builder's push did not fix. The other
 // reviewers of this round post on the same PR at the same time, so a finding they raised minutes
 // ago is not a repeat, and nor is an earlier Nit re-rated must-fix, which the builder was allowed
 // to skip: on the website's #27, each of these stopped a run as if a fix had failed twice.
 const REPEATS = "Earlier rounds' reviews on this PR are in its comments. Mark a finding as a repeat only when a review posted before the PR's latest push raised it and it is still not fixed. Reviews posted after the latest push are this round's, from the other reviewers working beside you: a finding only they raised is not a repeat, even if you agree with it. Nor is one an earlier round marked as a Nit or informational that you now rate must-fix: the builder was allowed to skip it, so it has not failed to fix it; raise it as a new finding."
 
-const reviews = async (n, ticket, built, again, earlier) => {
-  const before = earlier && earlier.length
-    ? `\n\nThe previous round's must-fix findings, so you can tell which are still open:\n${earlier.filter(f => f.must_fix).map(f => `- ${f.where}: ${f.what}`).join('\n')}`
-    : ''
+// From the second round a reviewer checks the builder's fixes and its own earlier findings, not the
+// whole PR again: on the website's #35 each round re-read everything and found something new.
+const since = (before, built) => `${REPEATS}
+
+You reviewed this PR in an earlier round${before.head ? `, at commit ${before.head}` : ''}. Review only what changed since then: the builder's fixes (${before.head && built.head ? `\`git diff ${before.head}..${built.head}\`` : 'the commits pushed after your last review'}) and what they affect, and whether each of your findings below is fixed. Leave alone what has not changed since your last review: you saw it then, and raising it now only adds a round.
+
+${before.findings.length ? `Your findings last time:\n${before.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`).join('\n')}` : 'You raised nothing last time.'}`
+const RESUMED = `${REPEATS}
+
+If you reviewed this PR before (an earlier comment on it starts with your heading), review only what changed since your latest review: find the commit its branch was at when you posted it with \`gh pr view <number> --json commits\`, diff from there, and check whether each finding in that review is fixed. Leave alone what has not changed since: you saw it then. If you have not reviewed it before, review all of it.`
+
+// The reviewers the tier needs, side by side, each posting its own comment on the PR; the change is
+// approved only when all approve. A reviewer that rates the change riskier raises the tier, and the
+// reviewers the new tier adds start as soon as it returns, without waiting for the others. Returns
+// the tier the round ended on and what each reviewer saw, for the next round.
+const reviews = async (n, ticket, built, tier, seen, resumed) => {
   const brief = `PR #${built.pr_number} in ${ticket.repo}, which builds issue #${n}: ${ticket.title}
 
-${ticket.body}${decided(ticket)}
-
-${again ? `${REPEATS}${before}\n\n` : ''}Post your review on the PR, then return the verdict and every finding.`
-  const secure = () => agent(`Check the security of ${brief}`,
-    { label: `security review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:security-reviewer', model: 'opus', schema: REVIEW })
-  // A diff that needs a security review the issue did not ask for gets one as soon as code review
-  // says so, without waiting for QA to finish.
-  const codeThenSecurity = async () => {
-    const code = await agent(`Review ${brief}`, { label: `code review #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:code-reviewer', model: 'opus', schema: CODE_REVIEW })
-    return { code, security: code && code.security && !ticket.security ? await secure() : null }
+${ticket.body}${decided(ticket)}`
+  const scope = who => seen[who] ? since(seen[who], built) : resumed ? RESUMED : ''
+  const started = new Map()
+  const start = who => {
+    if (started.has(who)) return
+    const r = REVIEWERS[who]
+    const prompt = `${r.ask} ${brief}\n\n${scope(who) ? `${scope(who)}\n\n` : ''}Post your review on the PR, then return the verdict, the change's risk and every finding, each saying who can reach it.`
+    started.set(who, agent(prompt, { label: `${r.label} #${n}, round ${built.round}`, phase: 'Review', agentType: r.agentType, model: TIERS[tier].model, schema: REVIEW })
+      .catch(() => null)
+      .then(review => {
+        if (review && RANK.indexOf(review.risk) > RANK.indexOf(tier)) {
+          log(`#${n}: ${r.name} rated the change ${review.risk} risk, above ${tier}`)
+          tier = review.risk
+          TIERS[tier].reviewers.forEach(start)
+        }
+        return review
+      }))
   }
-  const [qa, reviewed, early] = await parallel([
-    () => agent(`Test ${brief}`, { label: `qa #${n}, round ${built.round}`, phase: 'Review', agentType: 'founding-agents:qa', model: 'opus', schema: REVIEW }),
-    codeThenSecurity,
-    ...(ticket.security ? [secure] : []),
-  ])
-  if (!qa || !reviewed || !reviewed.code) return null
-  const security = ticket.security ? early : reviewed.security
-  if ((ticket.security || reviewed.code.security) && !security) return null
-  const all = [['QA', qa], ['Code review', reviewed.code]]
-  if (security) all.push(['Security', security])
+  TIERS[tier].reviewers.forEach(start)
+  let waited
+  do {
+    waited = started.size
+    await Promise.all(started.values())
+  } while (started.size > waited)
+  const all = await Promise.all([...started].map(async ([who, review]) => [who, await review]))
+  if (all.some(([, review]) => !review)) return null
+  const weighed = all.map(([who, review]) => {
+    const findings = review.findings.map(f => trustedOnly(f) ? { ...f, must_fix: false, trusted_only: true } : f)
+    const cleared = findings.some(f => f.trusted_only) && !findings.some(f => f.must_fix)
+    return { who, approved: review.verdict === 'approve' || cleared, findings }
+  })
   return {
-    verdict: all.every(([, r]) => r.verdict === 'approve') ? 'approve' : 'changes',
-    findings: all.flatMap(([who, r]) => r.findings.map(f => ({ ...f, where: `${who}: ${f.where}` }))),
+    tier,
+    verdict: weighed.every(r => r.approved) ? 'approve' : 'changes',
+    findings: weighed.flatMap(r => r.findings.map(f => ({ ...f, where: `${REVIEWERS[r.who].name}: ${f.where}` }))),
+    seen: Object.fromEntries(weighed.map(r => [r.who, { head: built.head, findings: r.findings }])),
   }
 }
+
+// What this run has spent on one issue so far, read from the session logs by the run-report skill.
+const spend = n => agent(
+  `Use the run-report skill to read what this run has spent on issue #${n} so far: from this repo's folder, run its script with \`--workflow build --issue ${issue} --spent-on ${n}\`, and return the dollars it prints, or -1 when it prints no figure.`,
+  { label: `spend #${n}`, phase: 'Review', model: 'haiku', effort: 'low', schema: SPENT },
+)
 
 // A must-fix the builder failed to fix twice is a mistake the next change can make too, so it goes to
 // the librarian as a `librarian` issue, built here rather than by a model so every one has the same shape.
@@ -228,10 +287,13 @@ ${body.join('\n')}`,
   )
 }
 
-// Builder and reviewers, up to ROUNDS times. Returns the approved PR, or why it stopped.
+// Builder and reviewers, up to ROUNDS times, and only while the issue stays within its tier's budget.
+// Returns the approved PR, or why it stopped, with the tier it ended on.
 const develop = async (n, ticket) => {
   let built = null
   let review = null
+  let tier = tierOf(ticket.risk)
+  let seen = {}
   for (let round = 1; round <= ROUNDS; round++) {
     const resume = round === 1 && ticket.open_pr
     const task = resume
@@ -251,40 +313,58 @@ Work on a branch named \`build/issue-${n}\`. Open the PR against the default bra
 Findings:
 ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`).join('\n')}`
     const result = await agent(
-      `${task}\n\nReturn the PR's number and URL, or 0 and why you stopped without one.`,
+      `${task}\n\nReturn the PR's number, its URL and the commit its branch ends at, or 0 and why you stopped without one.`,
       { label: `builder #${n}, round ${round}`, phase: 'Build', agentType: 'founding-agents:builder', isolation: 'worktree', model: 'opus', schema: BUILT },
     )
     if (!result || !result.pr_number) {
-      return { issue: n, status: 'stopped in build', reason: result ? result.stopped_because : 'the builder returned nothing', pr: built && built.pr_url }
+      return { issue: n, status: 'stopped in build', reason: result ? result.stopped_because : 'the builder returned nothing', pr: built && built.pr_url, risk: tier }
     }
     built = { ...result, round }
 
-    review = await reviews(n, ticket, built, round > 1 || resume, round > 1 ? review.findings : null)
-    if (!review) return { issue: n, status: 'stopped in review', reason: 'a reviewer returned nothing', pr: built.pr_url }
-    if (review.verdict === 'approve') return { issue: n, status: 'approved', built }
+    review = await reviews(n, ticket, built, tier, seen, Boolean(ticket.open_pr))
+    if (!review) return { issue: n, status: 'stopped in review', reason: 'a reviewer returned nothing', pr: built.pr_url, risk: tier }
+    tier = review.tier
+    seen = { ...seen, ...review.seen }
+    if (review.verdict === 'approve') return { issue: n, status: 'approved', built, risk: tier, trusted_only: review.findings.filter(f => f.trusted_only) }
     const stuck = review.findings.filter(f => f.must_fix && f.repeat)
     if ((round > 1 || resume) && stuck.length) {
       const filed = await lesson(n, ticket, built, stuck)
-      return { issue: n, status: 'the same finding came back unfixed; the founder decides', pr: built.pr_url, findings: stuck,
+      return { issue: n, status: 'the same finding came back unfixed; the founder decides', pr: built.pr_url, findings: stuck, risk: tier,
                lesson: filed ? (filed.issue_url || filed.reason) : 'not filed' }
+    }
+    // An issue past its tier's budget stops before another round, the way three send-backs do.
+    if (round < ROUNDS) {
+      const spent = await spend(n)
+      const budget = TIERS[tier].budget
+      if (spent && spent.dollars > budget) {
+        return { issue: n, status: `over its ${tier}-risk budget, $${spent.dollars.toFixed(2)} against $${budget}; the founder decides`,
+                 pr: built.pr_url, findings: review.findings, risk: tier }
+      }
     }
     log(`#${n}, round ${round}: the reviewers sent PR #${built.pr_number} back with ${review.findings.filter(f => f.must_fix).length} finding(s) to fix`)
   }
-  return { issue: n, status: `sent back ${ROUNDS} times; the founder decides`, pr: built.pr_url, findings: review.findings }
+  return { issue: n, status: `sent back ${ROUNDS} times; the founder decides`, pr: built.pr_url, findings: review.findings, risk: tier }
 }
 
-// The integrator merges one PR at a time, each tested on top of the one merged before it.
+// The integrator merges one PR at a time, each tested on top of the one merged before it. A reviewer
+// whose only must-fix findings the workflow rated as Nits still says "Changes needed" on the PR, so
+// the integrator is told why it is approved, and leaves those findings on the PR for the founder.
 let turn = Promise.resolve()
-const merge = (n, ticket, built) => {
+const merge = (n, ticket, developed) => {
+  const { built, risk } = developed
+  const trusted = developed.trusted_only || []
+  const why = trusted.length
+    ? `\n\nA reviewer's comment may ask for changes the workflow rated as Nits, because only someone the team trusts could cause them, with a value review would see. Count that review as an approval, and before merging post one comment on the PR, with \`gh pr comment ${built.pr_number} --body-file -\`, listing these as left for the founder:\n${trusted.map(f => `- ${f.where}: ${f.what}`).join('\n')}`
+    : ''
   const mine = turn.then(async () => {
     const merged = await agent(
-      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push.`,
+      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push.${why}`,
       { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
     )
     if (!merged || !merged.merged) {
-      return { issue: n, status: 'not merged', reason: merged ? merged.reason : 'the integrator returned nothing', pr: built.pr_url }
+      return { issue: n, status: 'not merged', reason: merged ? merged.reason : 'the integrator returned nothing', pr: built.pr_url, risk }
     }
-    return { issue: n, status: 'merged', pr: built.pr_url, merge_commit: merged.merge_commit }
+    return { issue: n, status: 'merged', pr: built.pr_url, merge_commit: merged.merge_commit, risk }
   })
   turn = mine.catch(() => null)
   return mine
@@ -303,7 +383,7 @@ if (!ticket.parts.length) {
   if (ticket.unseen.length || !ticket.ready) return notReady(issue, ticket)
   const developed = await develop(issue, ticket)
   if (developed.status !== 'approved') return await report(developed)
-  return await report(await merge(issue, ticket, developed.built))
+  return await report(await merge(issue, ticket, developed))
 }
 
 // A brief: build its issues, up to `builders` at a time, each once every issue it builds after has
@@ -315,7 +395,7 @@ const one = async n => {
   if (!t) return { issue: n, status: 'not started', reason: `could not read #${n}` }
   if (t.unseen.length || !t.ready) return notReady(n, t)
   const developed = await develop(n, t)
-  return developed.status === 'approved' ? await merge(n, t, developed.built) : developed
+  return developed.status === 'approved' ? await merge(n, t, developed) : developed
 }
 const results = []
 const running = new Map()

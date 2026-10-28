@@ -53,12 +53,11 @@ def replies(task):
     if step["workflow"] == "propose":
         return {}
     ticket = {"ready": True, "reason": "", "repo": github["repo"], "title": issue["title"], "body": issue["body"],
-              "decision": "", "unseen": [], "open_pr": 0, "parts": [], **step.get("ticket", {})}
+              "decision": "", "unseen": [], "open_pr": 0, "risk": "medium", "parts": [], **step.get("ticket", {})}
     pr = step.get("pr", 0)
-    built = {"pr_number": pr, "pr_url": f"https://github.com/{github['repo']}/pull/{pr}", "stopped_because": ""}
-    approve = {"verdict": "approve", "findings": []}
-    return {"check": [ticket] * 3, "builder": [built] * 3, "qa": [approve] * 3,
-            "code review": [{**approve, "security": False}] * 3}
+    built = {"pr_number": pr, "pr_url": f"https://github.com/{github['repo']}/pull/{pr}", "head": "", "stopped_because": ""}
+    approve = {"verdict": "approve", "risk": ticket["risk"], "findings": []}
+    return {"check": [ticket] * 3, "builder": [built] * 3, "qa": [approve] * 3, "code review": [approve] * 3}
 
 
 def capture(task):

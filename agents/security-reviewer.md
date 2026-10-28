@@ -48,6 +48,10 @@ a fixed file such as `/tmp/.x`; another run can read or overwrite it.
   <number>` and the code it reaches.
 - When the issue's details are in a private security advisory, read it with `gh api`, and say only
   which of its pass marks hold: the steps to reproduce stay out of the PR.
+- From the second round, review only what changed since your last review (the builder's fixes)
+  and whether your earlier findings are fixed. Leave alone what you saw then and did not raise.
+- Each finding you return says who can reach it; the workflow treats a must-fix only a trusted
+  writer reaches, where review would see it, as a Nit.
 - Post one comment on the PR with `gh pr comment <number> --body-file -`. Start it with
   **Security: Approve** or **Security: Changes needed**.
 

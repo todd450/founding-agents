@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "run-report"))
-from report import build_runs, cost, find_session, project_logs, runs_table, summarise, table  # noqa: E402
+from report import build_runs, cost, find_session, project_logs, runs_table, spent_on, summarise, table  # noqa: E402
 
 
 def call(message_id, model, stamp, **usage):
@@ -142,3 +142,30 @@ class FindSessionTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SpentOnTest(unittest.TestCase):
+    """While a run is going, `--spent-on` gives what its agents have spent on one issue."""
+
+    def setUp(self):
+        self.folder = tempfile.TemporaryDirectory()
+        self.session = Path(self.folder.name) / "s1.jsonl"
+        write(self.session, {"type": "user", "message": {"content": "/founding-agents:build 7"}},
+              call("m1", "claude-sonnet-5-5", "2026-10-27T10:00:00Z", output_tokens=1_000_000))
+        agents = Path(self.folder.name) / "s1" / "subagents" / "workflows" / "wf_1"
+        for name, prompt, model in (("a1", "Build issue #12 in o/r: Add slugify", "claude-opus-5-5"),
+                                    ("a2", "Review PR #4 in o/r, which builds issue #12: Add slugify", "claude-opus-5-5"),
+                                    ("a3", "Build issue #123 in o/r: Something else", "claude-opus-5-5"),
+                                    ("a4", "Use the tidy-worktrees skill", "claude-haiku-5-5")):
+            write((agents / f"agent-{name}").with_suffix(".jsonl"), {"type": "user", "message": {"content": prompt}},
+                  call(f"{name}-1", model, "2026-10-27T10:01:00Z", output_tokens=100_000))
+            (agents / f"agent-{name}.meta.json").write_text(json.dumps({"agentType": "workflow-subagent"}))
+
+    def tearDown(self):
+        self.folder.cleanup()
+
+    def test_counts_only_the_agents_whose_task_names_the_issue(self):
+        # Two Opus agents worked on #12, at 100K output tokens each, $2 apiece.
+        self.assertAlmostEqual(spent_on(self.session, 12), 4.0)
+        self.assertAlmostEqual(spent_on(self.session, 123), 2.0)
+        self.assertEqual(spent_on(self.session, 1), 0.0)

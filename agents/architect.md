@@ -36,6 +36,10 @@ interface working for the callers that depend on it.
   with its tests in the same PR. Each names the files it owns, and no two issues own the same file;
   when one must build on another, it says "Build after #<n>". Order the issues so each one leaves
   the product working.
+- **Rate each issue's risk** by what it touches, since that decides how much review it gets. Low:
+  only wording or static content. Medium: styling, layout or ordinary logic. High: routes, sign-in,
+  permissions, stored data, secrets, input from outside, calls to a model, or a dependency that
+  ships to users. When unsure, rate it higher; a reviewer can raise a rating but never lower it.
 - **Only what the brief asks.** No issue for a need nobody has yet, and no backlog of ideas for
   later; the brief's no-gos stay out.
 - Write the issues and the plan with `gh`. Never write code, never add the `decided` label, and

@@ -152,6 +152,18 @@ class RecordTest(unittest.TestCase):
         self.assertGreaterEqual(sum(w in ("stop", "approve", "refuse") for w in wanted), 5)
 
 
+
+class FindingsTest(unittest.TestCase):
+    def test_a_grader_counts_must_fix_findings_the_way_build_does(self):
+        trusted = {"must_fix": True, "reach": "trusted", "review_would_see": True, "where": "facts", "what": "a crafted link"}
+        slip = {**trusted, "review_would_see": False, "what": "an empty fact"}
+        with tempfile.TemporaryDirectory() as folder:
+            (Path(folder) / "output.json").write_text(json.dumps({"findings": [trusted, slip]}))
+            (Path(folder) / "github.json").write_text(json.dumps({"posted": []}))
+            checks = trial.Trial({}, folder)
+            self.assertEqual([f["what"] for f in checks.findings(must_fix=True)], ["an empty fact"])
+            self.assertEqual([f["what"] for f in checks.findings(must_fix=False)], ["a crafted link"])
+
 @unittest.skipUnless(HAVE_NODE, "needs node")
 class RunnerTest(unittest.TestCase):
     def test_each_task_runs_the_prompt_its_workflow_sends_as_that_steps_agent_and_model(self):

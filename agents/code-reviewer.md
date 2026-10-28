@@ -26,7 +26,8 @@ a fixed file such as `/tmp/.x`; another run can read or overwrite it.
   does what the issue asks and nothing more.
 - Mark polish as "Nit:" so the builder knows it may skip it; anything unmarked must be fixed.
   Rate a security-shaped finding the way the security reviewer does, by who can reach the input:
-  one only a trusted writer could trigger, where review would see it, is a Nit.
+  one only a trusted writer could trigger, where review would see it, is a Nit. Each finding you
+  return says who can reach it, and the workflow holds that rule.
 - A change that settles a technical one-way decision the issue does not name as the founder's (a
   framework, a build step, how it deploys, a new store for data, a dependency that ships to users,
   an outside service) goes back, however good it is otherwise. A check tool run from `check.sh` (a
@@ -40,9 +41,13 @@ a fixed file such as `/tmp/.x`; another run can read or overwrite it.
 - Read CI's result with `gh pr checks <number> --watch` before you post; the builder does not wait
   for it, and it has almost always finished by then. A failing check is a finding that must be
   fixed, naming the step that failed and its error.
-- Say whether the diff touches routes, sign-in, permissions, stored data, secrets, input from
-  outside, calls to a model, or a dependency that ships to users. When it does, the security
-  reviewer looks at it too.
+- Rate the change's risk from the diff: low for wording or static content only, medium for
+  styling, layout or ordinary logic, high when it touches routes, sign-in, permissions, stored
+  data, secrets, input from outside, calls to a model, or a dependency that ships to users. A
+  rating above the issue's brings in the reviewers that tier adds, such as the security reviewer
+  for high.
+- From the second round, review only what changed since your last review (the builder's fixes)
+  and whether your earlier findings are fixed. Leave alone what you saw then and did not raise.
 
 **The review**
 

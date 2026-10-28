@@ -11,8 +11,8 @@ from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 READY = {"ready": True, "reason": "", "repo": "o/site", "title": "Brief: a pricing page",
          "decision": "B, and D1: GitHub Pages"}
 PLANNED = {"decisions": [], "plan_url": "https://github.com/o/site/issues/7#issuecomment-2", "stopped_because": "",
-           "issues": [{"number": 8, "title": "Add the price table", "after": []},
-                      {"number": 9, "title": "Link pricing from the home page", "after": [8]}]}
+           "issues": [{"number": 8, "title": "Add the price table", "after": [], "risk": "medium"},
+                      {"number": 9, "title": "Link pricing from the home page", "after": [8], "risk": "low"}]}
 DOOR = {"decision": "Where prices are stored", "options": ["in the page", "a JSON file"], "recommend": "a JSON file",
         "why": "Both pages read the same prices.", "reverse": "an hour while two pages read them"}
 POSTED = {"comment_url": "https://github.com/o/site/issues/7#issuecomment-3"}
@@ -38,7 +38,8 @@ class PlanWorkflowTest(unittest.TestCase):
     def test_a_planned_brief_names_its_issues_in_order_and_how_to_build_them(self):
         run = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)
         self.assertEqual(run["result"]["status"], "planned")
-        self.assertEqual(run["result"]["issues"], ["#8 Add the price table", "#9 Link pricing from the home page (after #8)"])
+        self.assertEqual(run["result"]["issues"], ["#8 Add the price table, medium risk",
+                                                   "#9 Link pricing from the home page (after #8), low risk"])
         self.assertEqual(run["result"]["next"], "/founding-agents:build 7")
         self.assertEqual(self.labels(run), ["check #7", "architect", "run report"])
 
@@ -52,6 +53,15 @@ class PlanWorkflowTest(unittest.TestCase):
         for part in ("Part of #7.", "Build after #<n>.", "## Files", "no two issues own the same file",
                      "## Technical decisions", "technical one-way door"):
             self.assertIn(part, prompt)
+
+    def test_the_architect_rates_each_issues_risk_for_build_to_read(self):
+        architect = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][1]
+        self.assertIn("## Risk\n<low, medium or high, and what it touches that makes it so>", architect["prompt"])
+        self.assertIn("a reviewer can raise it but never lower it", architect["prompt"])
+        self.assertIn("When unsure, rate it higher", architect["prompt"])
+        item = architect["schema"]["properties"]["issues"]["items"]
+        self.assertIn("risk", item["required"])
+        self.assertEqual(item["properties"]["risk"]["enum"], ["low", "medium", "high"])
 
     def open_decision(self, **replies):
         return run_workflow("plan", {"check": [READY], "architect": [{**PLANNED, "issues": [], "plan_url": "",

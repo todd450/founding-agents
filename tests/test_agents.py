@@ -71,6 +71,15 @@ class ProportionTest(unittest.TestCase):
         self.assertIn("Rate a failure by who meets it", self.read("qa"))
         self.assertIn("by who can reach the input", self.read("code-reviewer"))
 
+    def test_the_architect_rates_each_issues_risk(self):
+        self.assertIn("Rate each issue's risk", self.read("architect"))
+
+    def test_reviewers_review_only_what_changed_from_the_second_round(self):
+        # On the website's #35, each of 13 rounds re-read the whole PR and found something new.
+        for name in ("qa", "code-reviewer", "security-reviewer"):
+            self.assertIn("From the second round", self.read(name), name)
+            self.assertIn("only what changed since your last review", self.read(name), name)
+
     def test_the_integrator_merges_on_green_checks_when_main_has_not_moved(self):
         integrator = self.read("integrator")
         self.assertIn("git merge-base --is-ancestor origin/main FETCH_HEAD", integrator)
