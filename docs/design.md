@@ -300,7 +300,11 @@ of this (see Sources).
   run's trials still wrote that folder's path into a fixed note, `/tmp/.x`, because the shell
   forgets variables between commands, so the same four agents now type the folder's full path
   into each later command and never save it to a fixed file: trials using a fixed path or port
-  fell from 34 of 103 to 7 of 54, and no `/tmp/.x`.
+  fell from 34 of 103 to 7 of 54, and no `/tmp/.x`. Every server is now `http.server 0`, so QA's
+  clean-up, `pkill -f "http.server 0"`, stopped every other agent's server too (9 of 54 trials,
+  all QA). The four agents now start a server in the background with `& echo $!` and stop only
+  that number with `kill`, never `pkill` or `killall` by a pattern, and the eval runner counts
+  pattern kills: none in the next 54 trials, where every QA trial stopped its own server by PID.
 - **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
   the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
   its own worktree and posting its own comment; when the change touches routes, sign-in,
