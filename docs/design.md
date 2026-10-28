@@ -270,31 +270,19 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Merging and the gate
 
-- **The gate: GitHub branch protection with required checks, plus a plugin hook.** The hook blocks
-  `git push` to `main` and `gh pr merge` for every agent but `founding-agents:integrator`. Hooks
-  see a plugin agent's name with the plugin prefix, both as a subagent and with `--agent`, so a
-  user or project agent merely called `integrator` is not trusted. Hook filtering is best-effort,
-  so the hard gate sits on GitHub, where nothing local can get around it.
-- **Every product's checks run in one CI job that branch protection requires.** `setup` installs a
-  `ci` workflow whose one job, `check`, runs `check.sh`, the product's single command for every
-  check, and makes `check` the required status check, so a change that breaks a test cannot merge.
-  `setup` keeps the workflow current but never replaces `check.sh`, which the product owns.
-- **The integrator tests the merge, not the branch, without rerunning what CI ran.** When `main`
-  has not moved since the PR's last push, the PR's green required checks tested exactly what the
-  merge will be, so it merges on them. When `main` has moved, it brings the PR up to date with
-  `gh pr update-branch`, which needs no force-push, and waits for the checks again.
-- **Where a merge deploys to production, the founder merges; the integrator readies it.** Where the
-  product's `CLAUDE.md` says merging deploys, or GitHub lists a production deployment, the
-  integrator brings the PR up to date, waits for green and stops short of the merge; so does any
-  merge Claude Code's own checking refuses, which the team never works around (principle 8).
-  `build` then posts a script-built `Ready for your merge` item labelled `needs-founder`, naming the
-  reviewers who approved and saying so when no security review ran, carries on with issues that do
-  not build after it, and reports `ready`. An allow rule letting the integrator's merges through
-  was left out: it would take the founder's eyes off every release. A product that releases from a
-  step the founder starts has merges that deploy nothing, so the integrator merges there; choosing
-  that is the product's own one-way door.
-- **Red lights: ops watch opens a `red` issue, and the integrator merges nothing while one is
-  open.** An issue reaches the founder's phone, and blocking merges is what makes principle 9 hold.
+- **The gate: GitHub branch protection with required checks, plus a plugin hook.** `setup` makes
+  one CI job, `check`, required on `main`; it runs `check.sh`, the product's single command for
+  every check, which the product owns. The hook blocks `git push` to `main` and `gh pr merge` for
+  every agent but `founding-agents:integrator`, matched with its plugin prefix so no other agent
+  called `integrator` passes. Hooks are best-effort, so the hard gate is GitHub's.
+- **The integrator tests the merge, not the branch.** If `main` has not moved since the PR's last
+  push, the PR's green checks already tested the merge. If it has, `gh pr update-branch` brings the
+  PR up to date and the checks run again.
+- **Where a merge deploys to production, the founder merges.** The integrator gets the PR up to
+  date and green, then stops; `build` posts a `Ready for your merge` item and carries on with other
+  issues. The same happens when Claude Code refuses a merge, which the team never works around
+  (principle 8).
+- **Nothing merges while a `red` issue is open** (principle 9).
 
 ### Holdouts
 
