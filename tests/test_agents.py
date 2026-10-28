@@ -71,6 +71,16 @@ class ProportionTest(unittest.TestCase):
         self.assertIn("Rate a failure by who meets it", self.read("qa"))
         self.assertIn("by who can reach the input", self.read("code-reviewer"))
 
+    def test_a_failing_holdout_is_rated_like_any_failure_and_a_loud_refusal_is_caught(self):
+        # On the website's #39 QA held the PR for a holdout whose only harm was a stack trace where
+        # the build's refusal of the founder's own file should have been a sentence.
+        qa = self.read("qa")
+        self.assertNotIn("A failing holdout is a must-fix", qa)
+        self.assertIn("A failing holdout is a finding, rated by who meets it", qa)
+        self.assertIn("the product refuses it loudly", qa)
+        for role in ("code-reviewer", "security-reviewer"):
+            self.assertIn("refuses", self.read(role))
+
     def test_the_architect_rates_each_issues_risk(self):
         self.assertIn("Rate each issue's risk", self.read("architect"))
 

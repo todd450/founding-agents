@@ -133,8 +133,8 @@ class Trial:
 
     def findings(self, pattern=".", must_fix=None, repeat=None):
         """The returned findings whose text matches `pattern`, and whose flags match when given. A finding
-        is must-fix as `build` counts it: one only a trusted writer reaches, where review would see it,
-        is a Nit whatever the reviewer called it."""
+        is must-fix as `build` counts it: one only a trusted writer reaches, where review would see it or
+        the product refuses it loudly, is a Nit whatever the reviewer called it."""
         found = []
         for f in self.output.get("findings", []):
             held = bool(f.get("must_fix")) and not (f.get("reach") == "trusted" and f.get("review_would_see"))

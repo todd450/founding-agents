@@ -418,8 +418,20 @@ of this (see Sources).
     Nit: the builder gets it as one, it is never a repeat, and a reviewer whose only must-fix
     findings were these counts as approving. Its PR comment still says "Changes needed", so the
     integrator is told why, and posts those findings on the PR as left for the founder. An ordinary
-    slip in kept data, or harm a trusted writer could do unseen, stays must-fix. The eval graders
-    count must-fix findings the same way.
+    slip in kept data that gets past the product to readers, or harm a trusted writer could do
+    unseen, stays must-fix. The eval graders count must-fix findings the same way.
+  - **A loud refusal counts as caught, and a failing holdout is rated like any failure.** Decided
+    by the founder on 28 Oct 2026, after the website's PR #39 stopped at its budget: QA held it for
+    a holdout that failed only because the build refused a `null` `content/site.json` with a stack
+    trace instead of a sentence. Nothing reached a reader; QA called it an ordinary slip, so the
+    rule above kept it must-fix, and QA's own instructions made every failing holdout must-fix
+    anyway. A trusted-only finding now counts as caught, and so a Nit, when review would see the
+    value or the product refuses it loudly (the build, a check or the command fails, and nothing
+    wrong is shown, written or sent), since all that is at stake is the message whoever made it
+    gets. A failing holdout is rated by who meets it like any other failure, still named only by
+    its class. The field keeps its name, `review_would_see`, and widens its meaning, so the
+    workflow, the reviewers and the eval graders still read one rule. Taking only the holdout half
+    was not chosen: QA would still have held #39 as a slip.
   - **A budget per issue that stops the run.** At API prices, per issue per run: $5 for low, $12
     for medium, $20 for high, at the tier the issue ends on. After a send-back, before the next
     round, a Haiku step runs `report.py --spent-on <issue>`, which adds up this run's agents whose
