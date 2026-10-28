@@ -8,9 +8,9 @@ practice gives an agent something concrete to do, and gives the founder words to
   look like Airbnb; each product keeps its own design tokens.
 - **The founder picks.** Exemplars are taste. To swap one, edit its section here and the agent file
   written from it.
-- **Spec until built.** Like [design.md](design.md), this is the spec for roles that have no agent
-  file yet. When a role's file exists, the file holds the instructions and its section here keeps
-  only why the exemplar was chosen and the sources.
+- **Spec until built.** This is the spec for roles that have no agent file yet. When a role's file
+  exists, the file holds the instructions and its section here keeps only why the exemplar was
+  chosen and the sources.
 
 | role | learns from |
 |---|---|
@@ -26,8 +26,8 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
 
-The starting five's combined reviewer took both the edge-case QA and the code reviewer sections
-until 27 Oct 2026, when they became two agents.
+A single reviewer took both the edge-case QA and the code reviewer sections until 27 Oct 2026,
+when they became two agents.
 
 ## Product lead — Basecamp's *Shape Up*
 

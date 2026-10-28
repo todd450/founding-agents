@@ -1,11 +1,8 @@
 # Design
 
-A team of agents that builds products with one founder. This doc is the spec until the agent files
-exist; after that it records the decisions behind them.
+A team of agents that builds products with one founder.
 
 ## The team
-
-Four lanes. The founder sits in the middle and is the only one who decides scope and taste.
 
 | lane | role | runs | produces | may touch |
 |---|---|---|---|---|
@@ -16,14 +13,15 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
-| | **Optimiser** | weekly, for team cost; a `codebase` or `tests` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does (sweep) | proposes builder tasks |
+| | **Optimiser** | a weekly routine, for team cost; an agent in a `codebase` or `tests` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does (sweep) | proposes builder tasks |
 | Ship & run | **Integrator** | the only agent that merges | rebase, run checks, gate production, cut releases; where a merge deploys to production, readies it for the founder's merge | `main` and production |
-| | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
-| | **Librarian** | after each incident; a weekly prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
+| | **Ops watch** | a daily routine, and a nightly GitHub Actions check | backups, release verdicts, production errors, spend; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
+| | **Librarian** | a weekly routine: the week's incidents, and a prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
 
-**Start with five:** product lead, designer, builders, a reviewer combining QA and code review, and
-the integrator. Add the others when their kind of work appears — except ops watch, which belongs on
-day one.
+Every role is an agent in `agents/` except where its row says routine. A routine runs in the cloud
+on a schedule, from instructions `setup` copies into each product, since a routine loads no plugin.
+So there are nine agents and eleven roles: ops watch and the librarian are routines only, and the
+optimiser is both.
 
 Each role borrows the practices of a team or person known for that job, such as Airbnb for the
 designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
@@ -47,8 +45,6 @@ left open, step 5 when a merge is the release, and step 6 when a brief did not w
 starts with the context it needs.
 
 ## Principles
-
-From the first product's history, and from what published agent teams reported by October 2026:
 
 1. **Decide before building.** Mockups and briefs are cheap; production code carries costs forever
    (fixes, guards, translations, review).
@@ -436,8 +432,8 @@ private, since the founder is the only user for now. A website bends the order i
    the errors found by reading the live page after #6, merged in one round. Two gaps showed:
    `build` could not continue an open PR unless its issue said so (fixed on 26 Oct 2026, above),
    and nothing cut a decided brief into build issues; the architect's `plan` now does.
-4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. This
-   completes the starting five. Done on 26 Oct 2026 on the website: on its brief the product lead
+4. **The decide lane:** product lead and designer as `propose`, feeding `needs-founder`. Done
+   on 26 Oct 2026 on the website: on its brief the product lead
    recommended go on a smaller test-bed site and rewrote the brief to match, the designer pushed
    three options at 2, 5 and 7 stars to `propose/issue-1`, and one `needs-founder` queue item
    carried them with their costs.
