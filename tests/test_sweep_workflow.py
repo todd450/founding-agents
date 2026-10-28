@@ -28,7 +28,7 @@ DOOR = {"decision": "Add a CSS linter", "options": ["stylelint", "none"], "recom
 
 
 def replies(**over):
-    base = {"check": [CHECKED], "optimiser": [FOUND], "test-auditor": [FOUND], "security-reviewer": [FOUND],
+    base = {"check": [CHECKED], "optimiser": [FOUND], "security-reviewer": [FOUND],
             "file findings": [FILED], "queue item": [QUEUE]}
     return {**base, **over}
 
@@ -40,7 +40,7 @@ class SweepWorkflowTest(unittest.TestCase):
         return call
 
     def test_each_kind_runs_its_own_finder_read_only_in_a_worktree_on_opus(self):
-        for kind, agent in (("codebase", "optimiser"), ("tests", "test-auditor"), ("security", "security-reviewer")):
+        for kind, agent in (("codebase", "optimiser"), ("tests", "optimiser"), ("security", "security-reviewer")):
             run = run_workflow("sweep", replies(), kind)
             finder = self.call(run, agent)
             self.assertEqual((finder["agentType"], finder["isolation"], finder["model"]),
@@ -49,7 +49,7 @@ class SweepWorkflowTest(unittest.TestCase):
 
     def test_each_kind_asks_for_its_own_pass_marks(self):
         self.assertIn("no test changed to make it pass", self.call(run_workflow("sweep", replies(), "codebase"), "optimiser")["prompt"])
-        self.assertIn("plants the kind of fault", self.call(run_workflow("sweep", replies(), "tests"), "test-auditor")["prompt"])
+        self.assertIn("plants the kind of fault", self.call(run_workflow("sweep", replies(), "tests"), "optimiser")["prompt"])
         self.assertIn("reproduces the exploit, fails before the fix",
                       self.call(run_workflow("sweep", replies(), "security"), "security-reviewer")["prompt"])
 

@@ -19,7 +19,7 @@ const KINDS = {
     marks: 'the whole suite passes before and after with no test changed to make it pass; nothing a user sees or does changes; and the number in the evidence moves as the finding says, measured with the same command.',
   },
   tests: {
-    agent: 'test-auditor',
+    agent: 'optimiser',
     what: 'the test suite',
     charter: 'Run the suite several times and time it, plant faults in the code it covers and undo them, and look for missing cases from the failure checklist, flaky or slow tests, tests of wording, and hand-written checks a standard tool does.',
     marks: 'the reviewer plants the kind of fault in the evidence in the code the fix covers, and the suite now fails on it; the suite passes on the unchanged product three runs in a row; and any timing in the evidence moves as the finding says.',

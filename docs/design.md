@@ -16,8 +16,7 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
-| | **Optimiser** | weekly, for team cost; a `codebase` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places (sweep) | proposes builder tasks |
-| | **Test auditor** | a `tests` sweep | missing cases, slow or flaky tests, tests of wording, hand-written checks a standard tool does | proposes builder tasks |
+| | **Optimiser** | weekly, for team cost; a `codebase` or `tests` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does (sweep) | proposes builder tasks |
 | Ship & run | **Integrator** | the only agent that merges | rebase, run checks, gate production, cut releases; where a merge deploys to production, readies it for the founder's merge | `main` and production |
 | | **Ops watch** | scheduled | backups, release verdicts, production errors, spend; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
 | | **Librarian** | after each incident; a weekly prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
@@ -320,18 +319,18 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Finding work: sweeps and routines
 
-- **Sweeps: a workflow that finds work and hands it to `build`.**
-  `/founding-agents:sweep codebase|tests|security`, on demand. A finder (the optimiser, the test
-  auditor or the security reviewer, on Opus) only reads and runs the product, and brings at most
-  five ranked findings, each with its evidence, the fix's size, what leaving it costs, its pass
-  marks and any one-way door. It leaves out what an open `Optimiser:` proposal covers. A script
-  files each as a `sweep` issue and posts one queue item; the founder adds `decided` to those worth
-  fixing and the rest are closed, since a sweep left to fix all it finds runs up fixes nobody
-  chose. Pass marks by kind: for the codebase, behaviour unchanged and the measured number moved;
-  for tests, the suite fails on faults planted in the code it covers; for security, a test that
-  reproduces the exploit fails before the fix and passes after. On a public repo a security
-  finding's details go in a draft security advisory and its issue carries only a summary;
-  publishing the advisory after the merge is the founder's call.
+- **Sweeps: a workflow that finds work and hands it to `build`.** `/founding-agents:sweep
+  codebase|tests|security`, on demand. A finder (the optimiser for the codebase and the tests, the
+  security reviewer for security, on Opus) only reads and runs the product, and brings at most five
+  ranked findings, each with its evidence, the fix's size, what leaving it costs, its pass marks and
+  any one-way door. It leaves out what an open `Optimiser:` proposal covers. A script files each as
+  a `sweep` issue and posts one queue item; the founder adds `decided` to those worth fixing and the
+  rest are closed, since a sweep left to fix all it finds runs up fixes nobody chose. Pass marks by
+  kind: for the codebase, behaviour unchanged and the measured number moved; for tests, the suite
+  fails on faults planted in the code it covers; for security, a test that reproduces the exploit
+  fails before the fix and passes after. On a public repo a security finding's details go in a draft
+  security advisory and its issue carries only a summary; publishing the advisory after the merge is
+  the founder's call.
 - **The optimiser and the librarian run as weekly routines that propose, never change.** Each one's
   instructions are a file `setup` copies into the product and keeps current, since a routine loads
   no plugin. Each proposes at most three changes as `needs-founder` issues, built through `build`
@@ -449,9 +448,10 @@ private, since the founder is the only user for now. A website bends the order i
    with the security reviewer beside them, on 27 Oct 2026, and the optimiser and librarian became
    weekly routines the same day; ops watch
    took on check-backs on shipped briefs the same day. None has run on the website yet. Every role
-   in the team table now has an agent or a routine. The same day a test auditor joined the
-   optimiser and the security reviewer as the finders `sweep` runs; it is done once a sweep of each
-   kind has run on the website and its findings have gone through `build`.
+   in the team table now has an agent or a routine. The same day the optimiser and the security
+   reviewer became the finders `sweep` runs, the optimiser for both the codebase and the tests; it
+   is done once a sweep of each kind has run on the website and its findings have gone through
+   `build`.
 
 ## Sources
 

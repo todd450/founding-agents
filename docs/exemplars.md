@@ -20,9 +20,8 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Builder | Kent Beck's test-driven development; Google's small changes |
 | Edge-case QA | Elisabeth Hendrickson's test heuristics |
 | Code reviewer | Google's code review guide |
-| Test auditor | Google's test sizes and flaky-test work; mutation testing |
 | Security reviewer | Trail of Bits findings, against OWASP ASVS |
-| Optimiser | Performance budgets; DRY; FinOps unit economics for token cost |
+| Optimiser | Performance budgets; DRY; FinOps unit economics for token cost; Google's test sizes, flaky-test work and mutation testing for the suite |
 | Integrator | Rust's bors and the Not Rocket Science Rule |
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
@@ -94,17 +93,6 @@ and what may be skipped. The practices are in [agents/code-reviewer.md](../agent
 Sources: Google, [The standard of code review](https://google.github.io/eng-practices/review/reviewer/standard.html)
 and [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html).
 
-## Test auditor — Google's testing and mutation testing
-
-The test auditor judges the suite itself, which nobody else does: the builder writes tests for one
-change and the reviewer runs them. Its practices are in [agents/test-auditor.md](../agents/test-auditor.md).
-Chosen by Claude when the role was added on 27 Oct 2026; the founder may swap it.
-
-Sources: Titus Winters, Tom Manshreck and Hyrum Wright, [*Software Engineering at Google*](https://abseil.io/resources/swe-book)
-(O'Reilly, 2020), chapters 11 to 14 on test size, unit tests and flaky tests; Goran Petrović and
-Marko Ivanković, [State of mutation testing at Google](https://research.google/pubs/state-of-mutation-testing-at-google/)
-(ICSE SEIP, 2018).
-
 ## Security reviewer — Trail of Bits, against OWASP ASVS
 
 ASVS turns "is it secure" into a list of requirements a finding can name, and Trail of Bits'
@@ -115,7 +103,7 @@ happens and how to fix it now and for good. The practices are in
 Sources: Trail of Bits, [Anatomy of a report](https://www.trailofbits.com/anatomy-of-a-report/);
 OWASP, [Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/).
 
-## Optimiser — budgets, DRY and unit economics
+## Optimiser — budgets, DRY, unit economics and mutation testing
 
 The optimiser looks after two costs: what the product costs to run (page weight, dead code,
 duplication) and what the team costs to run (tokens). Nobody owned token cost before, and Cursor
@@ -124,14 +112,25 @@ found that workers, not planners, used most of the tokens (principle 3). Perform
 economics measures cost per merged change rather than total spend, so spend that rises with output
 is fine and cost per change that rises is not. The weekly practices are in
 [skills/setup/optimiser/routine.md](../skills/setup/optimiser/routine.md), since the optimiser runs
-as a routine, which loads no plugin agents; its sweep of the codebase, run on demand by `sweep`,
-is in [agents/optimiser.md](../agents/optimiser.md).
+as a routine, which loads no plugin agents; its sweeps of the codebase and the tests, run on
+demand by `sweep`, are in [agents/optimiser.md](../agents/optimiser.md).
+
+The optimiser also judges the test suite itself, which nobody else does: the builder writes tests
+for one change and the reviewers run them. A suite that misses faults, flakes or crawls makes the
+product cost more to change. Google's test sizes and flaky-test work, and mutation testing, which
+plants faults to see what the suite misses, turn "are the tests good" into numbers. Chosen by
+Claude for the test auditor on 27 Oct 2026, which joined the optimiser on 28 Oct 2026; the founder
+may swap it.
 
 Sources: Milica Mihajlija, [Performance budgets 101](https://web.dev/articles/performance-budgets-101)
 (web.dev); Andrew Hunt and David Thomas, *The Pragmatic Programmer* (1999); FinOps Foundation,
 [Unit economics](https://www.finops.org/framework/capabilities/unit-economics/); Claude Code,
 [Manage costs](https://code.claude.com/docs/en/costs) and
-[Monitoring](https://code.claude.com/docs/en/monitoring-usage).
+[Monitoring](https://code.claude.com/docs/en/monitoring-usage); Titus Winters, Tom Manshreck and
+Hyrum Wright, [*Software Engineering at Google*](https://abseil.io/resources/swe-book) (O'Reilly,
+2020), chapters 11 to 14 on test size, unit tests and flaky tests; Goran Petrović and Marko
+Ivanković, [State of mutation testing at Google](https://research.google/pubs/state-of-mutation-testing-at-google/)
+(ICSE SEIP, 2018).
 
 ## Integrator — Rust's bors
 
