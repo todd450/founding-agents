@@ -257,7 +257,12 @@ of this (see Sources).
   page left out, or an after screenshot that does not match what it sees, since pictures only the
   builder checks show what the builder hoped. Fix rounds retake them, so the founder sees the
   change that merges. Builder and QA got the `Skill` tool for it, and a test now holds that every
-  agent told to use a skill has the tool. Not yet run on a real product.
+  agent told to use a skill has the tool. Not yet run on a real product. The rule sent back every
+  eval page QA should approve, since no fixture PR had screenshots, so the QA tasks' PRs now carry
+  them on an empty `screenshots/issue-<n>` branch, as a builder's do. Making them showed that
+  headless Chrome 156 lays a page out at least 500 px wide, so every 390 px phone shot was a crop
+  with cut-off text; the skill now shoots a phone inside a frame of its width. Task 11 went from 0
+  of 3 to 3 of 3, and builder and QA passed all 33 trials.
 - **Technical one-way doors reach the founder before they are built in.** Decided by the founder on
   26 Oct 2026, after the website's "no build step or framework" was settled by an aside in a brief
   ("the architect confirms that, not the founder"), with no architect to confirm it, and written
@@ -315,7 +320,11 @@ of this (see Sources).
   run's trials still wrote that folder's path into a fixed note, `/tmp/.x`, because the shell
   forgets variables between commands, so the same four agents now type the folder's full path
   into each later command and never save it to a fixed file: trials using a fixed path or port
-  fell from 34 of 103 to 7 of 54, and no `/tmp/.x`.
+  fell from 34 of 103 to 7 of 54, and no `/tmp/.x`. Every server is now `http.server 0`, so QA's
+  clean-up, `pkill -f "http.server 0"`, stopped every other agent's server too (9 of 54 trials,
+  all QA). The four agents now start a server in the background with `& echo $!` and stop only
+  that number with `kill`, never `pkill` or `killall` by a pattern, and the eval runner counts
+  pattern kills: none in the next 54 trials, where every QA trial stopped its own server by PID.
 - **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
   the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
   its own worktree and posting its own comment; when the change touches routes, sign-in,

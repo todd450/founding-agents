@@ -19,6 +19,10 @@ guidance on small changes describe.
   variables between commands, so keep the folder's path in the commands themselves: make it with
   `W=$(mktemp -d); echo $W`, then write that full path into each later command. Never save the path
   in a fixed file such as `/tmp/.x`; another run can read or overwrite it.
+  Start a server in the background and print its process ID in the same command:
+  `python3 -u -m http.server 0 > <folder>/server.log 2>&1 & echo $!` (the log names its
+  port). Stop it with `kill <that number>`, written into the command like the folder's path.
+  Never `pkill` or `killall` by a name or pattern: every other run's server matches it too.
 - Red: write a failing test first, from the product's edge-case fixtures. Run it and watch it fail
   for the reason you expect; a test that passes before you change the code tests nothing.
 - Green: write the simplest code that makes it pass, and nothing the ticket does not ask for.
