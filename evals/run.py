@@ -6,7 +6,8 @@ sends that step (by running the workflow with scripted replies up to it), runs i
 as the step's agent and model, in a fresh throwaway repo with the `gh` stand-in, then grades what
 the agent returned, posted and pushed. Costs come from the session logs, priced by `run-report`.
 
-    python3 evals/run.py --role builder --trials 5         # one role's tasks
+    python3 evals/run.py --role qa --trials 1              # one role's tasks, as a PR runs them
+    python3 evals/run.py --role builder --trials 5         # one role's tasks, more trials
     python3 evals/run.py --task 09 --model qa=sonnet       # one task, on another model
     python3 evals/run.py --dry-run                         # show each task's step; run nothing
     python3 evals/run.py --report a/results.json b/results.json   # one report from several runs
@@ -53,12 +54,11 @@ def replies(task):
     if step["workflow"] == "propose":
         return {}
     ticket = {"ready": True, "reason": "", "repo": github["repo"], "title": issue["title"], "body": issue["body"],
-              "decision": "", "unseen": [], "open_pr": 0, "parts": [], **step.get("ticket", {})}
+              "decision": "", "unseen": [], "open_pr": 0, "risk": "medium", "parts": [], **step.get("ticket", {})}
     pr = step.get("pr", 0)
-    built = {"pr_number": pr, "pr_url": f"https://github.com/{github['repo']}/pull/{pr}", "stopped_because": ""}
-    approve = {"verdict": "approve", "findings": []}
-    return {"check": [ticket] * 3, "builder": [built] * 3, "qa": [approve] * 3,
-            "code review": [{**approve, "security": False}] * 3}
+    built = {"pr_number": pr, "pr_url": f"https://github.com/{github['repo']}/pull/{pr}", "head": "", "stopped_because": ""}
+    approve = {"verdict": "approve", "risk": ticket["risk"], "findings": []}
+    return {"check": [ticket] * 3, "builder": [built] * 3, "qa": [approve] * 3, "code review": [approve] * 3}
 
 
 def capture(task):
@@ -323,7 +323,7 @@ def main(argv=None):
     parser.add_argument("--trials", type=int, default=3)
     parser.add_argument("--model", action="append", default=[], help="role=model, to run a role on another model; repeat to run it on several")
     parser.add_argument("--trials-for", action="append", default=[], help="role=n, to give one role more trials, e.g. for a model comparison")
-    parser.add_argument("--parallel", type=int, default=4, help="trials at once")
+    parser.add_argument("--parallel", type=int, default=18, help="trials at once")
     parser.add_argument("--out", type=Path, help="where results go (default evals/runs/<time>)")
     parser.add_argument("--keep", action="store_true", help="keep each trial's folder for reading afterwards")
     parser.add_argument("--dry-run", action="store_true", help="show each task's agent, model and prompt; run nothing")
