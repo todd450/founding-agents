@@ -95,60 +95,33 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Packaging and setup
 
-- **Packaging: one plugin plus a `setup` skill.** The plugin ships the agents, skills, hooks and
-  workflows. Plugins cannot ship scheduled routines, and routines are not shared between people, so
-  `setup` does the per-product part: the routines, branch protection for `main`, the labels, the
-  fixtures folder, the holdout repo and the product's short `CLAUDE.md`. There is no template repo
-  to copy and then fall out of sync with.
-- **The plugin's version changes with every change a product should get.** A merged change that
-  adds or alters an agent, skill, hook or workflow bumps `.claude-plugin/plugin.json`; a docs-only
-  change does not. An install keeps its copy by version, and `claude plugin update` calls a plugin
-  current while its version is unchanged.
-- **`setup` writes starters the product then owns.** A short `CLAUDE.md` (what it is, `./check.sh`,
-  where decisions live, its own rules), `check.sh`, and a `fixtures/` folder whose README names the
-  holdouts' failure classes, which a test keeps in step. None is replaced once the product has one.
-  `setup` also creates the `red` label, so `build` and the integrator can check for red before ops
-  watch first raises it, and the routines arrive with the roles that run them.
-- **Generic vs product.** The plugin holds the edge-case checklist, which names failure classes;
-  each product supplies its own fixtures and holdouts, and keeps its own rules in its own repo.
-- **The plugin repo stays private** while the founder is its only user.
-- **Each person runs the team on their own login.** Anthropic's terms cover one subscriber's
-  ordinary use through `claude -p`, a `claude setup-token` token for CI, and routines. The plugin
-  never ships or shares a token; anyone else signs in with their own account or an API key.
-- **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)). A named practice
-  ("storyboard the journey", "test the merge, not the branch") gives an agent something concrete to
-  do and gives the founder words to correct it with; "be a great designer" does neither. Roles
-  borrow practices, not looks. The founder picks the exemplars, since they are taste.
-- **Borrow, don't depend.** Suites that cover parts of this (gstack, Compound Engineering,
-  Superpowers, GSD) churn, and their auto-triggered skills would compete with these roles. Ideas
-  are copied with credit once the licence allows: Superpowers' test-first and worktree skills, the
-  lessons in fayerman-source/agent-team, GSD's rule that the orchestrator never writes code, and a
-  local merge queue for the integrator. Products that use the team turn the overlapping plugins
-  off.
+- **One plugin plus a `setup` skill.** The plugin ships the agents, skills, hooks and workflows.
+  `setup` does each product's part, which a plugin cannot ship: the routines, branch protection,
+  the labels, the holdout repo, and a starter `CLAUDE.md`, `check.sh` and `fixtures/` that the
+  product then owns.
+- **A change a product should get bumps the plugin's version,** since an install updates only when
+  the version changes. A docs-only change does not.
+- **The plugin stays generic.** It holds the failure classes; each product keeps its own fixtures,
+  holdouts and rules.
+- **The plugin repo stays private** while the founder is its only user. Each person runs the team
+  on their own login, and the plugin never ships or shares a token.
+- **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)), which the founder
+  picks: a named practice gives an agent something concrete to do and the founder words to correct
+  it with.
+- **Borrow, don't depend.** Ideas from other agent suites are copied with credit, not depended on,
+  since those suites churn and their skills would compete with these roles.
 
 ### Tickets, the queue and the workflows
 
-- **Tickets: GitHub Issues.** PRs and merges already live there, and `gh` reaches all of it.
-  Markdown ticket files would put every builder on the same files (principle 5); Linear adds
-  another login.
-- **Decision queue: a `needs-founder` issue label.** GitHub's phone app already notifies, and an
-  issue holds the recommendation, the pictures and what each option costs.
-- **Coordination: subagents plus saved workflows, not agent teams.** The pipeline is sequential,
-  agent teams are experimental and off by default, and separate sessions messaging each other fail
-  at the messages.
-- **Workflows split where the founder decides.** A workflow cannot stop mid-run to ask, so each
-  one ends where the founder decides: `propose` ends at the brief and mockups, `plan` at the build
-  issues for a decided brief, and `build` at the merge. `sweep` finds work for `build`. A workflow
-  never reads the clock or random numbers, which a test holds. A headless `claude -p` run waits for
-  a workflow only 600 seconds unless `CLAUDE_CODE_PRINT_BG_WAIT_CEILING_MS=0` is set.
-- **Queue items are built by a script, not written by a model,** so every item has the same shape:
-  the recommendation, each option with its cost and pictures, and how to answer.
-- **Every decision put to the founder carries every role's recommendation and the team's.** The
-  founder decides better with more to go on. In `propose`'s and `plan`'s queue items each role with
-  an agent gives its pick and why, on Sonnet, without seeing the others' picks; an Opus step weighs
-  them on their reasons, not by count, and names any role that disagrees. The item leads with the
-  team's pick. Each workflow keeps its roles in one list, and a test checks that every agent a
-  workflow names has an agent file. A role that returns nothing is left out.
+- **Tickets are GitHub Issues, and the decision queue is the `needs-founder` label.** PRs already
+  live there, and GitHub's phone app notifies.
+- **Saved workflows run subagents, not agent teams,** since the pipeline is sequential.
+- **Workflows split where the founder decides,** since a workflow cannot stop mid-run to ask:
+  `propose` ends at the brief and mockups, `plan` at the build issues, and `build` at the merge.
+  `sweep` finds work for `build`. A workflow never reads the clock or random numbers.
+- **Every decision put to the founder is a script-built queue item** with every role's
+  recommendation and the team's. Each role picks without seeing the others; an Opus step weighs
+  them on their reasons and names any role that disagrees.
 
 ### Deciding: `propose`
 
