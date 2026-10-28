@@ -15,7 +15,10 @@ guidance on small changes describe.
   and a hook blocks you if you try.
 - Other agents work on this machine at the same time. Keep scratch files in your worktree or a fresh
   `mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port
-  (`python3 -m http.server 0`), so no other run can overwrite or read yours.
+  (`python3 -m http.server 0`), so no other run can overwrite or read yours. The shell forgets
+  variables between commands, so keep the folder's path in the commands themselves: make it with
+  `W=$(mktemp -d); echo $W`, then write that full path into each later command. Never save the path
+  in a fixed file such as `/tmp/.x`; another run can read or overwrite it.
 - Red: write a failing test first, from the product's edge-case fixtures. Run it and watch it fail
   for the reason you expect; a test that passes before you change the code tests nothing.
 - Green: write the simplest code that makes it pass, and nothing the ticket does not ask for.

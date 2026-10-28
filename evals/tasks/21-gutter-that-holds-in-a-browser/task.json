@@ -29,7 +29,7 @@
       {
         "number": 10,
         "title": "The band's head runs into step 1 at desktop width",
-        "body": "At 1440 px the line \"No open red issue. Nothing is blocked.\" ends exactly at the left edge of STEP 1: there is no gutter between the head's column and the first step. Give it one at desktop widths, with a test that fails without the fix.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`index.html`, `tests/`, `check.sh`\n\n## Technical decisions\nNone: CSS and tests inside the existing page.",
+        "body": "At 1440 px the line \"No open red issue.\" ends exactly at the left edge of STEP 1: there is no gutter between the head's column and the first step. Give it one at desktop widths, with a test that fails without the fix.\n\nHolds for every site issue: every claim on the page is true on the day this merges, using the facts in `docs/status.md`; it reads at 390 px and at 1440 px.\n\n## Files\n`index.html`, `tests/`, `check.sh`\n\n## Technical decisions\nNone: CSS and tests inside the existing page.",
         "labels": [
           "decided"
         ],

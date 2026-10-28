@@ -18,12 +18,13 @@
   .step{padding:var(--s4) 0; border-bottom:1px solid var(--rule)}
   .step-state{font-family:var(--font-mono); font-size:13px}
   .step-state.done{color:var(--green)}
+  .step-state time{white-space:nowrap}
   .rail{max-width:var(--measure)}
   table{border-collapse:collapse}
   td{padding:var(--s2) var(--s3); border-bottom:1px solid var(--rule)}
   footer{padding:var(--s5) 0 0; border-top:1px solid var(--rule); font-size:14px; color:var(--ink-muted)}
   @media (min-width:860px){
-    .band{display:grid; grid-template-columns:max-content 1fr; align-items:stretch}
+    .band{display:grid; grid-template-columns:fit-content(14em) 1fr; align-items:stretch}
     .band-head{flex-direction:column; border-bottom:0; border-right:1px solid var(--rule); padding:var(--s4) var(--s4) var(--s4) 0}
     .steps{grid-template-columns:repeat(4,1fr)}
     .step{padding:var(--s4); border-bottom:0}
@@ -40,7 +41,7 @@
 <section class="band" aria-labelledby="status">
   <div class="band-head">
     <h2 id="status">Where the team is</h2>
-    <p class="verdict">No open red issue. Nothing is blocked.</p>
+    <p class="verdict">No open red issue.</p>
     <p class="stamp">As of <time datetime="2026-10-26">26 Oct 2026</time></p>
   </div>
   <ol class="steps">

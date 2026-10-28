@@ -14,7 +14,10 @@ Start in your own worktree with `gh pr checkout <number>`, and read the diff wit
 <number>` and the code around it.
 Other agents work on this machine at the same time. Keep scratch files in your worktree or a fresh
 `mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port
-(`python3 -m http.server 0`), so no other run can overwrite or read yours.
+(`python3 -m http.server 0`), so no other run can overwrite or read yours. The shell forgets
+variables between commands, so keep the folder's path in the commands themselves: make it with
+`W=$(mktemp -d); echo $W`, then write that full path into each later command. Never save the path in
+a fixed file such as `/tmp/.x`; another run can read or overwrite it.
 
 - Approve a change once it definitely improves the code's overall health, even if it is not
   perfect; never approve one that makes it worse.
