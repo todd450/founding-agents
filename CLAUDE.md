@@ -12,7 +12,8 @@ the flow and the open decisions.
   `python3 -m unittest discover -s tests`.
 - A change that alters an agent, skill or workflow, or a model choice, runs the evals for the roles
   it touches before its version bump, one trial each: `python3 evals/run.py --role <role> --trials 1`.
-  The full run, `python3 evals/run.py`, goes before a release, off a PR's path (see
-  [evals/README.md](evals/README.md)).
+  The full run, `python3 evals/run.py`, goes before a release (before a product moves onto a new
+  plugin version), off a PR's path. A product's real run failing adds a task from that failure
+  (see [evals/README.md](evals/README.md)).
 - Nothing here is product specific. A rule that only makes sense for one product does not
   belong in the reusable team.
