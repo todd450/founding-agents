@@ -154,11 +154,8 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   them on their reasons, not by count, and names any role that disagrees. The item leads with the
   team's pick. Each workflow keeps its roles in one list, and a test checks that every agent a
   workflow names has an agent file. A role that returns nothing is left out.
-- **Agents post with the founder's GitHub login,** so an author never shows who decided. A
-  decision counts as made where the founder's `decided` label says yes to it, and labels, not
-  authors, mark what the team filed.
 
-### Deciding: `propose` and research
+### Deciding: `propose`
 
 - **`propose`: brief, then mockups, then one queue item.** `/founding-agents:propose <issue or
   idea>`. The product lead writes the brief into the issue, recommends go or no-go, says whether it
@@ -178,12 +175,6 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   files, so the phase takes about as long as one option. The script builds the result from what
   the branch holds: a missing option is left out and named, and the run stops when fewer than two
   remain, the pick is missing, or the branch holds anything outside the issue's mockups folder.
-- **The researcher prepares and makes sense of conversations; the founder has them.** An agent the
-  founder calls on demand, since research has no fixed place in a change. Each question is a
-  `research` issue holding the interview guide, the founder's notes and a synthesis that keeps what
-  people did apart from what is inferred. The product lead reads these as the strongest evidence a
-  brief can cite. The researcher never contacts anyone, since a message sent in the founder's name
-  is the founder's to send.
 
 ### Planning: one-way doors and build issues
 
@@ -252,11 +243,6 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   change with nothing on screen says "No visible change." QA shoots the same pages and sends back
   missing or mismatched shots, since pictures only the builder checks show what the builder hoped.
   Fix rounds retake them.
-- **A local preview binds to this machine and serves no secret, and a hook holds it.** Every
-  command the plugin gives binds to `127.0.0.1`, since an unbound server listens on every network
-  and serves every file in its folder. The `guard_serve` hook refuses an unbound `http.server`, or
-  one whose folder holds `.env*`, `.vercel/`, `.netlify/` or a key, for every session, and says how
-  to fix it. `setup` has the founder state the preview command and checks the web root for secrets.
 
 ### Review
 
@@ -286,16 +272,6 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   as left for the founder. An ordinary slip that reaches readers, or harm a trusted writer could do
   unseen, stays must-fix. A failing holdout is rated the same way. The workflow, the reviewers and
   the eval graders read one rule.
-- **Each issue has a budget per run that stops it.** At API prices: $5 for low, $12 for medium,
-  $20 for high, at the tier the issue ends on. Past it, after a send-back, the run stops for the
-  founder with the PR and its findings, and running `build` again is the go-ahead to spend another
-  budget. An approved change merges whatever it cost, and a spend that cannot be read does not
-  stop the run.
-- **A finding that comes back unfixed becomes a lesson.** When `build` stops on a repeated
-  must-fix, a script opens a `Repeated finding on PR #<n>` issue labelled `librarian` (or comments
-  on the open one), asking for a test, a lint rule, a hook or a skill (principle 7). The librarian
-  files each as a proposal the founder decides on. Every guard's failure message says how to fix
-  the problem, since the agent that trips it acts on that message alone.
 
 ### Merging and the gate
 
@@ -365,8 +341,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   loads, posted weekly on one standing issue; it never proposes cutting a check or a review for
   tokens alone. What the product costs (page weight, dead code, one thing defined in several
   places) belongs to `sweep codebase`, so nothing reaches the queue twice. The librarian reads the
-  week's incidents, `librarian` issues first, asks which check would have stopped each, and files
-  guards or prunes.
+  week's incidents, asks which check would have stopped each, and files guards or prunes.
 - **Ops watch's site check runs as a nightly GitHub Actions job, not a routine.** It needs no
   model, so it spends no allowance and still runs when the week's limit is used up. It checks that
   the deploy is green and every link resolves, trying a failed link once more after a pause; a
@@ -382,16 +357,6 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   serves only its own repo over REST, so its prompt lives in the product and every call is
   `gh api repos/<owner>/<repo>/…`, which a test holds. `setup` creates routines through the
   `schedule` skill after the founder's yes, with no connectors.
-- **Every shipped brief gets a check-back.** Otherwise nothing ever looks at whether people want
-  what was built. Two weeks after a brief's last issue closes as completed, or as long as its "how
-  we'll know" says, ops watch's routine posts on the brief what it said, what happened and a
-  verdict: worked, didn't, or can't tell yet. A "didn't" opens a queue item asking whether to keep,
-  change or remove it, with a recommendation; it is never red. "Can't tell yet" is checked again
-  one window later, three times at most. The evidence is the one metric and other signs of use
-  the product names in `watch.md`, research issues and the brief's comments. A script
-  (`check_back.py`) finds what is due, posts in one shape and keeps the score; the routine only
-  judges, leaning to "can't tell yet" when unsure, and the researcher gives a second reading when
-  the founder asks.
 
 ### Cost, models and evals
 
@@ -402,16 +367,12 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   agent and step names its model, since Max otherwise runs Opus 5.5 everywhere. Opus 5.5 is pinned
   in full with `ANTHROPIC_DEFAULT_OPUS_MODEL` in the product's `.claude/settings.json`, which
   `setup` writes, since the `opus` alias can resolve to an older, dearer Opus.
-- **Builders run on Opus, an exception to principle 3.** The founder's choice, backed by the
-  evals: Sonnet builders fail the builder tasks that stalled real runs. The cost is that builders
-  and reviewers share one Opus allowance, separate from Sonnet's; the optimiser's tokens per merged
-  change says whether it pays.
 - **Every run reports its time, tokens and cost on its issue.** Each workflow ends with the
   `run-report` skill, which reads Claude Code's session logs, counts each model call once, and
   posts one table by role and model, priced by the model each call actually ran at API list
   prices, so on a plan it is API-equivalent. A model the table does not know is named, not counted
   as free. Stalled runs report too, since stalls are where the cost goes. Each workflow passes a
-  budget ($5 a run, or `build`'s tier budgets) and the report flags a run over it. A `build` report
+  budget, and the report flags a run over it. A `build` report
   says whether it ended `merged`, `ready` or `stopped`, and `report.py --runs` gives the share of
   runs that merged without the founder.
 - **Token cost belongs to the optimiser.** Principle 3 only works if someone measures it: tokens
@@ -422,18 +383,6 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   within two weeks. A PR from `build`'s branch counts as with the plugin; any other change needs a
   `with-plugin` or `without-plugin` label. Cost comes from the run reports on the PR and the issues
   it closes. A later fix is a guess, so the table names each one for the founder to check.
-- **On a Pro or Max plan the team paces itself to the weekly limit.** Not built yet. Before `build`
-  takes a ticket it compares how much of the week's limit is used with how much of the week has
-  gone: ahead of pace it builds only decided issues; behind pace near the reset it also takes work
-  kept for spare allowance, since allowance left at the reset is lost. The status line's
-  `rate_limits` field is the only reading a program can get, so `setup` adds a status line that
-  saves it where `build` reads it.
-- **Spare allowance goes to deciding and checking, and to the hours the founder is away.** More
-  edge-case scenarios, a second review pass, more mockups, and the optimiser's and librarian's
-  tickets; never a feature nobody decided on (principle 1). Routines run on the plan with no charge
-  for the cloud machine, so they run overnight while the founder decides during the day. A run that
-  hits the limit fails instead of pausing, so each takes one ticket and leaves its issue where the
-  next run picks it up.
 - **Nothing falls through to paid billing by accident.** No environment meant to run on the plan
   sets `ANTHROPIC_API_KEY`, which `claude -p` always uses when set; no run uses `--bare`, which
   never reads the plan's login; and the pipeline uses neither fast mode nor `/code-review ultra`, which
@@ -521,7 +470,6 @@ private, since the founder is the only user for now. A website bends the order i
   [Routines](https://code.claude.com/docs/en/routines), [Worktrees](https://code.claude.com/docs/en/worktrees)
 - Spending a plan — [Using Claude Code with your Pro or Max plan](https://support.claude.com/en/articles/11145838-using-claude-code-with-your-pro-or-max-plan),
   Claude Code docs on [costs](https://code.claude.com/docs/en/costs),
-  [the status line](https://code.claude.com/docs/en/statusline),
   [headless runs](https://code.claude.com/docs/en/headless),
   [authentication](https://code.claude.com/docs/en/authentication),
   [fast mode](https://code.claude.com/docs/en/fast-mode),
