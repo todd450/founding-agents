@@ -4,7 +4,7 @@ export const meta = {
   whenToUse: 'When the founder has an idea or an issue to shape before anything is built, e.g. /founding-agents:propose 7 or /founding-agents:propose "a pricing page"',
   phases: [
     { title: 'Brief', detail: 'the product lead writes the brief and recommends', model: 'opus' },
-    { title: 'Design', detail: 'the designer storyboards and mocks up two or three options', model: 'opus' },
+    { title: 'Design', detail: 'the designer storyboards two or three options, then one designer per option builds them at once', model: 'opus' },
     { title: 'Views', detail: 'every other role recommends from what its job knows, and says why', model: 'sonnet' },
     { title: 'Team', detail: "the team's overall recommendation, weighing every role's", model: 'opus' },
     { title: 'Queue', detail: "one needs-founder item with each role's recommendation, the team's, the options and their costs", model: 'haiku' },
@@ -47,11 +47,11 @@ const BRIEF = {
   },
   required: ['repo', 'issue', 'recommend', 'reason', 'overruled', 'screens', 'decisions'],
 }
-const DESIGN = {
+// The designer's storyboard and a spec for each option; one designer per option then builds them at once.
+const STORYBOARD = {
   type: 'object',
   properties: {
-    branch: { type: 'string' },
-    stopped_because: { type: 'string', description: 'why there are no mockups, such as screenshots that could not be taken; empty otherwise' },
+    stopped_because: { type: 'string', description: 'why there will be no mockups, such as screenshots that cannot be taken; empty otherwise' },
     recommended: { type: 'string', description: 'the letter of the option you recommend' },
     why: { type: 'string', description: 'why that option, in one or two plain sentences for someone who does not read code' },
     options: {
@@ -60,20 +60,30 @@ const DESIGN = {
       items: {
         type: 'object',
         properties: {
-          letter: { type: 'string' },
+          letter: { type: 'string', description: 'A, B or C' },
           name: { type: 'string' },
           stars: { type: 'integer', description: 'where it sits from 1 to 11 stars' },
           what: { type: 'string', description: 'what the option does at the key moment, in two sentences' },
+          distinct: { type: 'string', description: 'what sets it apart from the other options, for the designer who builds it' },
           cost: { type: 'string', description: 'what it costs to build, against the appetite' },
-          html: { type: 'string', description: 'path of the page on the branch' },
-          phone: { type: 'string', description: 'path of the phone screenshot on the branch' },
-          desktop: { type: 'string', description: 'path of the desktop screenshot on the branch' },
         },
-        required: ['letter', 'name', 'stars', 'what', 'cost', 'html', 'phone', 'desktop'],
+        required: ['letter', 'name', 'stars', 'what', 'distinct', 'cost'],
       },
     },
   },
-  required: ['branch', 'stopped_because', 'recommended', 'why', 'options'],
+  required: ['stopped_because', 'recommended', 'why', 'options'],
+}
+const MOCKUP = {
+  type: 'object',
+  properties: {
+    stopped_because: { type: 'string', description: 'why the option is not on the branch, such as screenshots that could not be taken; empty when it was pushed' },
+  },
+  required: ['stopped_because'],
+}
+const BRANCH = {
+  type: 'object',
+  properties: { files: { type: 'array', items: { type: 'string' }, description: 'every file the branch adds or changes against main' } },
+  required: ['files'],
 }
 // One role's recommendation, and the team's.
 const VIEW = {
@@ -163,15 +173,51 @@ ${text}`,
 if (!brief) throw new Error('The product lead returned nothing')
 
 // A brief with nothing on screen, such as how the product deploys, goes to the founder without mockups.
+// The options are built at once, one designer each, since they share nothing but the storyboard: on
+// the Half Badger redesign one designer building three in turn took over 20 minutes.
 let design = null
 if ((brief.recommend === 'go' || brief.overruled) && brief.screens) {
-  design = await agent(
-    `Mock up issue #${brief.issue} in ${brief.repo}. Read its brief first: the who, the appetite and the no-gos bound the options. Storyboard the journey, then make two or three options at different stars, each an HTML page with phone and desktop screenshots, on the branch \`propose/issue-${brief.issue}\`. Push the branch and return every option with its paths on the branch.`,
-    { label: 'designer', phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', schema: DESIGN },
+  phase('Design')
+  const branch = `propose/issue-${brief.issue}`
+  const folder = `mockups/issue-${brief.issue}`
+  const storyboard = `${folder}/storyboard.md`
+  const specs = await agent(
+    `Storyboard issue #${brief.issue} in ${brief.repo}. Read its brief first: the who, the appetite and the no-gos bound the options. First check that screenshots can be taken: run the \`mockup-screenshots\` skill's script on a one-line page in a fresh \`mktemp -d\` folder, and if it fails, stop and return why. Storyboard the journey frame by frame and mark the key moment, then choose two or three options at different stars and recommend one. Write the storyboard, with each option's spec, to \`${storyboard}\`; commit only that file on the branch \`${branch}\`, started from \`main\`, or from the branch at origin if it is already there, removing anything an earlier run left in \`${folder}\`, and push it. Do not build the pages: one designer per option builds them at the same time from your spec, so say in each what sets it apart from the others.`,
+    { label: 'storyboard', phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', schema: STORYBOARD },
   )
-  if (!design) throw new Error('The designer returned nothing')
-  if (design.stopped_because || design.options.length < 2) {
-    return await report({ issue: brief.issue, status: 'stopped in design', reason: design.stopped_because || 'fewer than two options' })
+  if (!specs) throw new Error('The designer returned nothing')
+  if (specs.stopped_because || specs.options.length < 2) {
+    return await report({ issue: brief.issue, status: 'stopped in design', reason: specs.stopped_because || 'fewer than two options' })
+  }
+  const page = o => `${folder}/${o.letter.toLowerCase()}`
+  const built = await parallel(specs.options.map(o => () => agent(
+    `Build option ${o.letter} of the mockups for issue #${brief.issue} in ${brief.repo}. Read its brief, and the storyboard at \`${storyboard}\` on the branch \`${branch}\` at origin. Your option: ${o.name}, ${o.stars} stars. ${o.what} What sets it apart: ${o.distinct} The others, built at the same time by other designers: ${specs.options.filter(other => other !== o).map(other => `${other.letter}. ${other.name}, ${other.stars} stars`).join('; ')}.
+
+Work on the branch at origin, not a local one, since other worktrees have it: \`git fetch origin ${branch}\` and \`git switch --detach FETCH_HEAD\`. Make the page \`${page(o)}.html\`, take its phone and desktop screenshots with the \`mockup-screenshots\` skill, and look at both. Commit only those three files, and push with \`git push origin HEAD:${branch}\`. The other designers push to the same branch, so touch no other file. When the push is refused, run \`git pull --rebase origin ${branch}\` and push again, up to five times; when a fetch fails on a lock another designer holds, wait a few seconds and run it again. If the screenshots cannot be taken or the push never lands, stop and return why.`,
+    { label: `option ${o.letter}`, phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', schema: MOCKUP },
+  )))
+  const pushed = await agent(
+    `From this repo's folder, run \`git fetch origin main ${branch}\` and \`git diff --name-only origin/main...origin/${branch}\`. Return every file it lists, exactly as listed. Read only: change nothing.`,
+    { label: 'design check', phase: 'Design', model: 'haiku', effort: 'low', schema: BRANCH },
+  )
+  // The branch decides what the founder sees, not what each designer says it pushed.
+  const files = new Set(pushed ? pushed.files : [])
+  const stray = [...files].filter(f => !f.startsWith(`${folder}/`))
+  const options = specs.options.map(o => ({
+    letter: o.letter, name: o.name, stars: o.stars, what: o.what, cost: o.cost,
+    html: `${page(o)}.html`, phone: `${page(o)}-phone.png`, desktop: `${page(o)}-desktop.png`,
+  }))
+  const kept = options.filter((o, i) => !(built[i] && built[i].stopped_because) && [o.html, o.phone, o.desktop].every(f => files.has(f)))
+  const dropped = options.map((o, i) => !kept.includes(o) && `option ${o.letter}: ${(built[i] && built[i].stopped_because) || 'it is not on the branch'}`).filter(Boolean)
+  const reason = !pushed ? 'the branch could not be checked'
+    : stray.length ? `the branch holds more than mockups: ${stray.join(', ')}`
+    : kept.length < 2 ? `fewer than two options; ${dropped.join('; ')}`
+    : !kept.some(o => o.letter === specs.recommended) ? `the designer's pick was not built; ${dropped.join('; ')}`
+    : ''
+  if (reason) return await report({ issue: brief.issue, status: 'stopped in design', reason })
+  design = {
+    branch, storyboard: files.has(storyboard) ? storyboard : '', recommended: specs.recommended, why: specs.why,
+    options: kept, dropped,
   }
 }
 
@@ -227,6 +273,7 @@ const lines = [
 if (brief.overruled && brief.recommend === 'no-go') lines.push('You overruled the no-go, so here are the options.', '')
 if (design) {
   const picked = team && team.option ? team.option : design.recommended
+  if (design.storyboard) lines.push(`[The designer's storyboard of the journey](${file(design.storyboard)})`, '')
   for (const o of design.options) {
     const pick = o.letter === picked ? ' (recommended)' : ''
     lines.push(
@@ -240,6 +287,7 @@ if (design) {
       '',
     )
   }
+  if (design.dropped.length) lines.push(`Storyboarded but not built, so not offered: ${design.dropped.join('; ')}.`, '')
 }
 if (brief.decisions.length) {
   lines.push('### Technical decisions', '', 'Each one is costly to reverse once it is built in, so each is yours to decide:', '')

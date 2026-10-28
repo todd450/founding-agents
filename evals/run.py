@@ -117,6 +117,10 @@ def command(call, model):
     return cmd
 
 
+# The models setup pins in each product, so a trial runs the model a product would.
+PINNED = json.loads((EVALS.parent / "skills" / "setup" / "basics" / "settings.json").read_text())["env"]
+
+
 def environment(folder):
     """The trial's environment: the gh stand-in first on PATH, an empty GitHub login, and never an API key.
 
@@ -127,6 +131,7 @@ def environment(folder):
     env.update({"PATH": f"{EVALS / 'bin'}:{env.get('PATH', '')}", "EVAL_GH_STATE": str(folder / "github.json"),
                 "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1", "TMPDIR": str(folder / "tmp"),
                 "GIT_TERMINAL_PROMPT": "0"})
+    env.update(PINNED)
     nowhere = (folder / "no-github").as_uri() + "/"
     config = [("credential.helper", "")] + [(f"url.{nowhere}.insteadOf", url) for url in GITHUB]
     env["GIT_CONFIG_COUNT"] = str(len(config))

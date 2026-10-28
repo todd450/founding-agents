@@ -196,6 +196,7 @@ class RunnerTest(unittest.TestCase):
         self.assertNotIn("ANTHROPIC_API_KEY", env)
         self.assertTrue(env["PATH"].startswith(str(EVALS / "bin")))
         self.assertEqual(env["GH_CONFIG_DIR"], "/tmp/t/gh-config")
+        self.assertEqual(env["ANTHROPIC_DEFAULT_OPUS_MODEL"], "claude-opus-5-5")
 
     def test_a_trial_can_reach_neither_github_nor_the_real_holdouts(self):
         # On 27 Oct 2026 trial QA pushed eval scenarios to the website's real holdouts repo.

@@ -156,15 +156,30 @@ Rerunning it on another machine clones the same repo there.
 
 ## The map and the fixtures
 
-Every product gets a short `CLAUDE.md`, the map every session loads, and a `fixtures/` folder for
-the visible edge-case scenarios builders write their tests from.
+Every product gets a short `CLAUDE.md`, the map every session loads, a `fixtures/` folder for
+the visible edge-case scenarios builders write their tests from, and a `.claude/settings.json` that
+pins `opus` to Opus 5.5 (`ANTHROPIC_DEFAULT_OPUS_MODEL`), since a workflow step can name only an
+alias and the alias has run an older Opus.
 
-1. **Dry run.** `python3 <this skill's directory>/install_kit.py basics` shows the two starter
-   files. A product that already has either keeps its own; for an existing `CLAUDE.md`, suggest to
-   the founder what the starter adds, rather than changing it.
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py basics` shows the three starter
+   files. A product that already has any of them keeps its own; for an existing `CLAUDE.md`, suggest
+   to the founder what the starter adds, rather than changing it, and for an existing
+   `.claude/settings.json`, suggest adding the `env` entry.
 2. **Fill in the starter `CLAUDE.md` with the founder:** one paragraph on what the product is and
    who it is for, and the product's own rules with the check that holds each. Keep it short; a
-   rule worth keeping becomes a check, not a paragraph.
+   rule worth keeping becomes a check, not a paragraph. Two facts every product states:
+   - **Whether merging to `main` deploys to production.** Check rather than assume:
+     `gh api repos/<owner>/<repo>/deployments --jq '[.[].environment] | unique'` lists
+     `Production`, `production` or `github-pages` when it does. Where it does, the founder merges
+     every PR, since the merge is the release; tell the founder so, and that a product which
+     deploys from a step the founder starts (a promoted release, a staging branch) lets the
+     integrator merge again.
+   - **The local preview command,** bound to this machine (`python3 -m http.server 0 --bind
+     127.0.0.1`, with `--directory` for the web root). Then list the folder it serves, dotfiles
+     included (`ls -a`), and look for secrets: `.env*`, `.vercel/`, a key. If one is there, tell the
+     founder before anything else and recommend moving it out of the web root; a static server
+     hands any file in its folder to whoever asks. The plugin's `guard_serve` hook refuses an
+     unbound server or one whose folder holds a secret.
 3. **Apply on a branch.** Rerun with `--apply`, commit, and open a PR.
 
 ## Labels
@@ -186,4 +201,5 @@ gh label create librarian --color 1D76DB --description "A mistake a run made twi
 The plugin's hooks need `python3` on the machine. The merge guard (`hooks/guard_main.py`) blocks
 every agent but the integrator from pushing to `main` or merging; branch protection is the hard
 gate behind it. The holdout guard (`hooks/guard_holdouts.py`) blocks every agent but QA
-from the holdout scenarios.
+from the holdout scenarios. The serve guard (`hooks/guard_serve.py`) blocks a local
+`python3 -m http.server` that is not bound to `127.0.0.1`, or whose folder holds a secret.
