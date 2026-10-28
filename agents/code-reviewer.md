@@ -13,8 +13,9 @@ Edge-case QA drives the running product at the same time; leave running it to QA
 Start in your own worktree with `gh pr checkout <number>`, and read the diff with `gh pr diff
 <number>` and the code around it.
 Other agents work on this machine at the same time. Keep scratch files in your worktree or a fresh
-`mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port
-(`python3 -m http.server 0`), so no other run can overwrite or read yours.
+`mktemp -d`, never at a fixed path under `/tmp`, and serve the product on a free port bound to
+this machine (`python3 -m http.server 0 --bind 127.0.0.1`), so no other run can overwrite or read
+yours and no other computer on the network can reach it.
 
 - Approve a change once it definitely improves the code's overall health, even if it is not
   perfect; never approve one that makes it worse.

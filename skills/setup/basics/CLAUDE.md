@@ -13,5 +13,11 @@ rule that must hold becomes a test in `check.sh`, a lint rule or a hook, and its
   it stores data, a dependency that ships, an outside service) are the founder's; each is
   recorded in the issue that decided it. Never settle one in code.
 - **Edge cases:** the visible scenarios are in `fixtures/`, one folder per failure class.
-- **Shipping:** changes reach `main` only through a pull request that the integrator merges.
+- **Shipping:** changes reach `main` only through a pull request. Merging to `main` deploys to
+  production: <yes or no>. Where it does, the founder merges: the integrator brings each PR up to
+  date and green and leaves a "Ready for your merge" item on it. Where it does not, the integrator
+  merges.
+- **Local preview:** `<the command, bound to this machine, such as
+  python3 -m http.server 0 --bind 127.0.0.1 --directory site>`. The folder it serves holds no
+  secret (`.env*`, `.vercel/`, a key); keep those outside it.
 - **This product's own rules:** <each rule only this product has, and the check that holds it>
