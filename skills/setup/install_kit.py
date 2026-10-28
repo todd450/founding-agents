@@ -19,6 +19,7 @@ KITS = {
     "basics": [
         (HERE / "basics" / "CLAUDE.md", Path("CLAUDE.md"), False),
         (HERE / "basics" / "fixtures" / "README.md", Path("fixtures/README.md"), False),
+        (HERE / "basics" / "settings.json", Path(".claude/settings.json"), False),
     ],
     "ci": [
         (HERE / "ci" / "ci.yml", Path(".github/workflows/ci.yml"), True),

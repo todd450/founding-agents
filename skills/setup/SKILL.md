@@ -156,12 +156,15 @@ Rerunning it on another machine clones the same repo there.
 
 ## The map and the fixtures
 
-Every product gets a short `CLAUDE.md`, the map every session loads, and a `fixtures/` folder for
-the visible edge-case scenarios builders write their tests from.
+Every product gets a short `CLAUDE.md`, the map every session loads, a `fixtures/` folder for
+the visible edge-case scenarios builders write their tests from, and a `.claude/settings.json` that
+pins `opus` to Opus 5.5 (`ANTHROPIC_DEFAULT_OPUS_MODEL`), since a workflow step can name only an
+alias and the alias has run an older Opus.
 
-1. **Dry run.** `python3 <this skill's directory>/install_kit.py basics` shows the two starter
-   files. A product that already has either keeps its own; for an existing `CLAUDE.md`, suggest to
-   the founder what the starter adds, rather than changing it.
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py basics` shows the three starter
+   files. A product that already has any of them keeps its own; for an existing `CLAUDE.md`, suggest
+   to the founder what the starter adds, rather than changing it, and for an existing
+   `.claude/settings.json`, suggest adding the `env` entry.
 2. **Fill in the starter `CLAUDE.md` with the founder:** one paragraph on what the product is and
    who it is for, and the product's own rules with the check that holds each. Keep it short; a
    rule worth keeping becomes a check, not a paragraph. Two facts every product states:
