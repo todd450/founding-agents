@@ -189,8 +189,10 @@ def first_prompt(session):
 
 
 def find_session(logs, workflow, issue):
-    """The newest session whose first prompt ran this workflow on this issue."""
-    wanted = re.compile(rf"founding-agents:{workflow}\b.*?(?:<command-args>|\s)#?{issue}\b", re.S)
+    """The newest session whose first prompt ran this workflow on this issue. A sweep names a kind,
+    not an issue, so for a sweep it is the newest session that ran one."""
+    wanted = re.compile(rf"founding-agents:{workflow}\b" if workflow == "sweep" else
+                        rf"founding-agents:{workflow}\b.*?(?:<command-args>|\s)#?{issue}\b", re.S)
     for session in sorted(logs.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True):
         if wanted.search(first_prompt(session)):
             return session
@@ -199,7 +201,7 @@ def find_session(logs, workflow, issue):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--workflow", choices=["build", "plan", "propose"], help="the workflow the run was")
+    parser.add_argument("--workflow", choices=["build", "plan", "propose", "sweep"], help="the workflow the run was")
     parser.add_argument("--issue", type=int, help="the issue it ran on")
     parser.add_argument("--session", type=Path, help="a session log to report on instead of finding one")
     parser.add_argument("--post", action="store_true", help="comment the report on the issue")

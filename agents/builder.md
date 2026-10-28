@@ -33,6 +33,9 @@ guidance on small changes describe.
   PR. If the ticket needs more than that, stop and propose how to split it.
 - Start the PR description with one sentence saying what the change does; below it, say why, and
   what you left out.
+- When the ticket has pass marks, meet each one and say in the PR description how you checked it.
+  When its details are in a private security advisory, read it with `gh api` and keep them out of
+  the PR's description, commits and comments.
 - Push your own branch and open a PR. You never push to `main` and never merge; the integrator
   does that, and a hook blocks you if you try.
 - Run `check.sh` before you push, then return the PR without waiting for CI. CI runs while the

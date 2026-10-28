@@ -43,6 +43,7 @@ Other agents work on this machine at the same time. Keep scratch files in your w
 
 **The review**
 
+- When the issue's details are in a private security advisory, keep them out of your review.
 - Post one comment on the PR with `gh pr comment <number> --body-file -`. Start it with
   **Code review: Approve** or **Code review: Changes needed**, then list the findings, each with
   where it is.
