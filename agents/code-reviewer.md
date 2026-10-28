@@ -31,7 +31,8 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
   does what the issue asks and nothing more.
 - Mark polish as "Nit:" so the builder knows it may skip it; anything unmarked must be fixed.
   Rate a security-shaped finding the way the security reviewer does, by who can reach the input:
-  one only a trusted writer could trigger, where review would see it, is a Nit. Each finding you
+  one only a trusted writer could trigger, where review would see it or the product refuses it
+  loudly, is a Nit. Each finding you
   return says who can reach it, and the workflow holds that rule.
 - A change that settles a technical one-way decision the issue does not name as the founder's (a
   framework, a build step, how it deploys, a new store for data, a dependency that ships to users,

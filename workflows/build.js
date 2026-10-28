@@ -101,7 +101,7 @@ const REVIEW = {
             enum: ['anyone', 'user', 'outside', 'trusted', 'none'],
             description: 'who can make it happen: anyone (any visitor or reader, as with an ordinary bug), user (a signed-in user), outside (an outside service, feed or model the product reads), trusted (only someone the team trusts: the founder writing their own data, a key the team never hands out, a change that goes through review), or none (it is about the code, its tests, CI or what the issue asks, not about who supplies a value)',
           },
-          review_would_see: { type: 'boolean', description: 'for a finding only someone trusted can reach: true when it takes a deliberate, crafted value that review of the change or the data would see; false for an ordinary slip (empty, too long, a typo, a date in the wrong form) and for harm that reaches readers without anyone noticing. false for every other reach' },
+          review_would_see: { type: 'boolean', description: 'for a finding only someone trusted can reach: true when it is caught before it harms anyone: it takes a deliberate, crafted value that review of the change or the data would see, or the product refuses the value loudly (the build, a check or the command fails, and nothing wrong is shown, written or sent), so only the message whoever made it gets is at stake. false for an ordinary slip (empty, too long, a typo, a date in the wrong form) that gets past the product to readers, and for harm that reaches readers without anyone noticing. false for every other reach' },
           where: { type: 'string' },
           what: { type: 'string', description: 'steps, expected, happened, and how to reproduce; for a holdout scenario, only its failure class and what went wrong, never its steps or data' },
           repeat: { type: 'boolean', description: "true only when a review from an earlier round, posted before the PR's latest push, raised it and it is still not fixed; never for one only this round's other reviewers raised" },
@@ -204,8 +204,10 @@ const REVIEWERS = {
 }
 
 // The severity rule, held by the workflow rather than left to each reviewer: a must-fix only someone
-// the team trusts can reach, with a crafted value review would see, is a Nit whatever the reviewer
-// called it. On the website's #35 QA held the PR for one after the rule was in its instructions.
+// the team trusts can reach, with a crafted value review would see or one the product refuses loudly,
+// is a Nit whatever the reviewer called it, a failing holdout included. On the website's #35 QA held
+// the PR for one after the rule was in its instructions; on #39 for a holdout whose only harm was a
+// stack trace where the build's refusal should have been a sentence.
 const trustedOnly = f => f.must_fix && f.reach === 'trusted' && f.review_would_see
 
 // A repeat is a finding an earlier round raised that the builder's push did not fix. The other
@@ -399,7 +401,7 @@ const merge = (n, ticket, developed) => {
   const { built, risk } = developed
   const trusted = developed.trusted_only || []
   const why = trusted.length
-    ? `\n\nA reviewer's comment may ask for changes the workflow rated as Nits, because only someone the team trusts could cause them, with a value review would see. Count that review as an approval, and before merging post one comment on the PR, with \`gh pr comment ${built.pr_number} --body-file -\`, listing these as left for the founder:\n${trusted.map(f => `- ${f.where}: ${f.what}`).join('\n')}`
+    ? `\n\nA reviewer's comment may ask for changes the workflow rated as Nits, because only someone the team trusts could cause them, and review or the product's own loud refusal would catch them. Count that review as an approval, and before merging post one comment on the PR, with \`gh pr comment ${built.pr_number} --body-file -\`, listing these as left for the founder:\n${trusted.map(f => `- ${f.where}: ${f.what}`).join('\n')}`
     : ''
   const mine = turn.then(async () => {
     const merged = await agent(
