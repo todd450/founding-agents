@@ -290,34 +290,20 @@ the check-back.
 
 ## Sources
 
-- Cursor — [Agent swarms and the new model economics](https://cursor.com/blog/agent-swarm-model-economics) (Jul 2026),
-  [Towards self-driving codebases](https://cursor.com/blog/self-driving-codebases) (Feb 2026),
-  [Auto-review](https://cursor.com/blog/agent-autonomy-auto-review) (Jun 2026)
+- Cursor — [Agent swarms and the new model economics](https://cursor.com/blog/agent-swarm-model-economics) (Jul 2026)
 - Anthropic — [Harness design for long-running apps](https://www.anthropic.com/research/harness-design-long-running-apps) (Mar 2026),
-  [Redesigning source control](https://www.anthropic.com/research/redesigning-source-control) (Oct 2026),
-  [Building a C compiler with parallel Claudes](https://www.anthropic.com/engineering/building-c-compiler) (Feb 2026),
-  [Claude Code agent teams](https://code.claude.com/docs/en/agent-teams)
+  [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) (Jan 2026)
 - OpenAI — [Harness engineering](https://openai.com/index/harness-engineering/) (Feb 2026),
   [Symphony](https://openai.com/index/open-source-codex-orchestration-symphony/) (Apr 2026)
-- Claude Code docs, for the decisions — [Plugin components](https://code.claude.com/docs/en/plugins/components),
-  [Hooks](https://code.claude.com/docs/en/hooks), [Workflows](https://code.claude.com/docs/en/workflows),
-  [Routines](https://code.claude.com/docs/en/routines), [Worktrees](https://code.claude.com/docs/en/worktrees)
-- Spending a plan — [Using Claude Code with your Pro or Max plan](https://support.claude.com/en/articles/11145838-using-claude-code-with-your-pro-or-max-plan),
-  Claude Code docs on [costs](https://code.claude.com/docs/en/costs),
-  [headless runs](https://code.claude.com/docs/en/headless),
-  [authentication](https://code.claude.com/docs/en/authentication),
-  [fast mode](https://code.claude.com/docs/en/fast-mode),
-  [ultrareview](https://code.claude.com/docs/en/ultrareview) and
-  [legal and compliance](https://code.claude.com/docs/en/legal-and-compliance) (read 24 Oct 2026)
-- Each role's exemplar — listed in [exemplars.md](exemplars.md)
+- Ramp — [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent), for
+  screenshots in every PR
+- StrongDM — [Software Factory](https://rywalker.com/research/strongdm-factory) (a third-party write-up, Sep 2026), for
+  holdout scenarios
+- Claude Code docs — [agent teams](https://code.claude.com/docs/en/agent-teams),
+  [plugins](https://code.claude.com/docs/en/plugins/components), [workflows](https://code.claude.com/docs/en/workflows),
+  [routines](https://code.claude.com/docs/en/routines) and [costs](https://code.claude.com/docs/en/costs)
 - Existing plugins borrowed from — [Superpowers](https://github.com/obra/superpowers),
   [fayerman-source/agent-team](https://github.com/fayerman-source/agent-team),
   [GSD Core](https://github.com/open-gsd/gsd-core),
   [claude-code-merge-queue](https://github.com/funador/claude-code-merge-queue)
-- Screenshots in every PR — Ramp, [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent)
-- Evals — Anthropic, [Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents) (Jan 2026)
-- Learning from runs — Anthropic, [Getting started with loops](https://claude.com/blog/getting-started-with-loops);
-  Ramp, [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent)
-  (read 27 Oct 2026)
-- Holdout scenarios — [StrongDM Software Factory](https://rywalker.com/research/strongdm-factory)
-  (a third-party write-up, Sep 2026)
+- Each role's exemplar — listed in [exemplars.md](exemplars.md)
