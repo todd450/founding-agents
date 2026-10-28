@@ -3,22 +3,6 @@
 A team of agents that builds products with one founder. This doc is the spec until the agent files
 exist; after that it records the decisions behind them.
 
-## Where it comes from
-
-The founder's first product was built from June to October 2026 with many parallel Claude
-sessions: 5,410 commits in under five months, with no real users yet. Its history showed four
-costs, each of which this team is shaped to prevent:
-
-| cost | evidence in that history | what the team does instead |
-|---|---|---|
-| Built before deciding | 32 removal commits deleted 61,365 lines in eight days (16–23 Oct); pages were translated and audited days before being cut | A product lead writes a brief and the founder decides before any code |
-| Found bugs late | 731 bug-sweep and audit commits, nearly all in October; fixes outnumbered features 2:1 that month | Edge-case QA runs the failure checklist on every change before merge |
-| Many writers, one branch | Every push deployed for most of the project; the release gate arrived after 2,985 commits; about a dozen traps from a shared working tree | One worktree per builder; only the integrator merges; a gate before production |
-| Red lights left red | The nightly off-site backup failed all 28 runs since it was added | Ops watch runs on a schedule and a red result reaches the founder's phone |
-
-The fifth finding is the constraint on everything: **the founder's attention is the bottleneck.**
-545 commits record an owner decision, and they came in bursts across 21 days.
-
 ## The team
 
 Four lanes. The founder sits in the middle and is the only one who decides scope and taste.
@@ -828,7 +812,7 @@ of this (see Sources).
 - **Spare allowance goes to deciding and checking, and to the hours the founder is away.** Work
   kept for spare allowance is more edge-case scenarios, a second review pass, more mockups to pick
   from, and the optimiser's and librarian's tickets; never a feature nobody decided on, since
-  building before deciding was the costliest of the four costs. Routines run on the plan with no
+  that would break principle 1, decide before building. Routines run on the plan with no
   charge for the cloud machine, so ops watch, the optimiser and the librarian run overnight while
   the founder decides during the day. A routine or headless run that hits the limit fails instead
   of pausing, so each run takes one ticket and leaves its issue where the next run picks it up.
@@ -899,8 +883,8 @@ Each step runs on a real change in a real product before the next one starts.
 **The first product is the Founding Agents website** ([todd450/founding-agents-site](https://github.com/todd450/founding-agents-site), named `agent-team-site` until 26 Oct 2026),
 decided by the founder on 24 Oct 2026. It is a test bed: a small real product that gives every build
 step a real change to run on, not a launch to outside users. A fresh product also shows the team
-from its first commit, with no history it has to work around. The four costs stay the evidence the
-team is shaped by; whether it prevents them shows up in the measures below. The plugin repo stays
+from its first commit, with no history it has to work around. Whether the team does its job shows
+up in the measures below. The plugin repo stays
 private, since the founder is the only user for now. A website bends the order in two places:
 
 - **The decide lane comes before `build`** (step 4 before step 3): nothing on a site can be built
@@ -947,8 +931,8 @@ private, since the founder is the only user for now. A website bends the order i
 
 ## How we'll know it works
 
-One number per cost in the first table, one for the founder's attention, and one for whether
-people want what the team built, which the other five cannot show:
+One number for each cost the team is shaped to prevent, one for the founder's attention, and one
+for whether people want what the team built, which the other five cannot show:
 
 | cost | measure | should |
 |---|---|---|
