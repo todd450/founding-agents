@@ -224,6 +224,26 @@ of this (see Sources).
   be opened at any width; the phone and desktop screenshots, taken with headless Chrome by the
   `mockup-screenshots` skill, let the founder compare options in the issue without opening
   anything. The branch is never merged, so mockups never become product code by accident.
+- **The designer's options are built at once, one designer each.** Decided on 27 Oct 2026, after
+  the Half Badger redesign's `propose` spent over 20 minutes in one designer building and
+  shooting three options in turn. Once the storyboard and each option's direction exist, the
+  options share nothing, so the Design phase now has three steps. One designer checks that
+  screenshots can be taken, storyboards the journey, writes each option's spec (its letter, stars,
+  what it does at the key moment, what sets it apart, its cost) and the pick into
+  `mockups/issue-<n>/storyboard.md`, and pushes only that to `propose/issue-<n>`. Then one designer
+  per option, each in its own worktree on Opus, builds its page and screenshots and pushes them to
+  the same branch, so the phase takes about as long as one option. Each works on a detached copy
+  of the branch at origin, since a branch can be checked out in only one worktree, touches only
+  its own three files, and on a refused push pulls with rebase and pushes again; with no shared
+  files the rebase cannot conflict. Last, a Haiku step lists what the branch changes against
+  `main`, and the script, not a model, builds the result from that list: an option whose designer
+  stopped, or whose page or screenshots are missing, is left out and named in the queue item (the
+  storyboard step clears an earlier run's mockups, so a stale page cannot stand in), the run stops in design with
+  the reasons when fewer than two remain or the designer's pick is missing, and it stops when the
+  branch holds anything outside the issue's mockups folder. The designer now recommends from the
+  storyboard rather than the finished pages; the roles' views never saw the pages either. It
+  costs two more Opus starts per run, each reading the brief and the storyboard. Not yet run on a
+  real product.
 - **Every PR that changes the screen carries before-and-after screenshots.** Decided on 27 Oct
   2026, from Ramp's background agent, Inspect, which puts screenshots in its PRs so a change can
   be judged without opening it. The founder reviews PRs from GitHub's phone app, and the website's
