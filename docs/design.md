@@ -695,7 +695,12 @@ of this (see Sources).
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
-  steps.
+  steps. Opus 5.5 is pinned in full: on Half Badger's headless runs (27 Oct 2026) every step asked
+  for `opus` ran Opus 5 (`claude-opus-5`), at $5/$25 per million tokens against Opus 5.5's $4/$20.
+  A workflow step can name only an alias, so the pin is `ANTHROPIC_DEFAULT_OPUS_MODEL` set to
+  `claude-opus-5-5` in the product's `.claude/settings.json`, which `setup` writes (a plugin's own
+  settings cannot set it), and the evals set the same in each trial. Decided by the founder on
+  27 Oct 2026 (#44).
 - **Builders run on Opus, an exception to principle 3.** The founder's choice on 26 Oct 2026, after
   the first website builds on Sonnet; on #5 the Sonnet builder was sent back once and still shipped
   a step status the issue had said to check against the repo. The cost is the shared limit:
@@ -778,10 +783,6 @@ of this (see Sources).
 - **Each change's share of the week:** on a plan the budget is a share of the weekly limit, not
   dollars, and Anthropic publishes no numbers for the limits. Set it after measuring the first ten
   changes from their run reports; the optimiser owns it once it exists.
-- **Which Opus does `opus` run?** On Half Badger's headless runs (27 Oct 2026) every step asked
-  for `opus` ran Opus 5 (`claude-opus-5`), at $5/$25 per million tokens against Opus 5.5's $4/$20,
-  while the models decision above says Opus 5.5. Naming the model in full is a model choice, so it
-  waits for the evals and the founder.
 - **Can a routine run `build` overnight, and know how much of the week is left?** Running decided
   issues while the founder is away would use allowance that otherwise expires, but nothing
   documented shows a routine starting a plugin workflow or reading the plan's remaining limit.
