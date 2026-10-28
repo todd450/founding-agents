@@ -28,9 +28,16 @@ class CommandsTest(unittest.TestCase):
     def test_one_screenshot_per_device_next_to_the_page(self):
         shots = dict(commands("chrome", "/m/issue-7/a.html"))
         self.assertEqual({out.name for out in shots}, {"a-phone.png", "a-desktop.png"})
-        phone = shots[Path("/m/issue-7/a-phone.png")]
-        self.assertIn("--window-size=390,1200", phone)
-        self.assertEqual(phone[-1], "file:///m/issue-7/a.html")
+        self.assertIn("--window-size=390,1200", shots[Path("/m/issue-7/a-phone.png")])
+        self.assertEqual(shots[Path("/m/issue-7/a-desktop.png")][-1], "file:///m/issue-7/a.html")
+
+    def test_the_phone_lays_the_page_out_in_a_frame_of_its_width(self):
+        # Chrome 156 lays a headless page out at least 500 px wide, so a 390 px shot was a crop.
+        with tempfile.TemporaryDirectory() as frames:
+            phone = dict(commands("chrome", "/m/issue-7/a.html", frames=frames))[Path("/m/issue-7/a-phone.png")]
+            holder = Path(phone[-1].removeprefix("file://")).read_text()
+        self.assertIn('src="file:///m/issue-7/a.html"', holder)
+        self.assertIn("width:390px", holder)
 
     def test_a_served_page_is_named_after_its_path_and_shot_into_the_folder(self):
         names = {url: {out.name for out, _ in commands("chrome", url, "/shots/after")}
@@ -45,7 +52,9 @@ class CommandsTest(unittest.TestCase):
         shots = dict(commands("chrome", "http://localhost:8000/reindex/", "/shots/before"))
         self.assertEqual(set(shots), {Path("/shots/before/reindex-phone.png"), Path("/shots/before/reindex-desktop.png")})
         self.assertIn("--window-size=1440,1100", shots[Path("/shots/before/reindex-desktop.png")])
-        self.assertTrue(all(command[-1] == "http://localhost:8000/reindex/" for command in shots.values()))
+        self.assertEqual(shots[Path("/shots/before/reindex-desktop.png")][-1], "http://localhost:8000/reindex/")
+        holder = Path(shots[Path("/shots/before/reindex-phone.png")][-1].removeprefix("file://")).read_text()
+        self.assertIn('src="http://localhost:8000/reindex/"', holder)
 
 
 @unittest.skipUnless(Path(MAC_CHROME).exists() or shutil.which("google-chrome") or shutil.which("chromium"),

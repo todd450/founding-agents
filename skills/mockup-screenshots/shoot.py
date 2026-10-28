@@ -7,16 +7,21 @@ about-desktop.png in shots/after.
 """
 
 import argparse
+import html
 import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
 # Tall enough to show most of a page below the fold; the HTML holds the rest.
 SIZES = {"phone": (390, 1200), "desktop": (1440, 1100)}
 MAC_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+# Headless Chrome lays a page out at least this wide whatever the window, so a narrower device's
+# page is shot inside a frame of the device's width, and the screenshot crops to that frame.
+NARROWEST = 500
 
 
 def find_chrome(environ=os.environ, which=shutil.which, exists=os.path.exists):
@@ -41,13 +46,22 @@ def target(page):
     return page.as_uri(), page.stem, page.parent
 
 
-def commands(chrome, page, out=None):
+def frame(uri, width, height, folder):
+    """A page holding `uri` in a frame `width` wide, so it lays out at that width."""
+    page = Path(folder) / f"frame-{width}.html"
+    page.write_text(f'<style>html,body{{margin:0}}</style><iframe src="{html.escape(uri)}" '
+                    f'style="border:0;display:block;width:{width}px;height:{height}px"></iframe>')
+    return page.as_uri()
+
+
+def commands(chrome, page, out=None, frames=None):
     uri, name, folder = target(page)
     folder = Path(out).resolve() if out else folder
     for device, (width, height) in SIZES.items():
         shot = folder / f"{name}-{device}.png"
+        opens = frame(uri, width, height, frames or tempfile.mkdtemp()) if width < NARROWEST else uri
         yield shot, [chrome, "--headless=new", "--disable-gpu", "--hide-scrollbars",
-                     f"--window-size={width},{height}", f"--screenshot={shot}", uri]
+                     f"--window-size={width},{height}", f"--screenshot={shot}", opens]
 
 
 def main(argv=None):
@@ -61,13 +75,14 @@ def main(argv=None):
         return 1
     if args.out:
         Path(args.out).mkdir(parents=True, exist_ok=True)
-    for page in args.pages:
-        for out, command in commands(chrome, page, args.out):
-            subprocess.run(command, capture_output=True)
-            if not out.exists():
-                print(f"Chrome made no screenshot for {page}", file=sys.stderr)
-                return 1
-            print(out)
+    with tempfile.TemporaryDirectory() as frames:
+        for page in args.pages:
+            for out, command in commands(chrome, page, args.out, frames):
+                subprocess.run(command, capture_output=True)
+                if not out.exists():
+                    print(f"Chrome made no screenshot for {page}", file=sys.stderr)
+                    return 1
+                print(out)
     return 0
 
 
