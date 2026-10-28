@@ -10,7 +10,6 @@ Four lanes. The founder sits in the middle and is the only one who decides scope
 | lane | role | runs | produces | may touch |
 |---|---|---|---|---|
 | Decide | **Product lead** | each new idea; a weekly scope review | a one-paragraph brief (who, what evidence, how we'll know); says no by default; owns the decision queue | no code |
-| | **Researcher** | ongoing | interview guides, synthesis of what users said, the one metric | no code; never contacts users without the founder |
 | | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
 | Build | **Architect** | each new surface; any schema or shared change | the plan builders work from, with the day-one defaults set | plans, schema review |
 | | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
@@ -445,10 +444,10 @@ private, since the founder is the only user for now. A website bends the order i
    carried them with their costs.
 5. **Grow on demand:** the architect for schema or shared changes (built as `plan` on 27 Oct 2026,
    not yet run on the website); two to four parallel builders once one is routine (built into
-   `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser,
-   librarian and researcher as their kind of work appears. QA and code review became two roles,
+   `build` on 27 Oct 2026, not yet run on the website); then the security reviewer, optimiser and
+   librarian as their kind of work appears. QA and code review became two roles,
    with the security reviewer beside them, on 27 Oct 2026, and the optimiser and librarian became
-   weekly routines the same day, and the researcher became an agent the founder calls; ops watch
+   weekly routines the same day; ops watch
    took on check-backs on shipped briefs the same day. None has run on the website yet. Every role
    in the team table now has an agent or a routine. The same day a test auditor joined the
    optimiser and the security reviewer as the finders `sweep` runs; it is done once a sweep of each
