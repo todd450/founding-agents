@@ -1,11 +1,13 @@
 export const meta = {
   name: 'plan',
-  description: 'Cut a decided brief into build issues: the architect plans, asks the founder about any technical decision the brief left open, and opens issues that never share files',
+  description: "Cut a decided brief into build issues: the architect plans, asks the founder about any technical decision the brief left open with every role's recommendation and the team's, and opens issues that never share files",
   whenToUse: 'When the founder has decided a brief and it needs cutting into build issues before building, e.g. /founding-agents:plan 7',
   phases: [
     { title: 'Check', detail: 'the brief is decided and not already planned', model: 'haiku' },
     { title: 'Plan', detail: 'the architect writes the plan and opens the build issues', model: 'opus' },
-    { title: 'Queue', detail: 'one needs-founder item for the technical decisions the brief left open', model: 'haiku' },
+    { title: 'Views', detail: 'when decisions are open, every other role recommends from what its job knows, and says why', model: 'sonnet' },
+    { title: 'Team', detail: "the team's choice on each open decision, weighing every role's", model: 'opus' },
+    { title: 'Queue', detail: "one needs-founder item for the technical decisions the brief left open, with each role's choice and the team's", model: 'haiku' },
     { title: 'Report', detail: "the run's time, tokens and cost, posted on the brief", model: 'haiku' },
   ],
 }
@@ -14,7 +16,7 @@ const raw = args && typeof args === 'object' ? args.issue : args
 const issue = Number(String(raw ?? '').replace(/[^0-9]/g, ''))
 if (!issue) throw new Error('Name the decided brief to plan, e.g. /founding-agents:plan 7')
 
-// What counts as a technical one-way door; build.js, propose.js and plan.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js, plan.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 // Dollars at API prices one run should stay under; the run report flags a run over it.
@@ -43,7 +45,7 @@ const PLAN = {
           decision: { type: 'string', description: 'the choice, in a few words' },
           options: { type: 'array', items: { type: 'string' }, description: 'the realistic options, each in a few words' },
           recommend: { type: 'string', description: 'the option you recommend' },
-          why: { type: 'string', description: 'why, in one sentence' },
+          why: { type: 'string', description: 'why, in one or two plain sentences for someone who does not read code' },
           reverse: { type: 'string', description: 'what reversing it later would cost' },
         },
         required: ['decision', 'options', 'recommend', 'why', 'reverse'],
@@ -67,6 +69,42 @@ const PLAN = {
   },
   required: ['decisions', 'issues', 'plan_url', 'stopped_because'],
 }
+// One role's choice on each open decision, and the team's.
+const VIEW = {
+  type: 'object',
+  properties: {
+    why: { type: 'string', description: 'your view overall, in plain sentences for someone who does not read code' },
+    decisions: {
+      type: 'array',
+      description: 'your choice on each open decision',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string', description: 'P1, P2 and so on' },
+          choice: { type: 'string', description: 'the option you pick' },
+          why: { type: 'string', description: 'why, in one plain sentence' },
+        },
+        required: ['id', 'choice', 'why'],
+      },
+    },
+  },
+  required: ['why', 'decisions'],
+}
+
+// The roles who each recommend after the architect, each from what its job knows; every one is an
+// agent file in agents/ (a test checks). propose.js asks the same roles about a brief.
+const VOICES = [
+  { name: 'Product lead', agentType: 'founding-agents:product-lead', lens: 'what the brief is for, its appetite and its no-gos' },
+  { name: 'Researcher', agentType: 'founding-agents:researcher', lens: 'what people have actually said and done, and how strong that evidence is' },
+  { name: 'Designer', agentType: 'founding-agents:designer', lens: 'what the person using it sees and does, and whether the choice limits that' },
+  { name: 'Builder', agentType: 'founding-agents:builder', lens: 'how much work it is to build and keep working, and what could make it take longer' },
+  { name: 'QA', agentType: 'founding-agents:qa', lens: 'what could go wrong for the people using it, and how hard that will be to check' },
+  { name: 'Code reviewer', agentType: 'founding-agents:code-reviewer', lens: 'whether it adds more to look after than it is worth, and whether a simpler version would do' },
+  { name: 'Security reviewer', agentType: 'founding-agents:security-reviewer', lens: "what it risks for people's data, accounts and privacy" },
+  { name: 'Integrator', agentType: 'founding-agents:integrator', lens: 'what releasing it means, and the risk to the live product' },
+]
+const PLAIN = 'in plain English for someone who does not read code, with no jargon, file names or code'
+
 const POSTED = {
   type: 'object',
   properties: { comment_url: { type: 'string' } },
@@ -135,14 +173,55 @@ if (!plan) throw new Error('The architect returned nothing')
 
 if (plan.decisions.length) {
   const ids = plan.decisions.map((_, i) => `P${i + 1}`)
+  const choices = plan.decisions.map((d, i) => `${ids[i]}. ${d.decision}: ${d.options.join(' / ')}. Reversing it later: ${d.reverse}`).join('\n')
+
+  // Each voice sees the brief and the open decisions but not the other roles' picks, so it gives its
+  // own view instead of echoing theirs; the team step then weighs them all.
+  phase('Views')
+  const views = await parallel(VOICES.map(v => () => agent(
+    `Read issue #${issue} in ${brief.repo}: the brief and its comments, including the founder's answers. The architect's plan needs these technical decisions the brief left open:
+${choices}
+
+Choose one option for each, from what your role knows: ${v.lens}. Form your own view; the architect's recommendations are its own. Say why ${PLAIN}, one sentence for each choice. Read only: change nothing and post nothing.`,
+    { label: v.name.toLowerCase(), phase: 'Views', agentType: v.agentType, model: 'sonnet', effort: 'medium', schema: VIEW },
+  )))
+  const members = [
+    { name: 'Architect', why: '', decisions: plan.decisions.map((d, i) => ({ id: ids[i], choice: d.recommend, why: d.why })) },
+    ...VOICES.map((v, i) => views[i] && { name: v.name, ...views[i] }).filter(Boolean),
+  ]
+
+  phase('Team')
+  const heard = members.map(m => `- ${m.name}:${m.decisions.map(d => ` ${d.id}: ${d.choice}. ${d.why}`).join('')}`).join('\n')
+  const team = await agent(
+    `Give the founder the team's choice on each technical decision the architect's plan for issue #${issue} in ${brief.repo} left open. Read the brief and its comments.
+${choices}
+
+Each role's choices:
+${heard}
+
+Weigh them on their reasons; do not count votes. Choose one option for each, and say why ${PLAIN}, one or two sentences for each: name any role that disagrees, and why the team goes the other way. Read only: change nothing and post nothing.`,
+    { label: 'team', phase: 'Team', model: 'opus', effort: 'medium', schema: VIEW },
+  )
+
   const lines = [
-    `**Decision needed:** the architect's plan for this brief needs ${plan.decisions.length === 1 ? 'a technical decision' : 'technical decisions'} the brief left open. Each is costly to reverse once it is built in, so each is yours to decide:`,
+    `**Decision needed:** the architect's plan for this brief needs ${plan.decisions.length === 1 ? 'a technical decision' : 'technical decisions'} the brief left open. Each is costly to reverse once it is built in, so each is yours to decide.`,
     '',
-    ...plan.decisions.map((d, i) =>
-      `- **${ids[i]}. ${d.decision}:** ${d.options.join(' / ')}. Recommended: **${d.recommend}**, because ${d.why} Reversing it later: ${d.reverse}`),
+    team ? `**The team:** ${team.why}` : "**The team** gave no overall recommendation; each role's choice is below.",
+    '',
+  ]
+  plan.decisions.forEach((d, i) => {
+    const ours = team ? team.decisions.find(c => c.id === ids[i]) : null
+    lines.push(`- **${ids[i]}. ${d.decision}:** ${d.options.join(' / ')}. Reversing it later: ${d.reverse}`)
+    if (ours) lines.push(`  - **The team: ${ours.choice}.** ${ours.why}`)
+    for (const m of members) {
+      const c = m.decisions.find(c => c.id === ids[i])
+      if (c) lines.push(`  - ${m.name}: ${c.choice}. ${c.why}`)
+    }
+  })
+  lines.push(
     '',
     `**To decide:** reply with your choice for each (${ids.join(', ')}) and any notes, then add the \`decided\` label again, and \`/founding-agents:plan ${issue}\` plans it with your answers. No build issues are open yet.`,
-  ]
+  )
   phase('Queue')
   const posted = await agent(
     `Post this comment on issue #${issue} in ${brief.repo} exactly as written, with \`gh issue comment ${issue} --repo ${brief.repo} --body-file -\`, then move the labels with \`gh issue edit ${issue} --repo ${brief.repo} --remove-label decided --add-label needs-founder\`. Return the comment's URL.
@@ -151,6 +230,7 @@ ${lines.join('\n')}`,
     { label: 'queue item', phase: 'Queue', model: 'haiku', effort: 'low', schema: POSTED },
   )
   return await report({ issue, status: 'needs the founder', decisions: plan.decisions.map(d => d.decision),
+                        team: team ? team.decisions.map(c => `${c.id}: ${c.choice}`) : [],
                         queue_item: posted ? posted.comment_url : 'not posted' })
 }
 if (!plan.issues.length) {

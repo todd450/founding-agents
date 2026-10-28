@@ -12,6 +12,8 @@ Run from the product repo's folder:
 - Use `--workflow propose` for a propose run. For an idea in words, `--issue` is the issue the product
   lead opened.
 - Use `--workflow plan` for a plan run, with the brief it planned as `--issue`.
+- Use `--workflow sweep` for a sweep run, with `--issue` the queue item it opened; it reports the
+  newest session that ran a sweep.
 - `--budget <dollars>` flags a run that cost more, above the table. The workflows pass their own
   budget.
 - `--outcome merged` or `--outcome stopped` records how the run ended, above the table. `build`
