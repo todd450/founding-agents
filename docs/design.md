@@ -614,6 +614,25 @@ of this (see Sources).
   the token linter four times in five each, at $0.32 a trial against $0.98. The model choice
   went to the founder (#41). A third of trials still used a fixed `/tmp` name, mostly a
   note holding the path of their own `mktemp -d` folder.
+- **A task's fixture keeps up with the rules it is graded by.** Found on 27 Oct 2026, when task 11,
+  the correct page QA should approve, failed all three trials on `main` and on #44's branch with
+  the same must-fixes. The fixture was stale, not QA too strict, since every finding held up in a
+  browser. Its PR had no screenshots, which QA has required since that morning. Its band's head
+  column was `max-content`, so the longest line in the head set the layout: with a red issue named
+  there, the steps were squeezed to 90 px and the page scrolled sideways at 860 px. That is task
+  09's flaw met through data instead of a missing gutter, and QA's "too big" heuristic finds it.
+  Dates also broke mid-value at 860 and 1000 px. The page now caps the head at `fit-content(16em)`
+  and keeps each date on one line, and its PR shows before-and-after screenshots from a
+  `screenshots/issue-31` branch started empty, as a builder leaves them. `tests/test_evals.py`
+  holds both: a QA task whose right answer is approve carries every screenshot its PR names, and
+  task 11's page still holds with its head line doubled. A rule QA enforces is a rule every
+  approve fixture must meet the day it lands, so a change to `qa.md` checks the approve tasks
+  too. Taking the screenshots also showed that every phone screenshot the skill had made was
+  cut off: headless Chrome will not open a window under 500 px, so `--window-size=390` laid the
+  page out at 500 and cropped it. `shoot.py` now sets the viewport through Chrome's DevTools pipe
+  and fails if the page sees any other width. Task 11 has not been rerun since, because its third
+  finding was the eval leaking (see "Still open"): no run goes against the founder's real holdouts
+  again until trials have their own.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
@@ -703,6 +722,17 @@ of this (see Sources).
 - **Can a routine run `build` overnight, and know how much of the week is left?** Running decided
   issues while the founder is away would use allowance that otherwise expires, but nothing
   documented shows a routine starting a plugin workflow or reading the plan's remaining limit.
+- **Eval trials reach the founder's real holdouts.** Found on 27 Oct 2026. A QA trial's repo is
+  named after the website, so QA reads `~/.founding-agents/holdouts/todd450/founding-agents-site`,
+  commits the scenarios it writes there, and pushes them to `founding-agents-site-holdouts`. Trials
+  running at once switch branches in that one clone. So "nothing reaches GitHub" was not true for
+  QA, and each run can raise the bar the next run is graded against: task 11's occasional holdout
+  finding was in a class whose scenarios were all added that afternoon, on `qa/…` branches that
+  look like trials' (`qa/record-dates-1793146000`). A trial cannot just get its own `HOME`,
+  because the plan's login does not survive it. The likely fix makes the holdouts path
+  configurable in `qa.md` and gives each trial a throwaway holdouts repo with a local `origin`,
+  then reruns QA's four tasks. Until then no QA task runs. Cleaning up the clone and the pushed
+  branches is the founder's call.
 
 ## Build order
 

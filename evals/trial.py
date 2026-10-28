@@ -57,10 +57,14 @@ def source(task_dir, name):
 
 
 def commit(work, task_dir, step):
-    """Commit a list of folders' files on a branch, creating it from `from` (default main) if new."""
+    """Commit a list of folders' files on a branch, creating it from `from` (default main) if new, or
+    with no history and no files when `orphan` is set, as a builder starts its screenshots branch."""
     branch = step["branch"]
     if git(work, "rev-parse", "--verify", "--quiet", f"refs/heads/{branch}", check=False).strip():
         git(work, "checkout", "-q", branch)
+    elif step.get("orphan"):
+        git(work, "checkout", "-q", "--orphan", branch)
+        git(work, "rm", "-rqf", "--ignore-unmatch", ".")
     elif git(work, "rev-parse", "--verify", "--quiet", "HEAD", check=False).strip():
         git(work, "checkout", "-q", "-b", branch, step.get("from", "main"))
     for name in step.get("dirs", []):
