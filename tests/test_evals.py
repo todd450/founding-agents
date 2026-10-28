@@ -100,7 +100,7 @@ class TaskTest(unittest.TestCase):
                 trial.make(task, folder)
                 trial.apply(task, folder, answer(task, "reference"))
                 checkout = trial.Trial(task, folder).branch("build/issue-12")
-                (checkout / "index.html").write_text(site.replace("No open red issue. Nothing is blocked.", line))
+                (checkout / "index.html").write_text(site.replace("No open red issue.", line))
                 trial.git(checkout, "commit", "-q", "--allow-empty", "-am", "Reword the red line")
                 trial.git(checkout, "push", "-q", "origin", "build/issue-12")
                 checks = dict(trial.grade(task, folder))
@@ -185,6 +185,32 @@ class RunnerTest(unittest.TestCase):
         self.assertTrue(env["PATH"].startswith(str(EVALS / "bin")))
         self.assertEqual(env["GH_CONFIG_DIR"], "/tmp/t/gh-config")
 
+    def test_a_trial_can_reach_neither_github_nor_the_real_holdouts(self):
+        # On 27 Oct 2026 trial QA pushed eval scenarios to the website's real holdouts repo.
+        folder = Path(tempfile.mkdtemp())
+        os.environ["GH_TOKEN"] = "ghp_test"
+        try:
+            env = run.environment(folder)
+        finally:
+            del os.environ["GH_TOKEN"]
+        self.assertNotIn("GH_TOKEN", env)
+        for remote in ("https://github.com/todd450/founding-agents-site-holdouts.git",
+                       "git@github.com:todd450/founding-agents-site-holdouts.git"):
+            with self.subTest(remote):
+                done = subprocess.run(["git", "ls-remote", remote], env=env, capture_output=True, text=True, timeout=30)
+                self.assertNotEqual(done.returncode, 0)
+                self.assertIn(str(folder / "no-github"), done.stderr)
+        cmd = run.command(run.capture(trial.load("11-a-correct-page")), "opus")
+        hook = json.loads(cmd[cmd.index("--settings") + 1])["hooks"]["PreToolUse"][0]["hooks"][0]["command"]
+        for tool_input, blocked in (({"command": "cd ~/.founding-agents/holdouts/o/n && git pull"}, True),
+                                    ({"command": "gh pr create --repo o/n-holdouts"}, True),
+                                    ({"file_path": "/Users/x/.founding-agents/holdouts/o/n/README.md"}, True),
+                                    ({"command": "python3 -m unittest discover -s tests"}, False)):
+            with self.subTest(tool_input):
+                event = {"agent_type": "founding-agents:qa", "tool_input": tool_input}
+                done = subprocess.run(hook, shell=True, input=json.dumps(event), capture_output=True, text=True)
+                self.assertEqual(done.returncode, 2 if blocked else 0)
+
 
 class ResultTest(unittest.TestCase):
     SCHEMA = {"required": ["verdict", "findings"]}
@@ -203,6 +229,15 @@ class ResultTest(unittest.TestCase):
     def test_flags_fixed_scratch_paths_and_ports_but_not_private_ones(self):
         used = "cp index.html /tmp/index.html.bak; d=$(mktemp -d); cd $TMPDIR/x; python3 -m http.server 8777; python3 -m http.server 0"
         self.assertEqual(run.FIXED.findall(used), ["/tmp/index.html.bak", "http.server 8777"])
+
+    def test_flags_killing_by_a_pattern_but_not_by_its_own_pid(self):
+        commands = ['python3 -u -m http.server 0 > /var/folders/x/tmp.Ab12Cd/server.log 2>&1 & echo $!',
+                    'kill 48213', 'pkill -f "http.server 0"; ls', "killall python3",
+                    "kill $(pgrep -f http.server)"]
+        log = Path(tempfile.mkdtemp()) / "session.jsonl"
+        log.write_text("\n".join(json.dumps({"type": "assistant", "message": {"content": [
+            {"type": "tool_use", "name": "Bash", "input": {"command": c}}]}}) for c in commands))
+        self.assertEqual(run.shared(log), ['kill $(pgrep -f http.server)', 'killall python3', 'pkill -f "http.server 0"'])
 
     def test_pass_rate_counts_trials_and_pass_k_counts_tasks_whose_every_trial_passed(self):
         def result(name, passed):

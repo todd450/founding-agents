@@ -239,7 +239,12 @@ of this (see Sources).
   page left out, or an after screenshot that does not match what it sees, since pictures only the
   builder checks show what the builder hoped. Fix rounds retake them, so the founder sees the
   change that merges. Builder and QA got the `Skill` tool for it, and a test now holds that every
-  agent told to use a skill has the tool. Not yet run on a real product.
+  agent told to use a skill has the tool. Not yet run on a real product. The rule sent back every
+  eval page QA should approve, since no fixture PR had screenshots, so the QA tasks' PRs now carry
+  them on an empty `screenshots/issue-<n>` branch, as a builder's do. Making them showed that
+  headless Chrome 156 lays a page out at least 500 px wide, so every 390 px phone shot was a crop
+  with cut-off text; the skill now shoots a phone inside a frame of its width. Task 11 went from 0
+  of 3 to 3 of 3, and builder and QA passed all 33 trials.
 - **Technical one-way doors reach the founder before they are built in.** Decided by the founder on
   26 Oct 2026, after the website's "no build step or framework" was settled by an aside in a brief
   ("the architect confirms that, not the founder"), with no architect to confirm it, and written
@@ -295,7 +300,15 @@ of this (see Sources).
   Agents running at once share one machine: on 27 Oct 2026 eval trials run side by side
   overwrote each other's `/tmp/index.html.bak`, and one QA reviewed another trial's checkout
   through `/tmp/qa-pr8`. So the builder, QA and the code and security reviewers keep scratch
-  files in their worktree or a fresh `mktemp -d` and serve on a free port.
+  files in their worktree or a fresh `mktemp -d` and serve on a free port. A third of the next
+  run's trials still wrote that folder's path into a fixed note, `/tmp/.x`, because the shell
+  forgets variables between commands, so the same four agents now type the folder's full path
+  into each later command and never save it to a fixed file: trials using a fixed path or port
+  fell from 34 of 103 to 7 of 54, and no `/tmp/.x`. Every server is now `http.server 0`, so QA's
+  clean-up, `pkill -f "http.server 0"`, stopped every other agent's server too (9 of 54 trials,
+  all QA). The four agents now start a server in the background with `& echo $!` and stop only
+  that number with `kill`, never `pkill` or `killall` by a pattern, and the eval runner counts
+  pattern kills: none in the next 54 trials, where every QA trial stopped its own server by PID.
 - **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
   the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
   its own worktree and posting its own comment; when the change touches routes, sign-in,
@@ -670,6 +683,15 @@ of this (see Sources).
   the token linter four times in five each, at $0.32 a trial against $0.98. The model choice
   went to the founder (#41). A third of trials still used a fixed `/tmp` name, mostly a
   note holding the path of their own `mktemp -d` folder.
+  The third run, the same evening, found trials were not sealed off from the founder's machine
+  either. A trial keeps the founder's home folder, since the plan's login lives there, so trial QA
+  wrote eval scenarios into the website's real holdouts and `git push`ed them to its real
+  `-holdouts` repo, which the `gh` stand-in never sees. Later trials, and the website's own QA
+  on a real PR, then ran those scenarios, and task 11 fell to 0 of 3. Now git in a trial sends
+  every GitHub address to a missing folder with no saved login, and a hook passed with
+  `--settings` stops any agent naming the real holdouts, so a trial runs as if holdouts were not
+  set up, as the first runs did. Task 11 went back to 3 of 3. A different `HOME` would seal more
+  but signs the plan out.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and Haiku 5.5 for ops watch and the workflows' small
