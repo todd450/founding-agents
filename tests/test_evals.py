@@ -100,7 +100,7 @@ class TaskTest(unittest.TestCase):
                 trial.make(task, folder)
                 trial.apply(task, folder, answer(task, "reference"))
                 checkout = trial.Trial(task, folder).branch("build/issue-12")
-                (checkout / "index.html").write_text(site.replace("No open red issue. Nothing is blocked.", line))
+                (checkout / "index.html").write_text(site.replace("No open red issue.", line))
                 trial.git(checkout, "commit", "-q", "--allow-empty", "-am", "Reword the red line")
                 trial.git(checkout, "push", "-q", "origin", "build/issue-12")
                 checks = dict(trial.grade(task, folder))

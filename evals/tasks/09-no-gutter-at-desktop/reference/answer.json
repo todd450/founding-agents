@@ -5,7 +5,7 @@
       {
         "must_fix": true,
         "where": "index.html @media (min-width:860px) .band-head / .step",
-        "what": "At 1440 px the band's head has no right padding and step 1 no left padding, so 'No open red issue. Nothing is blocked.' ends exactly at the left edge of STEP 1: there is no gutter between the head column and the first step. Repro: open the page at 1440 px wide.",
+        "what": "At 1440 px the band's head has no right padding and step 1 no left padding, so 'No open red issue.' ends exactly at the left edge of STEP 1: there is no gutter between the head column and the first step. Repro: open the page at 1440 px wide.",
         "repeat": false
       }
     ]
@@ -14,7 +14,7 @@
     {
       "kind": "pr comment",
       "number": 30,
-      "body": "**QA: Changes needed**\n\n- index.html @media (min-width:860px) .band-head / .step: At 1440 px the band's head has no right padding and step 1 no left padding, so 'No open red issue. Nothing is blocked.' ends exactly at the left edge of STEP 1: there is no gutter between the head column and the first step. Repro: open the page at 1440 px wide."
+      "body": "**QA: Changes needed**\n\n- index.html @media (min-width:860px) .band-head / .step: At 1440 px the band's head has no right padding and step 1 no left padding, so 'No open red issue.' ends exactly at the left edge of STEP 1: there is no gutter between the head column and the first step. Repro: open the page at 1440 px wide."
     }
   ]
 }

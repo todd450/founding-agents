@@ -237,7 +237,11 @@ of this (see Sources).
   Agents running at once share one machine: on 27 Oct 2026 eval trials run side by side
   overwrote each other's `/tmp/index.html.bak`, and one QA reviewed another trial's checkout
   through `/tmp/qa-pr8`. So the builder, QA and the code and security reviewers keep scratch
-  files in their worktree or a fresh `mktemp -d` and serve on a free port.
+  files in their worktree or a fresh `mktemp -d` and serve on a free port. A third of the next
+  run's trials still wrote that folder's path into a fixed note, `/tmp/.x`, because the shell
+  forgets variables between commands, so the same four agents now type the folder's full path
+  into each later command and never save it to a fixed file: trials using a fixed path or port
+  fell from 34 of 103 to 7 of 54, and no `/tmp/.x`.
 - **Review splits into edge-case QA, code review and security review.** Done on 27 Oct 2026, at
   the founder's request. Each round of `build`, QA and the code reviewer run side by side, each in
   its own worktree and posting its own comment; when the code reviewer says the diff touches
