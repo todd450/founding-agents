@@ -518,6 +518,20 @@ class ReachTest(unittest.TestCase):
         self.assertIn("- QA: facts.json: a fact written with a javascript: link", integrator)
         self.assertIn("left for the founder", integrator)
 
+    def test_a_loud_refusal_counts_as_caught(self):
+        qa = next(c for c in self.run_workflow({"qa": [APPROVE]})["calls"] if c["label"].startswith("qa"))
+        caught = qa["schema"]["properties"]["findings"]["items"]["properties"]["review_would_see"]["description"]
+        self.assertIn("the product refuses the value loudly", caught)
+        self.assertIn("gets past the product to readers", caught)
+
+    def test_a_failing_holdout_only_a_trusted_writer_meets_and_the_build_refuses_is_a_nit(self):
+        # On the website's #39 the build refused the founder's own file, with a stack trace.
+        holdout = {**TRUSTED, "where": "scripts/generate.js",
+                   "what": "data-and-account-shapes holdout: a wrong-shaped file is refused with a stack trace"}
+        run = self.run_workflow({"qa": [{"verdict": "changes", "findings": [holdout]}]})
+        self.assertEqual(run["result"]["status"], "merged")
+        self.assertNotIn("builder #12, round 2", [c["label"] for c in run["calls"]])
+
     def test_an_ordinary_slip_by_a_trusted_writer_stays_must_fix(self):
         slip = {**TRUSTED, "review_would_see": False, "what": "an empty fact breaks the page"}
         run = self.run_workflow({"qa": [{"verdict": "changes", "findings": [slip]}, APPROVE]})
