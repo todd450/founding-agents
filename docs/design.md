@@ -624,7 +624,7 @@ of this (see Sources).
 - **Spare allowance goes to deciding and checking, and to the hours the founder is away.** Work
   kept for spare allowance is more edge-case scenarios, a second review pass, more mockups to pick
   from, and the optimiser's and librarian's tickets; never a feature nobody decided on, since
-  building before deciding was the costliest of the four costs. Routines run on the plan with no
+  that would break principle 1, decide before building. Routines run on the plan with no
   charge for the cloud machine, so ops watch, the optimiser and the librarian run overnight while
   the founder decides during the day. A routine or headless run that hits the limit fails instead
   of pausing, so each run takes one ticket and leaves its issue where the next run picks it up.
@@ -695,8 +695,8 @@ Each step runs on a real change in a real product before the next one starts.
 **The first product is the Founding Agents website** ([todd450/founding-agents-site](https://github.com/todd450/founding-agents-site), named `agent-team-site` until 26 Oct 2026),
 decided by the founder on 24 Oct 2026. It is a test bed: a small real product that gives every build
 step a real change to run on, not a launch to outside users. A fresh product also shows the team
-from its first commit, with no history it has to work around. The four costs stay the evidence the
-team is shaped by; whether it prevents them shows up in the measures below. The plugin repo stays
+from its first commit, with no history it has to work around. Whether the team does its job shows
+up in the measures below. The plugin repo stays
 private, since the founder is the only user for now. A website bends the order in two places:
 
 - **The decide lane comes before `build`** (step 4 before step 3): nothing on a site can be built
@@ -743,8 +743,8 @@ private, since the founder is the only user for now. A website bends the order i
 
 ## How we'll know it works
 
-One number per cost in the first table, one for the founder's attention, and one for whether
-people want what the team built, which the other five cannot show:
+One number for each cost the team is shaped to prevent, one for the founder's attention, and one
+for whether people want what the team built, which the other five cannot show:
 
 | cost | measure | should |
 |---|---|---|
