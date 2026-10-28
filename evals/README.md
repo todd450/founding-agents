@@ -14,9 +14,12 @@ That runs every task three times on your plan and prints, per agent and model, t
 agent's tasks; `--model builder=sonnet` runs them on another model; `--task 09` runs one task;
 `--dry-run` shows each task's step and runs nothing; `--keep` keeps each trial's folder to read.
 
-Run it before the version bump of any change that alters an agent, skill or workflow, or a model
-choice (`docs/design.md` says why). A change to one agent runs that agent's tasks; a model change, a
-workflow change or a release runs all of them.
+A change that alters an agent, skill or workflow, or a model choice, runs the tasks of the roles it
+touches before its version bump, one trial each, all at once: for a change to the reviewers,
+`python3 evals/run.py --role code-reviewer --role qa --trials 1`, about a quarter of an hour, since
+the wait is the slowest trial. A model change adds `--model <role>=<model>` for the role it moves.
+The full run, every task three times, goes before a release, off a PR's path: one trial shows a change
+did not break an agent, three tell a reliable one from a lucky one (`docs/design.md` says why).
 
 ## How a trial runs
 

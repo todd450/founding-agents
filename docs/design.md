@@ -399,7 +399,13 @@ of this (see Sources).
     the integrator recommended these; the optimiser wanted $4, $8 and $12, so that every send-back
     on medium or high reaches the founder, which the others thought would fill the queue with
     routine fixes. A brief's run report flags the sum of its issues' budgets.
-  Not yet run on a real product.
+  The evals (one trial each, the code reviewer on both models) found the Opus code reviewer at 7
+  of 7 and QA at 3 of 4; its miss, task 11, fails on `main` too, from a stale fixture (#46). The
+  code reviewer on Sonnet passed 5 of 7, at $0.14 a trial against $0.37. It missed both tasks where
+  a standard tool should replace a hand-written check, the CSS linter (01, in both runs that tried
+  it) and the HTML validator (02): the failure that sent the website's #4 back three times. A
+  low-risk change is wording or static content, where such checks are rare, so Sonnet stays there
+  until the founder decides otherwise. Not yet run on a real product.
 - **The optimiser and the librarian run as weekly routines that propose, never change.** Built on
   27 Oct 2026, the same way as ops watch's daily routine: each one's instructions are a file
   `setup` copies into the product (`.github/optimiser/routine.md`, `.github/librarian/routine.md`)
@@ -632,9 +638,9 @@ of this (see Sources).
   run the workflows with scripted replies, so they prove the wiring, not the judgement: a change to
   an agent's instructions or a model choice shipped untested, and the builder moved to Opus, and
   `propose`'s role views to Sonnet, with no data behind either. So a change that alters an agent,
-  skill or workflow, or a model choice, runs the eval set before its version bump: a change to one
-  agent runs that agent's tasks, and a model change, a workflow change or a release runs all of
-  them. The set follows Anthropic's *Demystifying evals for AI agents*: 19 tasks in `evals/`, each
+  skill or workflow, or a model choice, runs the eval set before its version bump: since 27 Oct
+  2026 (below), the tasks of the roles it touches, one trial each, and the full set before a
+  release. The set follows Anthropic's *Demystifying evals for AI agents*: 19 tasks in `evals/`, each
   taken from a real website run and testing one failure class, each graded by a script, with a
   reference answer that passes and a known-bad answer (the website's own mistake where there was
   one) that fails, which `tests/test_evals.py` holds both ways without a model. Seven want a stop,
@@ -680,6 +686,14 @@ of this (see Sources).
   `--settings` stops any agent naming the real holdouts, so a trial runs as if holdouts were not
   set up, as the first runs did. Task 11 went back to 3 of 3. A different `HOME` would seal more
   but signs the plan out.
+  The founder then found the wait, not the cost, the problem: a full run takes about an hour, and
+  every workflow change ran one. A trial takes 1 to 12 minutes; the hour was 90 of them four at a
+  time. So since 27 Oct 2026 a PR runs only the tasks of the roles it touches, one trial each, all
+  at once, and the wait is its slowest trial: for the risk tiers above, 18 trials of the code
+  reviewer and QA took 16.5 minutes and $7.20, against about an hour and $65 for the full run with
+  Sonnet added. Eighteen at once hit no limit, so that is the runner's default. The full run,
+  three trials each, still goes before a release, since one trial shows a change did not break an
+  agent but cannot tell a reliable one from a lucky one.
 - **Models: the strongest model plans and judges; cheaper ones build** (principle 3). Today that is
   Opus 5.5 for the product lead, architect, designer, QA, the code and security reviewers and the
   builders, Sonnet 5.5 for the integrator and for the code reviewer on a low-risk change, and Haiku
