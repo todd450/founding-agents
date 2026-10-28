@@ -102,8 +102,8 @@ screen, one design-token source that generates every copy.
 - **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
-- **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` before a version
-  bump that changes an agent, skill, workflow or model.
+- **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` for the roles a
+  model change, a release or a real failure touched.
 - **Hard rules** → a plugin hook (only the integrator pushes to `main` or merges) and GitHub branch
   protection (nothing merges without passing checks).
 
@@ -574,15 +574,19 @@ of this (see Sources).
   the PR and the issues it closes, so a plain session counts only once its own report is posted on
   its PR. A fix later is a merged PR within two weeks that changed one of the same files and is
   labelled or titled as a fix: a guess, so the table names each one for the founder to check.
-- **Evals test the agents themselves, and a change runs them before its version bump.** Decided by
-  the founder on 27 Oct 2026 (#34), after the team's own recommendation. The tests in `tests/`
+- **Evals test the agents themselves, for the roles touched, on a model change, a release or a
+  real failure.** Decided by the founder on 27 Oct 2026 (#34), after the team's own recommendation. The tests in `tests/`
   run the workflows with scripted replies, so they prove the wiring, not the judgement: a change to
   an agent's instructions or a model choice shipped untested, and the builder moved to Opus, and
-  `propose`'s role views to Sonnet, with no data behind either. So a change that alters an agent,
-  skill or workflow, or a model choice, runs the eval set before its version bump: a change to one
-  agent runs that agent's tasks, and a model change, a workflow change or a release runs all of
-  them. The set follows Anthropic's *Demystifying evals for AI agents*: 19 tasks in `evals/`, each
-  taken from a real website run and testing one failure class, each graded by a script, with a
+  `propose`'s role views to Sonnet, with no data behind either. So evals run at three moments, each
+  for only the roles it touched: a model change runs that role's tasks; a release, before a
+  product moves onto a new plugin version, runs the tasks of every agent, skill or workflow step
+  changed since the last eval run; and a product's real run failing adds a task from that failure
+  and runs its role's tasks. Narrowed by the founder on 27 Oct 2026 from a run before every
+  version bump: the plugin went from 0.18.0 to 0.30.0 in a day, a rerun of three roles cost $40–60
+  at API prices, and task 11 broke because `main` added a rule, not because an agent got worse, so
+  runs on every bump cost more than they caught. The set follows Anthropic's *Demystifying evals
+  for AI agents*: 19 tasks in `evals/`, each taken from a real website run and testing one failure class, each graded by a script, with a
   reference answer that passes and a known-bad answer (the website's own mistake where there was
   one) that fails, which `tests/test_evals.py` holds both ways without a model. Seven want a stop,
   a refusal or an approval, so a role that sends everything back scores nothing there. Tasks the

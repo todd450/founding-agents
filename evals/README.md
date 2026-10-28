@@ -14,9 +14,11 @@ That runs every task three times on your plan and prints, per agent and model, t
 agent's tasks; `--model builder=sonnet` runs them on another model; `--task 09` runs one task;
 `--dry-run` shows each task's step and runs nothing; `--keep` keeps each trial's folder to read.
 
-Run it before the version bump of any change that alters an agent, skill or workflow, or a model
-choice (`docs/design.md` says why). A change to one agent runs that agent's tasks; a model change, a
-workflow change or a release runs all of them.
+Run it for only the roles a change touched, and only at three moments (`docs/design.md` says why):
+a model change runs that role's tasks (`--role`); a release, before a product moves onto a new
+plugin version, runs the tasks of every agent, skill or workflow step changed since the last eval
+run; and a product's real run failing adds a task from that failure and runs its role's tasks. Not
+on every version bump.
 
 ## How a trial runs
 
