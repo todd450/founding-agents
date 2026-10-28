@@ -22,6 +22,11 @@ const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse 
 // How much review a change gets follows what it could break, so the architect rates each issue it
 // cuts and build reads the rating. build.js and plan.js keep the same words (a test checks).
 const RISK = 'low: only wording or static content, with nothing that changes layout, styling or behaviour; medium: styling, layout or ordinary logic; high: it touches routes, sign-in, permissions, stored data, secrets, input from outside, calls to a model, or a dependency that ships to users. When unsure, rate it higher'
+// Three things Half Badger's first plan got wrong on 27 Oct 2026. #2 was sent back three times on
+// pass marks behind Vercel's dashboard and login; #6 to #9 were chained partly to stay consistent,
+// so parallel builders idled; and the issues served the site with an unbound `http.server` from a
+// folder that held a Vercel token.
+const PLAN_RULES = `Write "Build after" only for a real dependency, and link issues that only need to stay consistent with "Matches". Put every pass mark the reviewers cannot check before the merge under "The founder checks". Any command that serves the product binds to 127.0.0.1, and serves a folder that holds no secret (.env*, .vercel/, a key); if the folder holds one, say so in the plan.`
 
 // Dollars at API prices one run should stay under; the run report flags a run over it.
 const BUDGET = 5
@@ -63,7 +68,7 @@ const PLAN = {
         properties: {
           number: { type: 'integer' },
           title: { type: 'string' },
-          after: { type: 'array', items: { type: 'integer' }, description: 'issues it builds after' },
+          after: { type: 'array', items: { type: 'integer' }, description: 'issues it cannot be built or checked without; never one it only matches' },
           risk: { type: 'string', enum: ['low', 'medium', 'high'], description: `the risk its "Risk" section names. ${RISK}` },
         },
         required: ['number', 'title', 'after', 'risk'],
@@ -150,6 +155,8 @@ phase('Plan')
 const plan = await agent(
   `Plan brief #${issue} in ${brief.repo}: ${brief.title}
 ${brief.decision ? `\nThe founder decided: ${brief.decision}\n` : ''}
+${PLAN_RULES}
+
 Read the brief, its comments and the product first. Then list each ${ONE_WAY}, that the plan needs. The founder has answered one only when it is named in the brief's "Technical decisions" section or in a queue item on it, with the founder's choice in a comment.
 
 If any is not answered that way, create nothing: return each one with its options, the one you recommend and why, and what reversing it later would cost.
@@ -157,7 +164,8 @@ If any is not answered that way, create nothing: return each one with its option
 Otherwise open the build issues with \`gh issue create\`, in the order to build them, one small change each. Give each this body:
 
 Part of #${issue}.
-Build after #<n>. (only when it builds on another issue)
+Build after #<n>: <what of #<n>'s merged change it needs>. (one line per issue, only when it cannot be built or checked without that one merged)
+Matches #<n>: <what stays the same in both>. (only to keep two issues consistent; it never makes one wait, so write the shared thing into both)
 
 ## What
 <what it does and why, in a few sentences>
@@ -166,7 +174,10 @@ Build after #<n>. (only when it builds on another issue)
 <every file it owns; no two issues own the same file>
 
 ## Tests
-<the behaviour its tests check, from the product's fixtures where they cover it>
+<the behaviour its tests check, from the product's fixtures where they cover it. Every pass mark here is one QA, code review and security review can check before the merge, from the PR's branch, a server bound to 127.0.0.1, the public site and gh, with no dashboard, login or account>
+
+## The founder checks
+<each pass mark only the founder can check, such as a setting in a hosting dashboard, a page behind a login, or the live site after the deploy, and whether before or after the merge. "None." when there is none>
 
 ## Technical decisions
 <each one-way door it settles, with the founder's choice: "<decision>: <choice>, decided on #${issue}". "None." when it settles none>

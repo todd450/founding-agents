@@ -9,13 +9,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
 READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs.", "decision": "",
-         "unseen": [], "open_pr": 0, "risk": "medium", "parts": []}
+         "unseen": [], "open_pr": 0, "awaiting_merge": False, "risk": "medium", "parts": []}
 PR = {"pr_number": 4, "pr_url": "https://github.com/o/r/pull/4", "head": "aaa1111", "stopped_because": ""}
 APPROVE = {"verdict": "approve", "findings": []}
 CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "reach": "anyone", "review_would_see": False,
                                                "where": "slug.py:3", "what": "empty title crashes", "repeat": False}]}
 REPEATED = {"verdict": "changes", "findings": [{**CHANGES["findings"][0], "repeat": True}]}
-MERGED = {"merged": True, "merge_commit": "abc1234", "reason": ""}
+MERGED = {"merged": True, "merge_commit": "abc1234", "founder": False, "reason": ""}
+# Where a merge deploys to production, or auto mode refuses it, the merge is the founder's.
+FOUNDERS = {"merged": False, "merge_commit": "", "founder": True, "reason": "merging to main deploys to production"}
 CODE_OK = APPROVE
 INSECURE = {"verdict": "changes", "findings": [{"must_fix": True, "reach": "user", "review_would_see": False,
                                                 "where": "api.py:9", "what": "any user reads any draft", "repeat": False}]}
@@ -71,6 +73,57 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
         integrator = next(c for c in run["calls"] if c["label"].startswith("integrator"))
         self.assertIn("without rerunning them when `main` has not moved", integrator["prompt"])
+
+    def test_a_merge_left_to_the_founder_goes_up_as_a_queue_item_at_once(self):
+        # On Half Badger, auto mode refused the integrator's merge of #10, #12 and #14 and each
+        # approved PR waited for the whole run to end.
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [FOUNDERS],
+                                 "ready for your merge": [{"comment_url": "https://github.com/o/r/pull/4#c1"}]})
+        self.assertEqual(run["result"]["status"], "ready for your merge")
+        self.assertEqual(run["result"]["queue_item"], "https://github.com/o/r/pull/4#c1")
+        self.assertEqual(self.labels(run)[-4:], ["integrator, PR #4", "ready for your merge, PR #4", "tidy worktrees", "run report"])
+        item = run["calls"][-3]
+        self.assertEqual(item["model"], "haiku")
+        self.assertIn("**Ready for your merge:** PR #4 builds #12, Add slugify. QA, Code review approved it", item["prompt"])
+        self.assertIn("**Why the merge is yours:** merging to main deploys to production", item["prompt"])
+        self.assertIn("No security review ran", item["prompt"])
+        self.assertIn('"The founder checks"', item["prompt"])
+        self.assertIn("gh pr edit 4 --repo o/r --add-label needs-founder", item["prompt"])
+        self.assertIn("Do not merge the PR.", item["prompt"])
+        self.assertIn("--outcome ready", run["calls"][-1]["prompt"])
+
+    def test_the_integrator_is_told_never_to_work_around_a_refused_merge(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
+        prompt = run["calls"][-3]["prompt"]
+        self.assertIn("Where a merge deploys to production, or Claude Code refuses the merge, do not merge and do not look for another way", prompt)
+
+    def test_a_merge_that_fails_its_checks_is_not_the_founders(self):
+        failed = {"merged": False, "merge_commit": "", "founder": False, "reason": "check failed on the merge"}
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [failed]})
+        self.assertEqual(run["result"]["status"], "not merged")
+        self.assertNotIn("ready for your merge, PR #4", self.labels(run))
+        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
+
+    def test_a_pr_already_waiting_for_the_founders_merge_is_not_built_again(self):
+        run = self.run_workflow({"check": [{**READY, "open_pr": 9, "awaiting_merge": True}], "builder": [PR]})
+        self.assertEqual(run["result"]["status"], "ready for your merge")
+        self.assertEqual(self.labels(run), ["check #12"])
+
+    def test_the_check_finds_a_pr_waiting_for_the_founders_merge(self):
+        prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
+        self.assertIn('starts "**Ready for your merge:**"', prompt)
+
+    def test_reviewers_leave_the_founders_pass_marks_to_the_founder(self):
+        # Half Badger's #2 went back three times on pass marks behind Vercel's dashboard and login.
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
+        for call in run["calls"]:
+            if call["label"].startswith(("qa", "code review")):
+                self.assertIn('Pass marks under "The founder checks" in the issue are the founder\'s: never send the change back for one', call["prompt"])
+
+    def test_a_matches_line_never_makes_an_issue_wait(self):
+        prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
+        self.assertIn('A "Matches #<m>" line is a consistency link, not a dependency: it never makes the issue wait.', prompt)
+        self.assertIn('(a "Matches #<m>" line only keeps it consistent with #<m> and is not one of them)', prompt)
 
     def test_each_role_runs_as_its_plugin_agent_and_the_builder_in_a_worktree(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
@@ -594,6 +647,20 @@ class BuildBriefTest(unittest.TestCase):
         self.assertEqual(by_issue[43]["status"], "merged")
         self.assertNotIn("check #32", self.labels(run))
         self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
+
+    def test_an_issue_after_one_left_for_the_founders_merge_waits_for_the_next_run(self):
+        run = self.run_brief(slow={"integrator": 20}, **{"integrator": [FOUNDERS, MERGED],
+                                                         "ready for your merge": [{"comment_url": "u"}]})
+        by_issue = {r["issue"]: r for r in run["result"]["issues"]}
+        self.assertEqual(by_issue[21]["status"], "ready for your merge")
+        self.assertEqual((by_issue[32]["status"], by_issue[32]["waits_for"]), ("not started", 21))
+        self.assertIn("waits for your merge", by_issue[32]["reason"])
+        self.assertEqual(by_issue[43]["status"], "merged")
+        self.assertEqual(run["result"]["status"], "1 of 3 issues merged, 1 ready for your merge")
+        self.assertIn("--outcome ready", run["calls"][-1]["prompt"])
+        # The item goes up before the next merge starts, not when the run ends.
+        events = run["events"]
+        self.assertLess(events.index("end ready for your merge, PR #121"), events.index("start integrator, PR #143"))
 
     def test_each_issue_is_checked_on_its_own_before_it_is_built(self):
         run = self.run_brief(**{"check #43": [{**READY, "ready": False, "reason": "a red issue is open"}]})

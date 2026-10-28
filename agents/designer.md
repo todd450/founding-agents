@@ -33,5 +33,10 @@ Borrow Airbnb's practices, never its look; the product keeps its own design toke
   way to take them.
 - Work on the branch `propose/issue-<n>`, commit, and push that branch. Never push to `main`; the
   mockups are for picking, not shipping.
+- In `propose` the work splits so the options are built at once: one designer storyboards and
+  writes each option's spec in `mockups/issue-<n>/storyboard.md`, then one designer per option
+  builds its page from that spec. When you build one option, keep to it: other designers push to
+  the same branch at the same time, so commit only your own page and screenshots, and when a push
+  is refused, pull with rebase and push again.
 - After a build, the same practices review the rendered screens: check the journey and the chosen
   star, not just the match to the mockup.
