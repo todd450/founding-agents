@@ -7,15 +7,17 @@ decides scope and taste and talks to users; the agents plan, build, check, ship 
 [Founding Agents website](https://todd450.github.io/founding-agents-site/): the merge guard, a
 `setup` skill that turns on branch protection and installs ops watch's nightly site check,
 `/founding-agents:propose`, which turns an idea into a brief and mockups for the founder to decide,
-and `/founding-agents:build`, which built the site's page through four decided issues. Step 5,
+and `/founding-agents:build`, which has merged eight decided issues on the site. Step 5,
 growing the team on demand, has begun with the architect: `/founding-agents:plan` cuts a decided
 brief into build issues, asking the founder first about any technical decision the brief left
 open, and `/founding-agents:build <brief>` builds them two to four at a time. Every role now
 exists: edge-case QA, code and security review in `build`; ops watch, the optimiser and the
 librarian as routines `setup` creates. For a sprint,
 `/founding-agents:sweep codebase|tests|security` runs the optimiser (for the codebase or the
-tests) or the security reviewer and puts up to five findings to the founder for `build`. None of
-the newer roles has run on the website yet.
+tests) or the security reviewer and puts up to five findings to the founder for `build`. On the
+website, `plan` has cut its first brief into build issues, and a codebase sweep, the optimiser's
+weekly numbers, a security review and the librarian have all run. Still to run on a real product:
+a `tests` or `security` sweep, risk tiers and the check-back.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.
