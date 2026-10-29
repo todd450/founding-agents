@@ -52,7 +52,8 @@ def replies(task):
         return {"check": [{"ready": True, "reason": "", "repo": github["repo"], "title": issue["title"],
                            "decision": step.get("decision", "")}]}
     if step["workflow"] == "propose":
-        return {}
+        return {"issue check": [{"repo": github["repo"], "design": "design" in issue.get("labels", []), "ready": True,
+                                 "reason": ""}]}
     ticket = {"ready": True, "reason": "", "repo": github["repo"], "title": issue["title"], "body": issue["body"],
               "decision": "", "unseen": [], "open_pr": 0, "risk": "medium", "parts": [], **step.get("ticket", {})}
     pr = step.get("pr", 0)
