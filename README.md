@@ -29,6 +29,9 @@ To try it in a product, from Claude Code:
 
 Then ask Claude to run the `setup` skill in the product's repo. The merge guard needs `python3`.
 
+Until 1.0, any version may change how the team works or what `setup` writes into a product, so
+read the commits before you update. Issues are welcome; pull requests by invitation.
+
 How much of the team a change uses depends on its size:
 
 - **A new idea:** `/founding-agents:propose <idea>` writes the brief and mockups. Once you have
@@ -42,3 +45,5 @@ How much of the team a change uses depends on its size:
 
 The design comes from five months of building one product with agent sessions (June–October 2026)
 and from what published agent teams at Cursor, Anthropic and OpenAI reported by October 2026.
+
+MIT licensed: see [LICENSE](LICENSE).
