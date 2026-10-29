@@ -17,7 +17,7 @@ librarian as routines `setup` creates. For a sprint,
 tests) or the security reviewer and puts up to five findings to the founder for `build`. On the
 website, `plan` has cut its first brief into build issues, and a codebase sweep, the optimiser's
 weekly numbers, a security review and the librarian have all run. Still to run on a real product:
-a `tests` or `security` sweep, risk tiers and the check-back.
+a `tests` or `security` sweep, risk tiers, the check-back and a design iteration.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.
@@ -39,6 +39,10 @@ How much of the team a change uses depends on its size:
 - **A new idea:** `/founding-agents:propose <idea>` writes the brief and mockups. Once you have
   decided, `/founding-agents:plan <brief>` cuts it into issues and `/founding-agents:build <brief>`
   builds them.
+- **A design iteration** (options for changing a screen already built): open an issue that names
+  the screen, what is wrong with it and what must stay, add the `design` label, and run
+  `/founding-agents:propose <issue>`. It skips the brief and shows two options beside the screen as
+  it is. Pick one, add `decided`, and run `/founding-agents:build <issue>`.
 - **A small change** (a typo, a colour, a line of copy): skip `propose` and `plan`. Open an issue
   that says what to change, add the `decided` label, and run `/founding-agents:build <issue>`.
   Wording alone gets one code review, on Sonnet.

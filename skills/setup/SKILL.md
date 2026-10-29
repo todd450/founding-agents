@@ -185,12 +185,13 @@ alias and the alias has run an older Opus.
 ## Labels
 
 `build` takes only issues labelled `decided`, the founder's yes; `needs-founder` is the decision
-queue; an open `red` issue stops merges; `research` holds what users said and did; `librarian`
+queue; `design` makes `propose` a design iteration on a screen already built; an open `red` issue stops merges; `research` holds what users said and did; `librarian`
 holds a finding `build` saw come back unfixed, for the librarian to turn into a check. Create them once, skipping any that exist:
 
 ```
 gh label create needs-founder --color FBCA04 --description "Waiting on the founder's decision"
 gh label create decided --color 0E8A16 --description "The founder said yes; ready to build"
+gh label create design --color C5DEF5 --description "Options for changing a screen already built, with no brief"
 gh label create red --color B60205 --description "A scheduled check failed; nothing merges until it is fixed"
 gh label create research --color 5319E7 --description "A question about users, with what they said and did"
 gh label create librarian --color 1D76DB --description "A mistake a run made twice, for the librarian to turn into a check"
