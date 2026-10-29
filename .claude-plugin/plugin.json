@@ -6,5 +6,6 @@
     "name": "Todd Holloway"
   },
   "repository": "https://github.com/todd450/founding-agents",
+  "license": "MIT",
   "keywords": ["agents", "team", "workflow", "guardrails"]
 }

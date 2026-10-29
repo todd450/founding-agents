@@ -103,8 +103,11 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   the version changes. A docs-only change does not.
 - **The plugin stays generic.** It holds the failure classes; each product keeps its own fixtures,
   holdouts and rules.
-- **The plugin repo stays private** while the founder is its only user. Each person runs the team
-  on their own login, and the plugin never ships or shares a token.
+- **The plugin repo is public, under MIT.** A plugin installs from its repo, so a private one
+  leaves the public website pointing at a team nobody else can install. Each person runs the team
+  on their own login, and the plugin never ships or shares a token; holdouts live on each machine,
+  in `~/.founding-agents`, never in a repo. Until 1.0 any version may change the team, and pull
+  requests come by invitation.
 - **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)), which the founder
   picks: a named practice gives an agent something concrete to do and the founder words to correct
   it with.
