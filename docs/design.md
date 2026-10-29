@@ -146,6 +146,16 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   files, so the phase takes about as long as one option. The script builds the result from what
   the branch holds: a missing option is left out and named, and the run stops when fewer than two
   remain, the pick is missing, or the branch holds anything outside the issue's mockups folder.
+- **A design iteration skips the brief.** `propose` on an issue labelled `design` changes how a
+  screen already built looks or reads, so there is no who or evidence to weigh, and the product
+  lead's default no would only slow it. The issue names the screen, what is wrong with it and what
+  must stay, or `propose` does not start. The designer screenshots the screen as it is, then two
+  options close to it are built at once. No option may need a technical one-way door; a change
+  that needs one goes through `propose` without the label. Every role still recommends, the product
+  lead among them, with "keep it as it is" beside the options, since the founder wants every view
+  and the views are the cheap part of the run. The founder's pick goes straight to `build`, since
+  one screen needs no plan. It is a mode of `propose` rather than a workflow of its own, because it
+  ends at the same decision.
 
 ### Planning: one-way doors and build issues
 
@@ -288,8 +298,8 @@ fresh one shows the team from its first commit, with no history to work around.
    security review, the optimiser and the librarian, and `sweep`, each once its kind of work
    appears.
 
-Every step is built. Still to run on a real product: a `tests` or `security` sweep, risk tiers and
-the check-back.
+Every step is built. Still to run on a real product: a `tests` or `security` sweep, risk tiers,
+the check-back and a design iteration.
 
 ## Sources
 

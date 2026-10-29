@@ -51,9 +51,12 @@ VOICES = ["architect", "builder", "qa", "code reviewer", "security reviewer", "i
 TEAM = view(option="B", why="Everyone agrees B is worth its six days.")
 
 
-def replies(lead=GO, design=DESIGN, views=None, team=TEAM, built=None, branch=None):
+CHECKED = {"repo": "o/site", "design": False, "ready": True, "reason": ""}
+
+
+def replies(lead=GO, design=DESIGN, views=None, team=TEAM, built=None, branch=None, checked=CHECKED):
     views = views or {}
-    out = {"product lead": [lead], "team": [team], "queue": [POSTED]}
+    out = {"issue check": [checked], "product lead": [lead], "team": [team], "queue": [POSTED]}
     out.update({voice: [views.get(voice, view(option="B" if design else ""))] for voice in VOICES})
     if design:
         letters = [o["letter"] for o in design["options"]]
@@ -61,6 +64,17 @@ def replies(lead=GO, design=DESIGN, views=None, team=TEAM, built=None, branch=No
         out["storyboard"] = [design]
         out.update({f"option {letter}": [built.get(letter, PUSHED)] for letter in letters})
         out["design check"] = [branch or files(*[l for l in letters if not built.get(l, PUSHED)["stopped_because"]])]
+    return out
+
+
+DESIGN_CHECKED = {**CHECKED, "design": True}
+NOW = ["mockups/issue-7/now-phone.png", "mockups/issue-7/now-desktop.png"]
+
+
+def design_replies(views=None, checked=DESIGN_CHECKED, branch=None):
+    views = {"product lead": view(option="B"), **(views or {})}
+    out = replies(views=views, checked=checked, branch=branch or {"files": files("A", "B")["files"] + NOW})
+    out["product lead"] = [views["product lead"]]
     return out
 
 
@@ -78,7 +92,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_an_issue_number_is_shaped_in_place(self):
         run = run_workflow("propose", replies(), 7)
-        self.assertIn("Shape issue #7", run["calls"][0]["prompt"])
+        self.assertIn("Shape issue #7", self.call(run, "product lead")["prompt"])
         self.assertEqual(run["result"]["queue_item"], POSTED["comment_url"])
 
     def test_an_idea_in_words_becomes_a_new_issue(self):
@@ -153,7 +167,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_a_no_go_skips_the_designer_and_still_reaches_the_founder_with_every_view(self):
         run = run_workflow("propose", replies(lead=NO_GO, design=None, team=view("no-go", why="Nobody has asked yet.")), 7)
-        self.assertEqual(self.labels(run), ["product lead", *VOICES, "team", "queue item", "tidy worktrees", "run report"])
+        self.assertEqual(self.labels(run), ["issue check", "product lead", *VOICES, "team", "queue item", "tidy worktrees", "run report"])
         item = self.queue_item(run)
         self.assertIn("**The team: no-go.** Nobody has asked yet.", item)
         self.assertIn("- **Product lead:** no-go. no evidence anyone wants it yet", item)
@@ -164,7 +178,7 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_an_overruled_no_go_gets_mockups_and_keeps_the_honest_recommendation(self):
         run = run_workflow("propose", replies(lead={**NO_GO, "overruled": True}), 7)
         self.assertEqual(self.labels(run),
-                         ["product lead", "storyboard", "option A", "option B", "design check", *VOICES, "team", "queue item",
+                         ["issue check", "product lead", "storyboard", "option A", "option B", "design check", *VOICES, "team", "queue item",
                           "tidy worktrees", "run report"])
         item = self.queue_item(run)
         self.assertIn("- **Product lead:** no-go.", item)
@@ -275,13 +289,13 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertNotIn("each technical decision", item)
 
     def test_the_product_lead_is_asked_to_name_decisions_including_ones_taken_for_granted(self):
-        prompt = run_workflow("propose", replies(lead=NO_GO, design=None), 7)["calls"][0]["prompt"]
+        prompt = self.call(run_workflow("propose", replies(lead=NO_GO, design=None), 7), "product lead")["prompt"]
         self.assertIn('"Technical decisions"', prompt)
         self.assertIn('"a static site"', prompt)
 
     def test_a_brief_with_nothing_on_screen_skips_the_designer_and_asks_only_the_decisions(self):
         run = run_workflow("propose", replies(lead=BUILT, design=None), 7)
-        self.assertEqual(self.labels(run), ["product lead", *VOICES, "team", "queue item", "tidy worktrees", "run report"])
+        self.assertEqual(self.labels(run), ["issue check", "product lead", *VOICES, "team", "queue item", "tidy worktrees", "run report"])
         self.assertNotIn("one option", self.call(run, "builder")["prompt"])
         item = self.queue_item(run)
         self.assertIn("**D1. How the site deploys:** GitHub Pages / Netlify", item)
@@ -298,6 +312,60 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_the_queue_item_adds_the_needs_founder_label(self):
         item = self.queue_item(run_workflow("propose", replies(lead=NO_GO, design=None), 7))
         self.assertIn("--add-label needs-founder", item)
+
+    def test_an_idea_in_words_has_no_issue_to_check(self):
+        self.assertNotIn("issue check", self.labels(run_workflow("propose", replies(), "a pricing page")))
+
+    def test_a_design_issue_skips_the_brief_and_the_product_lead_recommends_with_the_others(self):
+        run = run_workflow("propose", design_replies(), 7)
+        self.assertEqual(self.labels(run),
+                         ["issue check", "storyboard", "option A", "option B", "design check", "product lead", *VOICES,
+                          "team", "queue item", "tidy worktrees", "run report"])
+        lead = self.call(run, "product lead")
+        self.assertEqual((lead["agentType"], lead["model"]), ("founding-agents:product-lead", "sonnet"))
+        self.assertIn("worth making now", lead["prompt"])
+        self.assertIn("no-go to keep the screen as it is", lead["prompt"])
+        self.assertIn("`mockups/issue-7/now-phone.png`", lead["prompt"])
+        self.assertTrue(run["result"]["design_iteration"])
+
+    def test_a_design_iteration_screenshots_the_screen_as_it_is_and_specs_two_options_close_to_it(self):
+        run = run_workflow("propose", design_replies(), 7)
+        storyboard = self.call(run, "storyboard")["prompt"]
+        self.assertIn("what must stay the same", storyboard)
+        self.assertIn("`mockups/issue-7/now-phone.png` and `mockups/issue-7/now-desktop.png`", storyboard)
+        self.assertIn("two options close to the screen as it is", storyboard)
+        self.assertIn("without the `design` label", storyboard)
+        self.assertIn("screenshots can be taken", storyboard)
+        self.assertNotIn("frame by frame", storyboard)
+        self.assertIn("keep what the issue says must stay", self.call(run, "option A")["prompt"])
+
+    def test_a_design_iterations_queue_item_shows_now_beside_the_options_and_goes_straight_to_build(self):
+        views = {"product lead": view(option="A", why="A fixes it for the people who use it most."),
+                 "builder": view("no-go", why="The screen works; neither is worth a day.")}
+        item = self.queue_item(run_workflow("propose", design_replies(views=views), 7))
+        self.assertIn("**Decision needed:** which option, or keep the screen as it is.", item)
+        self.assertIn("**The team: option B.**", item)
+        self.assertIn("- **Product lead:** option A. A fixes it for the people who use it most.", item)
+        self.assertIn("- **Builder:** keep it as it is. The screen works; neither is worth a day.", item)
+        self.assertLess(item.index("**Product lead:**"), item.index("**Designer:**"))
+        self.assertIn("### Now: the screen as it is", item)
+        self.assertIn("https://github.com/o/site/blob/propose/issue-7/mockups/issue-7/now-phone.png?raw=true", item)
+        self.assertLess(item.index("### Now"), item.index("### A."))
+        self.assertIn("The designer's spec for each option", item)
+        self.assertIn("`/founding-agents:build 7` builds it", item)
+        self.assertIn("To keep the screen as it is, close the issue", item)
+        self.assertNotIn("/founding-agents:plan", item)
+
+    def test_a_design_issue_that_does_not_name_the_screen_is_not_started(self):
+        checked = {**DESIGN_CHECKED, "ready": False, "reason": "It does not say which screen to change."}
+        run = run_workflow("propose", design_replies(checked=checked), 7)
+        self.assertEqual(run["result"], {"issue": 7, "status": "not started", "reason": "It does not say which screen to change."})
+        self.assertEqual(self.labels(run), ["issue check"])
+
+    def test_a_design_iteration_without_the_screen_as_it_is_stops_in_design(self):
+        run = run_workflow("propose", design_replies(branch=files("A", "B")), 7)
+        self.assertEqual(run["result"]["status"], "stopped in design")
+        self.assertEqual(run["result"]["reason"], "the screen as it is was not screenshotted")
 
     def test_nothing_to_propose_is_an_error(self):
         self.assertIn("Name an issue", run_workflow("propose", {}, None)["error"])

@@ -38,5 +38,10 @@ Borrow Airbnb's practices, never its look; the product keeps its own design toke
   builds its page from that spec. When you build one option, keep to it: other designers push to
   the same branch at the same time, so commit only your own page and screenshots, and when a push
   is refused, pull with rebase and push again.
+- An issue labelled `design` is a design iteration on a screen already built, with no brief. The
+  issue names the screen, what is wrong with it and what must stay. Screenshot the screen as it is
+  first, as `now-phone.png` and `now-desktop.png` in the issue's mockups folder, then offer two
+  options close to it rather than options across the stars. Each fixes what is wrong and keeps what
+  must stay.
 - After a build, the same practices review the rendered screens: check the journey and the chosen
   star, not just the match to the mockup.
