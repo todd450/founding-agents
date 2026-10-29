@@ -29,5 +29,16 @@ To try it in a product, from Claude Code:
 
 Then ask Claude to run the `setup` skill in the product's repo. The merge guard needs `python3`.
 
+How much of the team a change uses depends on its size:
+
+- **A new idea:** `/founding-agents:propose <idea>` writes the brief and mockups. Once you have
+  decided, `/founding-agents:plan <brief>` cuts it into issues and `/founding-agents:build <brief>`
+  builds them.
+- **A small change** (a typo, a colour, a line of copy): skip `propose` and `plan`. Open an issue
+  that says what to change, add the `decided` label, and run `/founding-agents:build <issue>`.
+  Wording alone gets one code review, on Sonnet.
+- **Smaller than that:** no Claude session merges except the integrator, yours included. Have
+  Claude open a PR, then merge it yourself on GitHub once `check` passes.
+
 The design comes from five months of building one product with agent sessions (June–October 2026)
 and from what published agent teams at Cursor, Anthropic and OpenAI reported by October 2026.
