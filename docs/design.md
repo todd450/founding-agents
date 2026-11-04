@@ -75,7 +75,7 @@ screen, one design-token source that generates every copy.
 
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
-- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
+- **Procedures** → skills (edge-case checklist, `design-review`, release, `setup`,
   `run-report`, `compare-changes`).
 - **The per-change pipeline** → three saved workflows in the plugin: `propose`, `plan` and `build`,
   and a fourth, `sweep`, that finds work for `build` instead of starting from the founder's idea.
@@ -199,6 +199,15 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   data, secrets, outside input, model calls or a dependency that ships) adds security review. When
   unsure, the higher. Any reviewer can raise the tier; nothing lowers it.
 - **After the first round, reviewers review only what changed.**
+- **Design review checks the build against the founder's pick, and starts as a skill.** The
+  `design-review` skill shoots a PR's screens and puts them next to the mockup the founder picked:
+  the key moment at the chosen star, the founder's notes, and for a design iteration what must
+  stay. QA checks that the screenshots show the product; design review checks that the product
+  shows the pick. A must-fix is something it can point to in writing (the option's spec, the
+  founder's notes, "must stay", the token source) or a screen broken at phone width. Everything
+  else is a Nit, because the founder made the taste call by picking, and taste that blocks would
+  send changes round to the limit. It is not yet a reviewer in `build`. It runs on real PRs first
+  (see Build order).
 - **A finding's severity depends on who can reach it.** A must-fix that only a trusted writer can
   reach counts as a Nit when review would see it or the product refuses it loudly; anything a
   reader, a user or an outside service can reach stays must-fix.
@@ -299,7 +308,7 @@ fresh one shows the team from its first commit, with no history to work around.
    appears.
 
 Every step is built. Still to run on a real product: a `tests` or `security` sweep, risk tiers,
-the check-back and a design iteration.
+the check-back, a design iteration and a design review.
 
 ## Sources
 
