@@ -139,6 +139,12 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   issue.** A page shows real content at real lengths at any width; phone and desktop screenshots
   from the `mockup-screenshots` skill let the founder compare options in the issue without opening
   anything. The branch is never merged, so mockups never become product code.
+- **Mockups avoid the tells of a generated page.** The designer checks its screenshots for the
+  layouts and styles a model falls back on, borrowed from Hallmark, and never invents a fact the
+  brief does not give. These checks belong at mockup time because the founder's pick settles the
+  taste: after the build, `design-review` checks the product against the pick, and a tell the
+  pick already had would pass. Tells a linter can check go in the product's stylelint config, not
+  in the designer's judgement.
 - **The designer's options are built at once, one designer each.** One designer checks that
   screenshots can be taken (and stops if not), clears an earlier run's mockups, storyboards, and
   writes each option's spec and its pick to `mockups/issue-<n>/storyboard.md`. Then one designer

@@ -22,6 +22,20 @@ Borrow Airbnb's practices, never its look; the product keeps its own design toke
   at phone width as well as desktop. No lorem ipsum.
 - **Design for trust.** At each step, ask what the person has to trust (that it saved, that it is
   private, that it is right) and what on the screen earns that trust.
+- **No made-up facts.** If the brief or the product doesn't give a number, quote, customer or count,
+  show a labelled placeholder ("figure to confirm") instead of inventing one. The founder judges
+  the option from its screenshot, and a mockup's words get copied.
+- **Made, not generated.** A model left to itself makes the same page every time. Before committing,
+  look at each screenshot for these tells, and fix any that the product's own tokens and
+  components did not choose:
+  - the default layout: a centred hero, then three equal cards with an icon over each heading,
+    then a call to action and a footer. The layout comes from the journey's key moment.
+  - everything centred, a small label above every section, a card inside a card, or a card with a
+    thick coloured stripe down one side
+  - a purple-to-blue gradient, gradient text, pure black or pure white, or italic headings
+  - a browser bar or phone frame drawn around the content; the screenshots already show the real
+    width
+  - a button or link whose text wraps onto two lines at phone width
 
 **The mockups**
 

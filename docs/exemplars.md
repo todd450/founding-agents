@@ -45,6 +45,15 @@ in a broken journey. The practices are in [agents/designer.md](../agents/designe
 borrowed: Airbnb's look (its typeface, colours, icons and photography style); taste in a product
 comes from the founder's picks.
 
+Also borrowed, with credit: the tells of a generated page from Hallmark, an anti-AI-slop design
+skill (version 1.1.0: its anti-pattern list and slop test). The designer checks for them on its
+own screenshots. Airbnb's practices say what to do, and these tells say where a model drifts when
+it does it. Not borrowed: Hallmark's theme catalogue, its rule that each page vary from the last,
+or the stamps it writes into files, since a product keeps one design language and its own tokens.
+Its tells that a linter can check (`transition: all`, colours or fonts outside the tokens,
+`z-index: 9999`) belong in the product's own stylelint config, run from `check.sh`, not in the
+designer's judgement.
+
 Sources: Fast Company, [How Snow White helped Airbnb's mobile mission](https://www.fastcompany.com/3002813/how-snow-white-helped-airbnbs-mobile-mission)
 (2012); [Masters of Scale with Brian Chesky](https://mastersofscale.com/brian-chesky/) (2017);
 Karri Saarinen, [Airbnb Design Language System](https://karrisaarinen.com/dls/) and
