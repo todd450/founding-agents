@@ -41,7 +41,7 @@ class PlanWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"]["issues"], ["#8 Add the price table, medium risk",
                                                    "#9 Link pricing from the home page (after #8), low risk"])
         self.assertEqual(run["result"]["next"], "/founding-agents:build 7")
-        self.assertEqual(self.labels(run), ["check #7", "architect", "run report"])
+        self.assertEqual(self.labels(run), ["check #7", "architect"])
 
     def test_the_architect_runs_as_its_plugin_agent_on_opus_with_the_founders_answers(self):
         architect = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][1]
@@ -89,8 +89,8 @@ class PlanWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"]["status"], "needs the founder")
         labels = self.labels(run)
         self.assertEqual(labels[:2], ["check #7", "architect"])
-        self.assertEqual(labels[-3:], ["team", "queue item", "run report"])
-        item = run["calls"][-2]["prompt"]
+        self.assertEqual(labels[-2:], ["team", "queue item"])
+        item = run["calls"][-1]["prompt"]
         self.assertIn("**P1. Where prices are stored:** in the page / a JSON file. Reversing it later: an hour", item)
         self.assertIn("--remove-label decided --add-label needs-founder", item)
         self.assertIn("`/founding-agents:plan 7` plans it with your answers", item)
@@ -112,7 +112,7 @@ class PlanWorkflowTest(unittest.TestCase):
 
     def test_the_queue_item_leads_with_the_team_then_each_role(self):
         item = self.open_decision(team=[TEAM], qa=[{"why": "", "decisions": [
-            {"id": "P1", "choice": "in the page", "why": "One file is one thing to check."}]}])["calls"][-2]["prompt"]
+            {"id": "P1", "choice": "in the page", "why": "One file is one thing to check."}]}])["calls"][-1]["prompt"]
         self.assertIn("**The team:** Keep prices in one place.", item)
         self.assertIn("  - **The team: a JSON file.** QA would keep it in the page, but two pages read it.", item)
         self.assertIn("  - Architect: a JSON file. Both pages read the same prices.", item)
@@ -120,7 +120,7 @@ class PlanWorkflowTest(unittest.TestCase):
         self.assertNotIn("because", item)
 
     def test_without_a_team_view_each_role_still_reaches_the_founder(self):
-        item = self.open_decision()["calls"][-2]["prompt"]
+        item = self.open_decision()["calls"][-1]["prompt"]
         self.assertIn("**The team** gave no overall recommendation", item)
         self.assertIn("  - Architect: a JSON file.", item)
 
@@ -135,11 +135,6 @@ class PlanWorkflowTest(unittest.TestCase):
                                                                      "stopped_because": "the brief is one line of copy"}]}, 7)
         self.assertEqual(run["result"]["status"], "stopped in plan")
         self.assertEqual(run["result"]["reason"], "the brief is one line of copy")
-
-    def test_a_run_past_its_check_posts_its_report_on_the_brief(self):
-        report = run_workflow("plan", {"check": [READY], "architect": [PLANNED]}, 7)["calls"][-1]
-        self.assertEqual((report["label"], report["model"]), ("run report", "haiku"))
-        self.assertIn("--workflow plan --issue 7 --budget 5 --post", report["prompt"])
 
     def test_takes_the_brief_as_a_number_a_string_or_an_object(self):
         for args in (7, "#7", {"issue": 7}):

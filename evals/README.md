@@ -47,7 +47,7 @@ second, and the report reads as the agents' failure, as all 60 Opus trials of a 
    how often.
 4. The task's `grade.py` checks the outcome: what the agent returned, what it posted, and the
    branches it pushed, running the product's checks where the task needs them.
-5. Tokens and cost come from the session logs, priced by `skills/run-report`.
+5. Tokens and cost are what `claude -p` reports for each trial.
 
 ## A task
 

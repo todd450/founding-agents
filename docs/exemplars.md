@@ -21,7 +21,7 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Edge-case QA | Elisabeth Hendrickson's test heuristics |
 | Code reviewer | Google's code review guide |
 | Security reviewer | Trail of Bits findings, against OWASP ASVS |
-| Optimiser | Performance budgets; DRY; FinOps unit economics for token cost; Google's test sizes, flaky-test work and mutation testing for the suite |
+| Optimiser | Performance budgets; DRY; Google's test sizes, flaky-test work and mutation testing for the suite |
 | Integrator | Rust's bors and the Not Rocket Science Rule |
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
@@ -103,17 +103,12 @@ happens and how to fix it now and for good. The practices are in
 Sources: Trail of Bits, [Anatomy of a report](https://www.trailofbits.com/anatomy-of-a-report/);
 OWASP, [Application Security Verification Standard](https://owasp.org/www-project-application-security-verification-standard/).
 
-## Optimiser — budgets, DRY, unit economics and mutation testing
+## Optimiser — budgets, DRY and mutation testing
 
-The optimiser looks after two costs: what the product costs to run (page weight, dead code,
-duplication) and what the team costs to run (tokens). Nobody owned token cost before, and Cursor
-found that workers, not planners, used most of the tokens (principle 3). Performance budgets turn
-"too slow" into a number CI checks; DRY gives every piece of knowledge one home; FinOps unit
-economics measures cost per merged change rather than total spend, so spend that rises with output
-is fine and cost per change that rises is not. The weekly practices are in
-[skills/setup/optimiser/routine.md](../skills/setup/optimiser/routine.md), since the optimiser runs
-as a routine, which loads no plugin agents; its sweeps of the codebase and the tests, run on
-demand by `sweep`, are in [agents/optimiser.md](../agents/optimiser.md).
+The optimiser looks after what the product costs to run (page weight, dead code, duplication).
+Performance budgets turn "too slow" into a number CI checks; DRY gives every piece of knowledge
+one home. Its sweeps of the codebase and the tests, run on demand by `sweep`, are in
+[agents/optimiser.md](../agents/optimiser.md).
 
 The optimiser also judges the test suite itself, which nobody else does: the builder writes tests
 for one change and the reviewers run them. A suite that misses faults, flakes or crawls makes the
@@ -123,10 +118,7 @@ Claude for the test auditor on 27 Oct 2026, which joined the optimiser on 28 Oct
 may swap it.
 
 Sources: Milica Mihajlija, [Performance budgets 101](https://web.dev/articles/performance-budgets-101)
-(web.dev); Andrew Hunt and David Thomas, *The Pragmatic Programmer* (1999); FinOps Foundation,
-[Unit economics](https://www.finops.org/framework/capabilities/unit-economics/); Claude Code,
-[Manage costs](https://code.claude.com/docs/en/costs) and
-[Monitoring](https://code.claude.com/docs/en/monitoring-usage); Titus Winters, Tom Manshreck and
+(web.dev); Andrew Hunt and David Thomas, *The Pragmatic Programmer* (1999); Titus Winters, Tom Manshreck and
 Hyrum Wright, [*Software Engineering at Google*](https://abseil.io/resources/swe-book) (O'Reilly,
 2020), chapters 11 to 14 on test size, unit tests and flaky tests; Goran Petrović and Marko
 Ivanković, [State of mutation testing at Google](https://research.google/pubs/state-of-mutation-testing-at-google/)
@@ -145,11 +137,10 @@ Sources: Graydon Hoare, [The Not Rocket Science Rule of Software Engineering](ht
 ## Ops watch — Google SRE
 
 - **Watch what users would notice,** not internal causes: the backup did not land, the site is
-  down, errors rose, spend passed the budget.
+  down, errors rose.
 - **A red is simple and actionable.** If nobody needs to do anything, it is not a red; it is a line
   in the weekly report.
-- **Budgets turn "too much" into a number:** an error budget for production, the token budget for
-  spend.
+- **Budgets turn "too much" into a number:** an error budget for production.
 - **Red stops other work** (principle 9): an open `red` issue blocks merges.
 
 Sources: Google, *Site Reliability Engineering*, [Monitoring distributed systems](https://sre.google/sre-book/monitoring-distributed-systems/)

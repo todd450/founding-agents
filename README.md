@@ -11,12 +11,11 @@ and `/founding-agents:build`, which has merged eight decided issues on the site.
 growing the team on demand, has begun with the architect: `/founding-agents:plan` cuts a decided
 brief into build issues, asking the founder first about any technical decision the brief left
 open, and `/founding-agents:build <brief>` builds them two to four at a time. Every role now
-exists: edge-case QA, code and security review in `build`; ops watch, the optimiser and the
-librarian as routines `setup` creates. For a sprint,
+exists: edge-case QA, code and security review in `build`; ops watch and the librarian as
+routines `setup` creates. For a sprint,
 `/founding-agents:sweep codebase|tests|security` runs the optimiser (for the codebase or the
 tests) or the security reviewer and puts up to five findings to the founder for `build`. On the
-website, `plan` has cut its first brief into build issues, and a codebase sweep, the optimiser's
-weekly numbers, a security review and the librarian have all run. Still to run on a real product:
+website, `plan` has cut its first brief into build issues, and a codebase sweep, a security review and the librarian have all run. Still to run on a real product:
 a `tests` or `security` sweep, risk tiers and the check-back.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the

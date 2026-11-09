@@ -7,23 +7,22 @@ export const meta = {
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
     { title: 'Review', detail: "the reviewers the issue's risk needs, side by side: code review alone on Sonnet for low, with edge-case QA for medium, and a security review too for high", model: 'opus' },
     { title: 'Merge', detail: "the integrator tests the merge and merges, or readies it for the founder's merge where a merge deploys to production and the founder has not handed it over", model: 'sonnet' },
-    { title: 'Report', detail: "the run's time, tokens, cost and whether it merged, posted on the issue", model: 'haiku' },
+    { title: 'Tidy', detail: 'remove the worktrees whose work is on GitHub', model: 'haiku' },
   ],
 }
 
 // A change the reviewers send back this many times goes to the founder instead of round four, and
-// sooner if the builder fails to fix the same finding twice or the issue passes its budget.
+// sooner if the builder fails to fix the same finding twice.
 const ROUNDS = 3
 
 // How much review a change gets follows what it could break. The architect rates each issue it cuts,
 // and the check rates one it did not; a reviewer can raise the tier, never lower it. Each tier names
-// its reviewers, their model, and the dollars at API prices one run may spend on the issue before it
-// stops for the founder. build.js and plan.js keep the same words (a test checks).
+// its reviewers and their model. build.js and plan.js keep the same words (a test checks).
 const RISK = 'low: only wording or static content, with nothing that changes layout, styling or behaviour; medium: styling, layout or ordinary logic; high: it touches routes, sign-in, permissions, stored data, secrets, input from outside, calls to a model, or a dependency that ships to users. When unsure, rate it higher'
 const TIERS = {
-  low: { reviewers: ['code'], model: 'sonnet', budget: 5 },
-  medium: { reviewers: ['qa', 'code'], model: 'opus', budget: 12 },
-  high: { reviewers: ['qa', 'code', 'security'], model: 'opus', budget: 20 },
+  low: { reviewers: ['code'], model: 'sonnet' },
+  medium: { reviewers: ['qa', 'code'], model: 'opus' },
+  high: { reviewers: ['qa', 'code', 'security'], model: 'opus' },
 }
 const RANK = Object.keys(TIERS)
 // An issue whose risk is unknown gets the most review, not the least.
@@ -123,15 +122,6 @@ const MERGED = {
   required: ['merged', 'merge_commit', 'founder', 'reason'],
 }
 
-const REPORTED = {
-  type: 'object',
-  properties: {
-    comment_url: { type: 'string', description: 'the posted comment; empty when it was not posted' },
-    reason: { type: 'string', description: 'why it was not posted; empty when it was' },
-  },
-  required: ['comment_url', 'reason'],
-}
-
 const FILED = {
   type: 'object',
   properties: {
@@ -153,32 +143,14 @@ const TIDIED = {
   required: ['removed', 'kept'],
 }
 
-const SPENT = {
-  type: 'object',
-  properties: { dollars: { type: 'number', description: 'the figure the script printed; -1 when it printed none' } },
-  required: ['dollars'],
-}
-
-// A run that got past its first step removes the worktrees whose work is on GitHub, then posts its
-// time, tokens, cost and whether it ended in a merge on the issue, stalled runs too. Its budget is
-// the budgets of the issues it built, at the tier each ended on.
+// A run that got past its first step removes the worktrees whose work is on GitHub, stalled runs too.
 const report = async result => {
-  const built = (result.issues || [result]).filter(r => r.risk)
-  const budget = built.length ? built.reduce((sum, r) => sum + TIERS[r.risk].budget, 0) : TIERS.low.budget
-  phase('Report')
+  phase('Tidy')
   const tidied = await agent(
     'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
-    { label: 'tidy worktrees', phase: 'Report', model: 'haiku', effort: 'low', schema: TIDIED },
+    { label: 'tidy worktrees', phase: 'Tidy', model: 'haiku', effort: 'low', schema: TIDIED },
   )
-  // A run whose only gap is the founder's merge did its part: it ended ready, not stopped.
-  const all = result.issues && result.issues.length ? result.issues : [result]
-  const ended = all.every(r => r.status === 'merged') ? 'merged'
-    : all.every(r => r.status === 'merged' || r.status === WAITING || r.waits_for) ? 'ready' : 'stopped'
-  const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow build --issue ${issue} --budget ${budget} --outcome ${ended} --post\`. Return the comment's URL, or why it was not posted.`,
-    { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
-  )
-  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted', worktrees_kept: tidied ? tidied.kept : [] }
+  return { ...result, worktrees_kept: tidied ? tidied.kept : [] }
 }
 
 // Reads one issue and says whether it can be built, or lists the issues cut from it when it is a brief.
@@ -280,12 +252,6 @@ ${FOUNDER_CHECKS}`
   }
 }
 
-// What this run has spent on one issue so far, read from the session logs by the run-report skill.
-const spend = n => agent(
-  `Use the run-report skill to read what this run has spent on issue #${n} so far: from this repo's folder, run its script with \`--workflow build --issue ${issue} --spent-on ${n}\`, and return the dollars it prints, or -1 when it prints no figure.`,
-  { label: `spend #${n}`, phase: 'Review', model: 'haiku', effort: 'low', schema: SPENT },
-)
-
 // A must-fix the builder failed to fix twice is a mistake the next change can make too, so it goes to
 // the librarian as a `librarian` issue, built here rather than by a model so every one has the same shape.
 // Agents post with the founder's login, so the label, not the author, is what marks it.
@@ -307,7 +273,7 @@ ${body.join('\n')}`,
   )
 }
 
-// Builder and reviewers, up to ROUNDS times, and only while the issue stays within its tier's budget.
+// Builder and reviewers, up to ROUNDS times.
 // Returns the approved PR, or why it stopped, with the tier it ended on.
 const develop = async (n, ticket) => {
   let built = null
@@ -351,15 +317,6 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
       const filed = await lesson(n, ticket, built, stuck)
       return { issue: n, status: 'the same finding came back unfixed; the founder decides', pr: built.pr_url, findings: stuck, risk: tier,
                lesson: filed ? (filed.issue_url || filed.reason) : 'not filed' }
-    }
-    // An issue past its tier's budget stops before another round, the way three send-backs do.
-    if (round < ROUNDS) {
-      const spent = await spend(n)
-      const budget = TIERS[tier].budget
-      if (spent && spent.dollars > budget) {
-        return { issue: n, status: `over its ${tier}-risk budget, $${spent.dollars.toFixed(2)} against $${budget}; the founder decides`,
-                 pr: built.pr_url, findings: review.findings, risk: tier }
-      }
     }
     log(`#${n}, round ${round}: the reviewers sent PR #${built.pr_number} back with ${review.findings.filter(f => f.must_fix).length} finding(s) to fix`)
   }

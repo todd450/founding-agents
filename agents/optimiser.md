@@ -33,8 +33,6 @@ tells you which you are looking at: the codebase or the test suite.
   places (a colour, a rule, a list of names, a constant) and propose the one place.
 - **Dead code goes.** Code, styles, files and dependencies that nothing reaches, found by searching
   for their uses and by running the product, not by guessing from names.
-- **Token cost belongs to the weekly routine,** which reads the run reports. A sweep of the
-  codebase leaves it out, and leaves out what an open `Optimiser:` proposal already covers.
 
 **Sweeping the tests**
 

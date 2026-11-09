@@ -101,10 +101,9 @@ class SweepWorkflowTest(unittest.TestCase):
         self.assertIn("Settles 1 technical decision, listed on #31", item)
         self.assertIn("after replying on it with your choice for each technical decision", item)
 
-    def test_the_report_goes_on_the_queue_item(self):
+    def test_a_run_ends_by_tidying_its_worktrees(self):
         run = run_workflow("sweep", replies(), "codebase")
-        self.assertEqual([call["label"] for call in run["calls"]][-2:], ["tidy worktrees", "run report"])
-        self.assertIn("--workflow sweep --issue 33 --budget 5 --post", run["calls"][-1]["prompt"])
+        self.assertEqual(run["calls"][-1]["label"], "tidy worktrees")
 
     def test_nothing_found_files_nothing(self):
         run = run_workflow("sweep", replies(optimiser=[{**FOUND, "findings": []}]), "codebase")

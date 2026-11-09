@@ -4,7 +4,7 @@
 `python3 evals/run.py` runs every task three times. Each trial takes the real prompt the workflow
 sends that step (by running the workflow with scripted replies up to it), runs it with `claude -p`
 as the step's agent and model, in a fresh throwaway repo with the `gh` stand-in, then grades what
-the agent returned, posted and pushed. Costs come from the session logs, priced by `run-report`.
+the agent returned, posted and pushed. Tokens and cost are what `claude -p` reports for each trial.
 
     python3 evals/run.py --role qa --trials 1              # one role's tasks, as a PR runs them
     python3 evals/run.py --role builder --trials 5         # one role's tasks, more trials
@@ -30,9 +30,8 @@ from pathlib import Path
 
 EVALS = Path(__file__).resolve().parent
 PLUGIN = EVALS.parent
-sys.path[:0] = [str(EVALS), str(PLUGIN / "tests"), str(PLUGIN / "skills" / "run-report")]
+sys.path[:0] = [str(EVALS), str(PLUGIN / "tests")]
 import trial  # noqa: E402
-from report import summarise, tokens  # noqa: E402
 from workflow_harness import run_workflow  # noqa: E402
 
 TOOLS = "Bash,Read,Edit,Write,Grep,Glob,Skill"
@@ -100,8 +99,8 @@ def extract(text, schema, env):
     try:
         result = json.loads(done.stdout)
     except ValueError:
-        return None, ""
-    return result.get("structured_output"), result.get("session_id", "")
+        return None, {}
+    return result.get("structured_output"), usage(result)
 
 
 def command(call, model):
@@ -191,6 +190,10 @@ def schedule(jobs, parallel, run):
             yield done.result()
 
 
+def tokens(n):
+    return f"{n / 1e6:.1f}M" if n >= 1e6 else f"{n / 1e3:.0f}K"
+
+
 def session_log(session_id):
     found = list((Path.home() / ".claude" / "projects").glob(f"*/{session_id}.jsonl"))
     return found[0] if found else None
@@ -226,12 +229,13 @@ def summarise_records(log):
                     yield json.dumps(part.get("input"))
 
 
-def usage(session_id):
-    """Calls, tokens and cost for one trial, priced by run-report across the session and its subagents."""
-    log = session_log(session_id) if session_id else None
-    rows = summarise(log).values() if log else []
-    totals = {key: sum(row[key] for row in rows) for key in ("calls", "new", "cached", "out", "cost")}
-    return {**totals, "log": str(log) if log else ""}
+def usage(result):
+    """Calls, tokens and cost for one `claude -p` run, as its JSON output reports them."""
+    used = result.get("usage") or {}
+    return {"calls": result.get("num_turns", 0),
+            "new": used.get("input_tokens", 0) + used.get("cache_creation_input_tokens", 0),
+            "cached": used.get("cache_read_input_tokens", 0), "out": used.get("output_tokens", 0),
+            "cost": result.get("total_cost_usd", 0.0)}
 
 
 def run_trial(task, call, model, folder):
@@ -251,17 +255,17 @@ def run_trial(task, call, model, folder):
     if output is None and result.get("result"):
         output = returned(result["result"], call["schema"])
         if output is None:
-            output, session = extract(result["result"], call["schema"], environment(folder))
-            extracted, extra = True, usage(session)
+            output, extra = extract(result["result"], call["schema"], environment(folder))
+            extracted = True
     (folder / "output.json").write_text(json.dumps(output))
+    log = session_log(result["session_id"]) if result.get("session_id") else None
     checks = trial.grade(task, folder)
     if error:
         checks.insert(0, (f"the agent finished ({error})", False))
     return {"task": task["name"], "role": task["role"], "model": model, "kind": task["kind"],
             "passed": all(ok for _, ok in checks), "checks": checks, "minutes": (time.time() - started) / 60,
             "session": result.get("session_id", ""), "folder": str(folder), "extracted": extracted,
-            "shared": shared(session_log(result.get("session_id")) if result.get("session_id") else None),
-            **add(usage(result.get("session_id")), extra)}
+            "log": str(log or ""), "shared": shared(log), **add(usage(result), extra)}
 
 
 def add(spent, extra):
@@ -337,7 +341,7 @@ def markdown(results, trials):
     lines += ["", "Pass rate is the share of trials that passed every check; pass^k is the share of tasks "
                   "where all k trials passed. Regression tasks are ones the team got right on the website "
                   "and should stay near 100%; capability tasks are ones it got wrong. Cost is API-equivalent at "
-                  "list prices, from `run-report`; on a Pro or Max plan the run uses the weekly limit instead."]
+                  "list prices, as `claude -p` reports it; on a Pro or Max plan the run uses the weekly limit instead."]
     return "\n".join(lines)
 
 

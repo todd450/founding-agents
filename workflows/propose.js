@@ -8,7 +8,7 @@ export const meta = {
     { title: 'Views', detail: 'every other role recommends from what its job knows, and says why', model: 'sonnet' },
     { title: 'Team', detail: "the team's overall recommendation, weighing every role's", model: 'opus' },
     { title: 'Queue', detail: "one needs-founder item with each role's recommendation, the team's, the options and their costs", model: 'haiku' },
-    { title: 'Report', detail: "the run's time, tokens and cost, posted on the issue", model: 'haiku' },
+    { title: 'Tidy', detail: 'remove the worktrees whose work is on GitHub', model: 'haiku' },
   ],
 }
 
@@ -126,8 +126,6 @@ const POSTED = {
   required: ['comment_url'],
 }
 
-// Dollars at API prices one run should stay under; the run report flags a run over it.
-const BUDGET = 5
 
 const TIDIED = {
   type: 'object',
@@ -135,28 +133,14 @@ const TIDIED = {
   required: ['removed', 'kept'],
 }
 
-const REPORTED = {
-  type: 'object',
-  properties: {
-    comment_url: { type: 'string', description: 'the posted comment; empty when it was not posted' },
-    reason: { type: 'string', description: 'why it was not posted; empty when it was' },
-  },
-  required: ['comment_url', 'reason'],
-}
-
-// A run that got past its first step removes the worktrees whose work is on GitHub, then posts its
-// time, tokens and cost on the issue, stalled runs too.
+// A run that got past its first step removes the worktrees whose work is on GitHub, stalled runs too.
 const report = async result => {
-  phase('Report')
+  phase('Tidy')
   const tidied = await agent(
     'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
-    { label: 'tidy worktrees', phase: 'Report', model: 'haiku', effort: 'low', schema: TIDIED },
+    { label: 'tidy worktrees', phase: 'Tidy', model: 'haiku', effort: 'low', schema: TIDIED },
   )
-  const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${brief.issue}: from this repo's folder, run its script with \`--workflow propose --issue ${brief.issue} --budget ${BUDGET} --post\`. Return the comment's URL, or why it was not posted.`,
-    { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
-  )
-  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted', worktrees_kept: tidied ? tidied.kept : [] }
+  return { ...result, worktrees_kept: tidied ? tidied.kept : [] }
 }
 
 phase('Brief')

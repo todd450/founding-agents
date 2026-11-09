@@ -18,7 +18,7 @@ class RoutineTest(unittest.TestCase):
     def test_every_routine_uses_no_graphql_command_since_the_cloud_proxy_blocks_them(self):
         # In a routine, `gh issue`, `gh pr` and `gh repo view` go through GraphQL and get a 403.
         # A routine names those three to warn against them; every command it runs is `gh api`.
-        self.assertEqual([p.parent.name for p in ROUTINES], ["librarian", "ops_watch", "optimiser"])
+        self.assertEqual([p.parent.name for p in ROUTINES], ["librarian", "ops_watch"])
         for routine in ROUTINES:
             text = routine.read_text()
             commands = [c for c in re.findall(r"`(gh [^`]+)`", text) if c not in ("gh issue", "gh pr", "gh repo view")]
@@ -37,18 +37,11 @@ class RoutineTest(unittest.TestCase):
         self.assertIn("pages/builds/latest", ROUTINE)
         self.assertNotIn("curl", ROUTINE)
 
-    def test_the_weekly_optimiser_leaves_product_cost_to_the_codebase_sweep(self):
-        # On the website the routine and a sweep both proposed a page-size budget (#18 and #19).
-        text = " ".join((SETUP / "optimiser" / "routine.md").read_text().split())
-        self.assertIn("belongs to `/founding-agents:sweep codebase`", text)
-        self.assertNotIn("The product's own cost", text)
-
-    def test_the_weekly_routines_only_propose_and_leave_deciding_to_the_founder(self):
-        for name in ("optimiser", "librarian"):
-            text = (SETUP / name / "routine.md").read_text()
-            self.assertIn("labels[]=needs-founder", text)
-            self.assertIn("At most three", text)
-            self.assertIn("Never push", text)
+    def test_the_weekly_routine_only_proposes_and_leaves_deciding_to_the_founder(self):
+        text = (SETUP / "librarian" / "routine.md").read_text()
+        self.assertIn("labels[]=needs-founder", text)
+        self.assertIn("At most three", text)
+        self.assertIn("Never push", text)
 
     def test_the_librarian_reads_the_findings_build_saw_come_back_first(self):
         text = (SETUP / "librarian" / "routine.md").read_text()
@@ -61,7 +54,7 @@ class RoutineTest(unittest.TestCase):
                       (SETUP / "librarian" / "routine.md").read_text())
 
     def test_runs_its_checks_then_the_products_own(self):
-        for check in ("Scheduled checks ran", "`main` passes", "Merged changes are live", "Spend",
+        for check in ("Scheduled checks ran", "`main` passes", "Merged changes are live",
                       ".github/ops-watch/watch.md", "disabled_inactivity"):
             self.assertIn(check, ROUTINE)
 
@@ -76,12 +69,11 @@ class RoutineTest(unittest.TestCase):
 
 
 class KitTest(unittest.TestCase):
-    def test_installs_the_weekly_routines_where_their_prompts_point(self):
+    def test_installs_the_weekly_routine_where_its_prompt_points(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
-            for kit in ("optimiser", "librarian"):
-                install(root, plan(root, kit))
-                self.assertTrue((root / ".github" / kit / "routine.md").exists(), kit)
+            install(root, plan(root, "librarian"))
+            self.assertTrue((root / ".github" / "librarian" / "routine.md").exists())
 
     def test_keeps_the_routine_current_and_the_products_checks_its_own(self):
         with tempfile.TemporaryDirectory() as folder:
