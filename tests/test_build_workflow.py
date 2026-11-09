@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
 READY = {"ready": True, "reason": "", "repo": "o/r", "title": "Add slugify", "body": "Turn titles into slugs.", "decision": "",
-         "unseen": [], "open_pr": 0, "awaiting_merge": False, "risk": "medium", "parts": []}
+         "unseen": [], "open_pr": 0, "awaiting_merge": False, "risk": "medium"}
 PR = {"pr_number": 4, "pr_url": "https://github.com/o/r/pull/4", "head": "aaa1111", "stopped_because": ""}
 APPROVE = {"verdict": "approve", "findings": []}
 CHANGES = {"verdict": "changes", "findings": [{"must_fix": True, "reach": "anyone", "review_would_see": False,
@@ -56,11 +56,10 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("technical one-way door", check["prompt"])
         self.assertIn('"Technical decisions" section', check["prompt"])
 
-    def test_the_check_takes_an_issue_the_architect_cut_from_a_decided_brief(self):
+    def test_the_check_takes_one_decided_issue(self):
         prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
-        self.assertIn('its body starts "Part of #<n>"', prompt)
-        self.assertIn('"Build after #<m>", each #<m> must be closed', prompt)
-        self.assertIn("on this issue or on the brief it is part of", prompt)
+        self.assertIn("it must be open and labelled `decided`", prompt)
+        self.assertNotIn("Part of", prompt)
 
     def test_an_approved_change_goes_to_the_integrator(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
@@ -122,11 +121,6 @@ class BuildWorkflowTest(unittest.TestCase):
         for call in run["calls"]:
             if call["label"].startswith(("qa", "code review")):
                 self.assertIn('Pass marks under "The founder checks" in the issue are the founder\'s: never send the change back for one', call["prompt"])
-
-    def test_a_matches_line_never_makes_an_issue_wait(self):
-        prompt = self.run_workflow({"check": [{**READY, "ready": False, "reason": "x"}]})["calls"][0]["prompt"]
-        self.assertIn('A "Matches #<m>" line is a consistency link, not a dependency: it never makes the issue wait.', prompt)
-        self.assertIn('(a "Matches #<m>" line only keeps it consistent with #<m> and is not one of them)', prompt)
 
     def test_each_role_runs_as_its_plugin_agent_and_the_builder_in_a_worktree(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
@@ -540,90 +534,6 @@ class ReachTest(unittest.TestCase):
     def test_a_trusted_only_repeat_does_not_stop_the_run(self):
         run = self.run_workflow({"qa": [CHANGES, {"verdict": "changes", "findings": [{**TRUSTED, "repeat": True}]}]})
         self.assertEqual(run["result"]["status"], "merged")
-
-
-def part(n, *after):
-    return {"number": n, "after": list(after)}
-
-
-def built(n):
-    return {"pr_number": 100 + n, "pr_url": f"https://github.com/o/r/pull/{100 + n}", "head": f"c{n}", "stopped_because": ""}
-
-
-@unittest.skipUnless(HAVE_NODE, "needs node")
-class BuildBriefTest(unittest.TestCase):
-    """Given a brief the architect cut, build builds its issues in parallel and merges one at a time."""
-
-    BRIEF = {**READY, "title": "Brief: pricing", "parts": [part(21), part(32, 21), part(43)]}
-
-    def run_brief(self, args=7, slow=None, **overrides):
-        replies = {"check #7": [self.BRIEF], "check #21": [READY], "check #32": [READY], "check #43": [READY],
-                   "builder #21": [built(21)], "builder #32": [built(32)], "builder #43": [built(43)],
-                   "qa": [APPROVE] * 3, "integrator": [MERGED] * 3}
-        replies.update(overrides)
-        return run_workflow("build", with_code_review(replies), args, slow)
-
-    def labels(self, run):
-        return [call["label"] for call in run["calls"]]
-
-    def test_builds_every_issue_and_tidies_once(self):
-        run = self.run_brief()
-        self.assertEqual(run["result"]["status"], "3 of 3 issues merged")
-        self.assertEqual(sorted(r["issue"] for r in run["result"]["issues"]), [21, 32, 43])
-        self.assertEqual(self.labels(run).count("tidy worktrees"), 1)
-
-    def test_an_issue_waits_until_the_one_it_builds_after_has_merged(self):
-        labels = self.labels(self.run_brief())
-        self.assertLess(labels.index("integrator, PR #121"), labels.index("check #32"))
-
-    def test_the_integrator_merges_one_pr_at_a_time(self):
-        events = self.run_brief(slow={"integrator": 30})["events"]
-        merges = [e for e in events if "integrator" in e]
-        self.assertEqual([e.split()[0] for e in merges], ["start", "end"] * 3)
-
-    def test_runs_two_builders_at_once_by_default_and_one_when_asked(self):
-        two = self.labels(self.run_brief())
-        self.assertLess(two.index("check #43"), two.index("builder #21, round 1"))
-        one = self.labels(self.run_brief(args="7 1"))
-        self.assertLess(one.index("integrator, PR #121"), one.index("check #43"))
-
-    def test_the_number_of_builders_comes_from_the_founder_up_to_four(self):
-        for args, builders in (("7", 2), ("#7 3", 3), ("7 9", 4), ({"issue": 7, "builders": 3}, 3)):
-            self.assertEqual(self.run_brief(args=args)["result"]["builders"], builders, args)
-
-    def test_an_issue_after_one_that_did_not_merge_is_not_started(self):
-        stopped = {"pr_number": 0, "pr_url": "", "stopped_because": "split it in two"}
-        run = self.run_brief(**{"builder #21": [stopped]})
-        by_issue = {r["issue"]: r for r in run["result"]["issues"]}
-        self.assertEqual(by_issue[21]["status"], "stopped in build")
-        self.assertEqual(by_issue[32]["status"], "not started")
-        self.assertIn("#21", by_issue[32]["reason"])
-        self.assertEqual(by_issue[43]["status"], "merged")
-        self.assertNotIn("check #32", self.labels(run))
-
-    def test_an_issue_after_one_left_for_the_founders_merge_waits_for_the_next_run(self):
-        run = self.run_brief(slow={"integrator": 20}, **{"integrator": [FOUNDERS, MERGED],
-                                                         "ready for your merge": [{"comment_url": "u"}]})
-        by_issue = {r["issue"]: r for r in run["result"]["issues"]}
-        self.assertEqual(by_issue[21]["status"], "ready for your merge")
-        self.assertEqual((by_issue[32]["status"], by_issue[32]["waits_for"]), ("not started", 21))
-        self.assertIn("waits for your merge", by_issue[32]["reason"])
-        self.assertEqual(by_issue[43]["status"], "merged")
-        self.assertEqual(run["result"]["status"], "1 of 3 issues merged, 1 ready for your merge")
-        # The item goes up before the next merge starts, not when the run ends.
-        events = run["events"]
-        self.assertLess(events.index("end ready for your merge, PR #121"), events.index("start integrator, PR #143"))
-
-    def test_each_issue_is_checked_on_its_own_before_it_is_built(self):
-        run = self.run_brief(**{"check #43": [{**READY, "ready": False, "reason": "a red issue is open"}]})
-        by_issue = {r["issue"]: r for r in run["result"]["issues"]}
-        self.assertEqual(by_issue[43], {"issue": 43, "status": "not started", "reason": "a red issue is open"})
-        self.assertNotIn("builder #43, round 1", self.labels(run))
-
-    def test_the_check_recognises_a_brief_by_the_issues_cut_from_it(self):
-        prompt = self.run_brief()["calls"][0]["prompt"]
-        self.assertIn('"Part of #7" in:body', prompt.replace('\\"', '"'))
-        self.assertIn("Return each open one as parts", prompt)
 
 
 if __name__ == "__main__":

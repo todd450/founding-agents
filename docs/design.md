@@ -9,7 +9,7 @@ A team of agents that builds products with one founder.
 | Decide | **Product lead** | each new idea; a weekly scope review | a one-paragraph brief (who, what evidence, how we'll know); says no by default; owns the decision queue | no code |
 | | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
 | Build | **Architect** | a weekly routine; its view on each brief in `propose` | at most three findings a week: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
-| | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the edge-case fixtures | their own worktree |
+| | **Builder** | one decided issue at a time, in its own worktree | the change, with tests written first from the edge-case fixtures | its own worktree |
 | | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the fixtures and the running product | read and run |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
@@ -56,7 +56,7 @@ starts with the context it needs.
 4. **Work runs as tickets, not sessions.** One ticket, one agent run, one worktree (OpenAI's
    Symphony, Claude Code's agent-team task list).
 5. **Never two writers on the same files.** Parallelism pays only when work splits cleanly.
-6. **A gate before production.** At two to four builders a merge queue costs little; large teams
+6. **A gate before production.** With one builder a merge gate costs little; large teams
    dropped single merge gates only at hundreds of agents or tens of thousands of merges a day.
 7. **Lessons become code.** A rule that must hold is a test, a lint rule or a hook. The
    always-loaded rules file is a short map into `docs/` (the first product's grew to 4,392 lines
@@ -160,8 +160,6 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 - **Pass marks are ones the reviewers can check, or the founder's by name.** A pass mark that needs
   a dashboard, a login or the live site goes under "The founder checks", and no reviewer sends a
   change back for it.
-- **"Build after" is only for a real dependency.** Issues that must merely look or read alike say
-  "Matches #<n>" instead, and `build` never waits on that.
 
 ### Building
 
@@ -170,9 +168,9 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   open. The builder and each reviewer work in their own worktree, and reviewers see the issue and
   the PR, never the builder's summary. After three rounds, or when a fixed must-fix comes back, the
   run stops for the founder.
-- **Parallel builders: `build` on a brief builds two to four issues at once.** It is safe only
-  because no two issues share a file. The integrator still merges one PR at a time, each tested on
-  top of the last.
+- **One issue per run.** `build` once built every issue `plan` cut from a brief, two to four
+  builders at once. With `plan` gone nothing cut those issues, so that mode was dropped: a run
+  builds the one issue it is given.
 - **Agents that run at once keep out of each other's way,** each with its own scratch folder and
   port, stopping only the server it started.
 - **Builders use standard tools before writing checks, and test behaviour, not wording.**
@@ -286,7 +284,7 @@ fresh one shows the team from its first commit, with no history to work around.
 4. **The decide lane:** the product lead and the designer as `propose`, feeding `needs-founder`. A
    product that can build nothing until its words and look are decided, such as a website, takes
    this step before step 3.
-5. **Grow on demand:** parallel builders, review split into QA, code and
+5. **Grow on demand:** review split into QA, code and
    security review, the optimiser and the librarian, and `sweep`, each once its kind of work
    appears.
 
