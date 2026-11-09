@@ -9,8 +9,8 @@ A team of agents that builds products with one founder.
 | Decide | **Product lead** | each new idea; a weekly scope review | a one-paragraph brief (who, what evidence, how we'll know); says no by default; owns the decision queue | no code |
 | | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
 | Build | **Architect** | each new surface; any schema or shared change | the plan builders work from, with the day-one defaults set | plans, schema review |
-| | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the visible edge-case fixtures | their own worktree; never the holdouts |
-| | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the visible fixtures and the holdout scenarios builders never see | read and run; the only role that reads the holdouts |
+| | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the edge-case fixtures | their own worktree |
+| | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the fixtures and the running product | read and run |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
 | | **Optimiser** | a weekly routine, for team cost; an agent in a `codebase` or `tests` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does (sweep) | proposes builder tasks |
@@ -50,7 +50,7 @@ starts with the context it needs.
 1. **Decide before building.** Mockups and briefs are cheap; production code carries costs forever
    (fixes, guards, translations, review).
 2. **The builder never grades itself.** A separate evaluator drives the real app against hard pass
-   marks, including scenarios the builder never saw. Expect to tune it: Anthropic found Claude a
+   marks. Expect to tune it: Anthropic found Claude a
    lenient QA agent out of the box.
 3. **The strongest model plans; cheaper models build.** Cursor's current swarm splits planners and
    workers this way; workers used most of the tokens.
@@ -85,8 +85,8 @@ screen, one design-token source that generates every copy.
   Actions schedules instead, which `setup` installs in the product.
 - **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` before a version
   bump that changes an agent, skill, workflow or model.
-- **Hard rules** → plugin hooks (only the integrator pushes to `main` or merges; only QA reads the
-  holdouts; a local preview binds to this machine and serves no secret) and GitHub branch
+- **Hard rules** → plugin hooks (only the integrator pushes to `main` or merges; a local preview
+  binds to this machine and serves no secret) and GitHub branch
   protection (nothing merges without passing checks).
 
 ## Decisions
@@ -98,16 +98,15 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 - **One plugin plus a `setup` skill.** The plugin ships the agents, skills, hooks and workflows.
   `setup` does each product's part, which a plugin cannot ship: the routines, branch protection,
-  the labels, the holdout repo, and a starter `CLAUDE.md`, `check.sh` and `fixtures/` that the
+  the labels, and a starter `CLAUDE.md`, `check.sh` and `fixtures/` that the
   product then owns.
 - **A change a product should get bumps the plugin's version,** since an install updates only when
   the version changes. A docs-only change does not.
-- **The plugin stays generic.** It holds the failure classes; each product keeps its own fixtures,
-  holdouts and rules.
+- **The plugin stays generic.** It holds the failure classes; each product keeps its own fixtures
+  and rules.
 - **The plugin repo is public, under MIT.** A plugin installs from its repo, so a private one
   leaves the public website pointing at a team nobody else can install. Each person runs the team
-  on their own login, and the plugin never ships or shares a token; holdouts live on each machine,
-  in `~/.founding-agents`, never in a repo. Until 1.0 any version may change the team, and pull
+  on their own login, and the plugin never ships or shares a token. Until 1.0 any version may change the team, and pull
   requests come by invitation.
 - **Each role learns from a named exemplar** ([exemplars.md](exemplars.md)), which the founder
   picks: a named practice gives an agent something concrete to do and the founder words to correct
@@ -223,23 +222,12 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   from a step they start.
 - **Nothing merges while a `red` issue is open** (principle 9).
 
-### Holdouts
+### Edge cases
 
-- **Holdout scenarios: QA keeps some edge-case scenarios hidden from builders.** For each failure
-  class, some scenarios are visible fixtures that builders write their tests from; the rest are
-  holdouts that only edge-case QA reads. Agents shape code to the tests in front of them without
-  meaning to, and Claude is a lenient QA agent out of the box (principle 2), so a scenario the
-  builder never saw is the one check it cannot have fitted.
-- **How holdouts stay hidden.** They live in a private `<product>-holdouts` repo that `setup`
-  creates and clones to `~/.founding-agents/holdouts/<owner>/<name>`, outside every product folder
-  and worktree, so nothing in the product points to them; one Markdown file per scenario (setup,
-  steps, expected), in a folder per failure class. The `guard_holdouts` hook blocks every agent but
-  `founding-agents:qa` from any tool call naming that folder or a `-holdouts` repo; the founder's
-  own session passes, since it writes them. Like the merge guard it is best-effort. The founder
-  writes the first scenarios, never through an agent, and QA adds one or two where a change touches
-  a class with none. A failing holdout is reported by its class and what went wrong, never the
-  scenario. A scenario a builder has seen moves into the visible fixtures, which is the founder's
-  job for now, and a new holdout replaces it.
+- **No hidden scenarios.** QA runs the product's visible fixtures and makes its own cases from the
+  failure checklist; builders see everything QA sees. Holdout scenarios, kept from builders in a
+  private repo behind a hook, were dropped: for one founder, the repo, the hook and their setup
+  weighed more than the cases they added.
 
 ### Finding work: sweeps and routines
 
@@ -314,8 +302,6 @@ the check-back.
   [Symphony](https://openai.com/index/open-source-codex-orchestration-symphony/) (Apr 2026)
 - Ramp — [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent), for
   screenshots in every PR
-- StrongDM — [Software Factory](https://rywalker.com/research/strongdm-factory) (a third-party write-up, Sep 2026), for
-  holdout scenarios
 - Claude Code docs — [agent teams](https://code.claude.com/docs/en/agent-teams),
   [plugins](https://code.claude.com/docs/en/plugins/components), [workflows](https://code.claude.com/docs/en/workflows),
   [routines](https://code.claude.com/docs/en/routines) and [costs](https://code.claude.com/docs/en/costs)
