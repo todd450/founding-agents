@@ -1,5 +1,5 @@
 {
-  "role": "code-reviewer",
+  "role": "reviewer",
   "kind": "capability",
   "class": "a unit test that makes a network call",
   "origin": "founding-agents-site #5 (PR #8): the reviewer called it 'worth a sentence of thought, not necessarily a change', saw it skip on a rate limit, and approved",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 5,
-    "label": "code review",
+    "label": "review",
     "pr": 8
   },
   "commits": [

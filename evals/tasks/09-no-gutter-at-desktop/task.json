@@ -1,5 +1,5 @@
 {
-  "role": "qa",
+  "role": "reviewer",
   "kind": "capability",
   "class": "a layout bug visible only in the rendered page",
   "origin": "founding-agents-site #5 (PR #8): the band's head ran into step 1 at 1440 px through every review, including one that rendered the page; fixed in #10",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 29,
-    "label": "qa",
+    "label": "review",
     "pr": 30
   },
   "commits": [

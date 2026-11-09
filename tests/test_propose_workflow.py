@@ -47,7 +47,7 @@ def view(recommend="go", option="", why="It is a day's work.", decisions=()):
     return {"recommend": recommend, "option": option, "why": why, "decisions": list(decisions)}
 
 
-VOICES = ["architect", "builder", "qa", "code reviewer", "security reviewer"]
+VOICES = ["architect", "builder", "reviewer", "security reviewer"]
 TEAM = view(option="B", why="Everyone agrees B is worth its six days.")
 
 
@@ -109,7 +109,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_the_queue_item_gives_the_teams_recommendation_then_each_roles_with_why(self):
         views = {"builder": view(option="A", why="A is two days less work."),
-                 "qa": view(option="B", why="B is easier to check on a phone."),
+                 "reviewer": view(option="B", why="B is easier to check on a phone."),
                  "security reviewer": view(option="B", why="Neither touches people's data.")}
         team = view(option="B", why="B shows the whole journey; the builder prefers A to save two days.")
         item = self.queue_item(run_workflow("propose", replies(views=views, team=team), ALL))
@@ -118,7 +118,7 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertIn("- **The brief:** go. two founders asked for it", item)
         self.assertIn("- **Designer:** option B. B shows the whole journey.", item)
         self.assertIn("- **Builder:** go, option A. A is two days less work.", item)
-        self.assertIn("- **QA:** go, option B. B is easier to check on a phone.", item)
+        self.assertIn("- **Reviewer:** go, option B. B is easier to check on a phone.", item)
         self.assertIn("- **Security reviewer:** go, option B. Neither touches people's data.", item)
         self.assertLess(item.index("**The team:"), item.index("**The brief:**"))
 
@@ -147,11 +147,11 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_a_role_or_team_that_returns_nothing_still_leaves_a_queue_item(self):
         r = replies()
-        r["qa"], r["team"] = [None], [None]
+        r["reviewer"], r["team"] = [None], [None]
         run = run_workflow("propose", r, ALL)
         item = self.queue_item(run)
         self.assertNotIn("**The team", item)
-        self.assertNotIn("**QA:**", item)
+        self.assertNotIn("**Reviewer:**", item)
         self.assertIn("- **Builder:** go, option B.", item)
         self.assertIn("### B. Option B (recommended)", item)
         self.assertEqual(run["result"]["team"], "")
@@ -336,14 +336,14 @@ class PanelTest(unittest.TestCase):
         self.assertEqual(run["result"]["panel"], ["builder", "security-reviewer"])
         self.assertIn("builder", self.labels(run))
         self.assertIn("security reviewer", self.labels(run))
-        self.assertNotIn("qa", self.labels(run))
+        self.assertNotIn("reviewer", self.labels(run))
 
     def test_an_idea_names_its_panel_after_panel_colon(self):
-        run = run_workflow("propose", replies(), "7 day trial page panel: qa")
+        run = run_workflow("propose", replies(), "7 day trial page panel: reviewer")
         self.assertIn("open it as a new issue", run["calls"][0]["prompt"])
         self.assertIn("7 day trial page", run["calls"][0]["prompt"])
         self.assertNotIn("panel:", run["calls"][0]["prompt"])
-        self.assertEqual(run["result"]["panel"], ["qa"])
+        self.assertEqual(run["result"]["panel"], ["reviewer"])
 
     def test_the_panel_can_come_as_an_argument(self):
         run = run_workflow("propose", replies(), {"issue": 7, "panel": ["architect"]})
@@ -352,7 +352,7 @@ class PanelTest(unittest.TestCase):
     def test_an_unknown_role_is_refused_with_the_choices(self):
         run = run_workflow("propose", replies(), "7 bulder")
         self.assertIn("No role called bulder", run["error"])
-        self.assertIn("architect, builder, qa, code-reviewer, security-reviewer", run["error"])
+        self.assertIn("architect, builder, reviewer, security-reviewer", run["error"])
         self.assertEqual(run["calls"], [])
 
     def test_one_role_gets_no_team_step(self):
@@ -362,7 +362,7 @@ class PanelTest(unittest.TestCase):
         self.assertIn("### B. Option B (recommended)", self.queue_item(run))
 
     def test_two_roles_get_the_team_step(self):
-        run = run_workflow("propose", replies(team={**TEAM, "option": "A"}), "7 builder qa")
+        run = run_workflow("propose", replies(team={**TEAM, "option": "A"}), "7 builder reviewer")
         self.assertIn("team", self.labels(run))
         self.assertIn("### A. Option A (recommended)", self.queue_item(run))
 
@@ -414,9 +414,9 @@ class DesignIterationTest(unittest.TestCase):
         self.assertIn("To keep the screen as it is, close the issue", item)
 
     def test_a_panel_can_say_keep_it_as_it_is(self):
-        run = self.run_design("7 qa", views={"qa": view("no-go", why="Nothing is wrong enough to change.")})
+        run = self.run_design("7 reviewer", views={"reviewer": view("no-go", why="Nothing is wrong enough to change.")})
         item = next(c["prompt"] for c in run["calls"] if c["label"] == "queue item")
-        self.assertIn("- **QA:** keep it as it is. Nothing is wrong enough to change.", item)
+        self.assertIn("- **Reviewer:** keep it as it is. Nothing is wrong enough to change.", item)
 
     def test_a_design_issue_without_the_screen_what_is_wrong_and_what_stays_does_not_start(self):
         run = run_workflow("propose", replies(checked={**DESIGN_ISSUE, "ready": False, "reason": "it names no screen"}), 7)

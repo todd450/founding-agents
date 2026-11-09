@@ -1,5 +1,5 @@
 {
-  "role": "code-reviewer",
+  "role": "reviewer",
   "kind": "regression",
   "class": "a sound change the reviewer should approve, not send back",
   "origin": "the website's one-round merges (#10, #12); a reviewer that sends everything back scores nothing here",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 15,
-    "label": "code review",
+    "label": "review",
     "pr": 16
   },
   "commits": [

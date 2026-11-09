@@ -1,5 +1,5 @@
 {
-  "role": "qa",
+  "role": "reviewer",
   "kind": "capability",
   "class": "a fact on the page no longer true, not checked against the repo",
   "origin": "founding-agents-site #5 (PR #8): step 4's stale 'Running · 1 of 2', copied from the mockup, passed six reviews and was fixed by the founder in #10",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 5,
-    "label": "qa",
+    "label": "review",
     "pr": 8
   },
   "commits": [

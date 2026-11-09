@@ -1,5 +1,5 @@
 {
-  "role": "code-reviewer",
+  "role": "reviewer",
   "kind": "capability",
   "class": "a test that pins today's wording instead of a behaviour",
   "origin": "founding-agents-site #6 and #10 (PRs #9 and #11): these tests merged, and #12 later removed them",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 6,
-    "label": "code review",
+    "label": "review",
     "pr": 9
   },
   "commits": [

@@ -6,9 +6,9 @@ sends that step (by running the workflow with scripted replies up to it), runs i
 as the step's agent and model, in a fresh throwaway repo with the `gh` stand-in, then grades what
 the agent returned, posted and pushed. Tokens and cost are what `claude -p` reports for each trial.
 
-    python3 evals/run.py --role qa --trials 1              # one role's tasks, as a PR runs them
+    python3 evals/run.py --role reviewer --trials 1        # one role's tasks, as a PR runs them
     python3 evals/run.py --role builder --trials 5         # one role's tasks, more trials
-    python3 evals/run.py --task 09 --model qa=sonnet       # one task, on another model
+    python3 evals/run.py --task 09 --model reviewer=sonnet # one task, on another model
     python3 evals/run.py --dry-run                         # show each task's step; run nothing
     python3 evals/run.py --report a/results.json b/results.json   # one report from several runs
 """
@@ -52,11 +52,11 @@ def replies(task):
         return {"issue check": [{"repo": github["repo"], "design": "design" in issue.get("labels", []), "ready": True,
                                  "reason": ""}]}
     ticket = {"ready": True, "reason": "", "repo": github["repo"], "title": issue["title"], "body": issue["body"],
-              "decision": "", "unseen": [], "open_pr": 0, "risk": "medium", "parts": [], **step.get("ticket", {})}
+              "decision": "", "unseen": [], "open_pr": 0, "security": False, "parts": [], **step.get("ticket", {})}
     pr = step.get("pr", 0)
     built = {"pr_number": pr, "pr_url": f"https://github.com/{github['repo']}/pull/{pr}", "head": "", "stopped_because": ""}
-    approve = {"verdict": "approve", "risk": ticket["risk"], "findings": []}
-    return {"check": [ticket] * 3, "builder": [built] * 3, "qa": [approve] * 3, "code review": [approve] * 3}
+    approve = {"verdict": "approve", "security": False, "findings": []}
+    return {"check": [ticket] * 3, "builder": [built] * 3, "review": [approve] * 3}
 
 
 def capture(task):

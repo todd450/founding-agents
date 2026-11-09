@@ -74,7 +74,7 @@ class TaskTest(unittest.TestCase):
         # The flaw is one the reviewer has to find, not a red test it can read off.
         for name in trial.tasks():
             task = trial.load(name)
-            if task["step"]["label"] not in ("qa", "code review"):
+            if task["step"]["label"] != "review":
                 continue
             with self.subTest(name):
                 folder = Path(self.folder.name) / f"{name}-suite"
@@ -148,11 +148,11 @@ class RecordTest(unittest.TestCase):
 
 
 class FindingsTest(unittest.TestCase):
-    def test_a_grader_counts_must_fix_findings_the_way_build_does(self):
-        trusted = {"must_fix": True, "reach": "trusted", "review_would_see": True, "where": "facts", "what": "a crafted link"}
-        slip = {**trusted, "review_would_see": False, "what": "an empty fact"}
+    def test_a_grader_counts_must_fix_findings_as_the_reviewer_marks_them(self):
+        nit = {"must_fix": False, "where": "facts", "what": "a crafted link"}
+        slip = {"must_fix": True, "where": "facts", "what": "an empty fact"}
         with tempfile.TemporaryDirectory() as folder:
-            (Path(folder) / "output.json").write_text(json.dumps({"findings": [trusted, slip]}))
+            (Path(folder) / "output.json").write_text(json.dumps({"findings": [nit, slip]}))
             (Path(folder) / "github.json").write_text(json.dumps({"posted": []}))
             checks = trial.Trial({}, folder)
             self.assertEqual([f["what"] for f in checks.findings(must_fix=True)], ["an empty fact"])
@@ -161,7 +161,7 @@ class FindingsTest(unittest.TestCase):
 @unittest.skipUnless(HAVE_NODE, "needs node")
 class RunnerTest(unittest.TestCase):
     def test_each_task_runs_the_prompt_its_workflow_sends_as_that_steps_agent_and_model(self):
-        expected = {"code-reviewer": "founding-agents:code-reviewer", "qa": "founding-agents:qa",
+        expected = {"reviewer": "founding-agents:reviewer",
                     "builder": "founding-agents:builder", "brief": None, "architect": "founding-agents:architect",
                     "build-check": None}
         for name in trial.tasks():
@@ -219,7 +219,7 @@ class ResultTest(unittest.TestCase):
 
     def test_only_an_agent_step_is_asked_for_json_in_its_reply(self):
         call = {"prompt": "Review.", "schema": self.SCHEMA}
-        self.assertIn("```json", run.prompt({**call, "agentType": "founding-agents:qa"}))
+        self.assertIn("```json", run.prompt({**call, "agentType": "founding-agents:reviewer"}))
         self.assertEqual(run.prompt({**call, "agentType": None}), "Review.")
 
     def test_flags_fixed_scratch_paths_and_ports_but_not_private_ones(self):

@@ -1,6 +1,6 @@
 # Fixtures
 
-The visible edge-case scenarios. Builders write their tests from these, and edge-case QA runs them
+The visible edge-case scenarios. Builders write their tests from these, and the reviewer runs them
 on every change, and makes more of its own from the same classes, so a change has to handle each
 whole failure class, not just these cases.
 

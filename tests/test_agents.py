@@ -43,8 +43,8 @@ class AgentFileTest(unittest.TestCase):
             if named:
                 self.assertIn("Skill", frontmatter(path)["tools"], f"{path.name} names {named}")
 
-    def test_the_builder_and_qa_look_for_screenshots_on_the_same_branch(self):
-        for role in ("builder", "qa"):
+    def test_the_builder_and_the_reviewer_look_for_screenshots_on_the_same_branch(self):
+        for role in ("builder", "reviewer"):
             text = words(AGENTS[0].parent / f"{role}.md")
             self.assertIn("`mockup-screenshots` skill", text, role)
             self.assertIn("`screenshots/issue-<n>`", text, role)
@@ -68,21 +68,17 @@ class ProportionTest(unittest.TestCase):
     def test_reviewers_rate_a_finding_by_who_can_reach_it(self):
         # On the website's #27, six rounds went on link tricks only the founder's own data could carry.
         self.assertIn("Rate severity by who can reach the input", self.read("security-reviewer"))
-        self.assertIn("Rate a failure by who meets it", self.read("qa"))
-        self.assertIn("by who can reach the input", self.read("code-reviewer"))
+        self.assertIn("a problem only someone the team trusts could cause", self.read("reviewer"))
 
-    def test_qa_rates_a_failure_by_who_meets_it_and_a_loud_refusal_is_caught(self):
+    def test_a_loud_refusal_counts_as_caught(self):
         # On the website's #39 QA held the PR for a failure whose only harm was a stack trace where
         # the build's refusal of the founder's own file should have been a sentence.
-        qa = self.read("qa")
-        self.assertIn("Rate a failure by who meets it", qa)
-        self.assertIn("the product refuses it loudly", qa)
-        for role in ("code-reviewer", "security-reviewer"):
-            self.assertIn("refuses", self.read(role))
+        self.assertIn("a loud failure (the build or a check refuses it) would catch", self.read("reviewer"))
+        self.assertIn("the product refuses loudly", self.read("security-reviewer"))
 
     def test_reviewers_review_only_what_changed_from_the_second_round(self):
         # On the website's #35, each of 13 rounds re-read the whole PR and found something new.
-        for name in ("qa", "code-reviewer", "security-reviewer"):
+        for name in ("reviewer", "security-reviewer"):
             self.assertIn("From the second round", self.read(name), name)
             self.assertIn("only what changed since your last review", self.read(name), name)
 
@@ -95,7 +91,7 @@ class ProportionTest(unittest.TestCase):
         self.assertIn(".github/sweeps/architecture.md", architect)
 
     def test_every_agent_that_serves_the_product_binds_it_to_this_machine(self):
-        for name in ("builder", "qa", "code-reviewer", "security-reviewer"):
+        for name in ("builder", "reviewer", "security-reviewer"):
             text = self.read(name)
             self.assertIn("python3 -m http.server 0 --bind 127.0.0.1", text, name)
             self.assertNotIn("http.server 0`", text, name)

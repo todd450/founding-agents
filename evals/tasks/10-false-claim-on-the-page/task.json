@@ -1,5 +1,5 @@
 {
-  "role": "qa",
+  "role": "reviewer",
   "kind": "capability",
   "class": "a false claim on the page graded as a Nit",
   "origin": "founding-agents-site #10 (PR #11): the reviewer marked 'a name, a state, a date and a link' as a Nit though no test checks a link; it merged and is still on main",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 10,
-    "label": "qa",
+    "label": "review",
     "pr": 11
   },
   "commits": [

@@ -1,5 +1,5 @@
 {
-  "role": "code-reviewer",
+  "role": "reviewer",
   "kind": "capability",
   "class": "a hand-written check where a standard tool would do",
   "origin": "founding-agents-site #4 (PR #7): this test was sent back three times before the founder narrowed the issue",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 4,
-    "label": "code review",
+    "label": "review",
     "pr": 7
   },
   "commits": [

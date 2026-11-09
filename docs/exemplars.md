@@ -18,15 +18,14 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Designer | Airbnb |
 | Architect | Amazon's one-way and two-way doors; Stripe's API compatibility |
 | Builder | Kent Beck's test-driven development; Google's small changes |
-| Edge-case QA | Elisabeth Hendrickson's test heuristics |
-| Code reviewer | Google's code review guide |
+| Reviewer | Google's code review guide; Elisabeth Hendrickson's test heuristics |
 | Security reviewer | Trail of Bits findings, against OWASP ASVS |
 | Optimiser (the `codebase` and `tests` sweeps) | Performance budgets; DRY; Google's test sizes, flaky-test work and mutation testing for the suite |
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
 
-A single reviewer took both the edge-case QA and the code reviewer sections until 27 Oct 2026,
-when they became two agents.
+Edge-case QA and the code reviewer were two agents from 27 Oct to 9 Nov 2026; the reviewer
+takes both sections below again.
 
 ## Product lead — Basecamp's *Shape Up*
 
@@ -74,20 +73,20 @@ Sources: Kent Beck, *Test-Driven Development: By Example* (Addison-Wesley, 2002)
 [Small CLs](https://google.github.io/eng-practices/review/developer/small-cls.html) and
 [Writing good CL descriptions](https://google.github.io/eng-practices/review/developer/cl-descriptions.html).
 
-## Edge-case QA — Elisabeth Hendrickson
+## Reviewer, driving the product — Elisabeth Hendrickson
 
 The failure checklist names classes of failure. Hendrickson's heuristics generate the cases inside
 each class, and her exploratory testing drives the real app instead of reading the code. The
-practices are in [agents/qa.md](../agents/qa.md).
+practices are in [agents/reviewer.md](../agents/reviewer.md).
 
 Sources: Elisabeth Hendrickson, [*Explore It!*](https://pragprog.com/titles/ehxta/explore-it/)
 (Pragmatic Bookshelf, 2013), and her Test Heuristics Cheat Sheet (with James Lyndsay and Dale
 Emery).
 
-## Code reviewer — Google's code review guide
+## Reviewer, reading the diff — Google's code review guide
 
 Google's guide gives the reviewer a standard to approve against and words for what must be fixed
-and what may be skipped. The practices are in [agents/code-reviewer.md](../agents/code-reviewer.md).
+and what may be skipped. The practices are in [agents/reviewer.md](../agents/reviewer.md).
 
 Sources: Google, [The standard of code review](https://google.github.io/eng-practices/review/reviewer/standard.html)
 and [What to look for in a code review](https://google.github.io/eng-practices/review/reviewer/looking-for.html).

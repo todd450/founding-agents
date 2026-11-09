@@ -55,8 +55,6 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
   which of its pass marks hold: the steps to reproduce stay out of the PR.
 - From the second round, review only what changed since your last review (the builder's fixes)
   and whether your earlier findings are fixed. Leave alone what you saw then and did not raise.
-- Each finding you return says who can reach it; the workflow treats a must-fix only a trusted
-  writer reaches, where review would see it or the product refuses it loudly, as a Nit.
 - Post one comment on the PR with `gh pr comment <number> --body-file -`. Start it with
   **Security: Approve** or **Security: Changes needed**.
 

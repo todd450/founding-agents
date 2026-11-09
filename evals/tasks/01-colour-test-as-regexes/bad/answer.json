@@ -14,7 +14,7 @@
     {
       "kind": "pr comment",
       "number": 7,
-      "body": "**Code review: Approve**\n\n- Nit: tests/test_style.py:15: Nit: stylelint would catch more cases than this regex."
+      "body": "**Review: Approve**\n\n- Nit: tests/test_style.py:15: Nit: stylelint would catch more cases than this regex."
     }
   ]
 }
