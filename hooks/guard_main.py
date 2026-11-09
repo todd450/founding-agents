@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""PreToolUse hook: only the integrator pushes to main or merges a PR.
+"""PreToolUse hook: no session or agent pushes to main or merges a PR; the founder merges on GitHub.
 
-Reads the hook event on stdin. When a Bash command would push to a protected branch or merge a PR
-and the calling agent is not the integrator, it exits 2 with the reason on stderr, which blocks
-the call and tells the agent why. This is best-effort parsing of shell commands; GitHub branch
+Reads the hook event on stdin. When a Bash command would push to a protected branch or merge a PR,
+it exits 2 with the reason on stderr, which blocks the call and tells the agent why. There is no
+exemption, so no agent's name can pass it. This is best-effort parsing of shell commands; GitHub branch
 protection is the hard gate (docs/design.md, "The gate").
 """
 
@@ -14,9 +14,6 @@ import shlex
 import subprocess
 import sys
 
-# Hooks see a plugin agent's name with the plugin prefix (tests/e2e_guard.sh, docs/design.md "The
-# gate"), so another agent that is merely called `integrator` does not pass.
-INTEGRATOR = "founding-agents:integrator"
 PROTECTED = {"main", "master"}
 
 SEGMENT_BREAKS = re.compile(r"&&|\|\||[;|\n]")
@@ -106,7 +103,7 @@ def main():
         event = json.load(sys.stdin)
     except ValueError:
         return 0
-    if event.get("tool_name") != "Bash" or event.get("agent_type") == INTEGRATOR:
+    if event.get("tool_name") != "Bash":
         return 0
     command = (event.get("tool_input") or {}).get("command") or ""
     if "push" not in command and "merge" not in command:
@@ -116,10 +113,10 @@ def main():
     if not found:
         return 0
     agent = event.get("agent_type")
-    caller = f"the {agent} agent" if agent else "a session that is not the integrator"
+    caller = f"the {agent} agent" if agent else "this session"
     print(
-        f"Blocked {found} by {caller}. Only the founding-agents integrator pushes to main or merges. "
-        "Push your own branch and open a PR instead.",
+        f"Blocked {found} by {caller}. The founder merges every PR on GitHub; no session pushes to "
+        "main or merges. Push your own branch and open a PR instead.",
         file=sys.stderr,
     )
     return 2

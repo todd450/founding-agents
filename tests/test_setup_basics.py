@@ -1,7 +1,6 @@
 """Setup's basics give a product its CLAUDE.md map and a fixtures folder, and never replace its own."""
 
 import json
-import re
 import sys
 import tempfile
 import unittest
@@ -42,19 +41,11 @@ class BasicsTest(unittest.TestCase):
             install(root, plan(root, "basics"))
             self.assertEqual((root / "CLAUDE.md").read_text(), "# Site\n")
 
-    def test_the_founder_hands_the_merge_over_in_the_words_the_integrator_reads(self):
-        # The product's CLAUDE.md and the integrator agree on one phrase; auto mode's approval lives in
-        # the founder's own settings, since Claude Code never reads `autoMode` from a repo or a plugin.
-        words = "the integrator merges even though merging deploys"
-        root = SETUP.parent.parent
-        for path in [SETUP / "basics" / "CLAUDE.md", SETUP / "SKILL.md", root / "agents" / "integrator.md",
-                     root / "workflows" / "build.js"]:
-            self.assertIn(words, " ".join(path.read_text().split()).lower(), path.name)
-        entry = json.loads(re.search(r"```json\n\s*(\{\"autoMode\".*?)\n\s*```", (SETUP / "SKILL.md").read_text(), re.S).group(1))
-        allow = entry["autoMode"]["allow"]
-        self.assertEqual(allow[0], "$defaults")
-        self.assertIn(words, allow[1])
-
+    def test_the_founder_merges_every_pr(self):
+        # No agent merges, whether or not merging deploys (the integrator went on 9 Nov 2026).
+        shipping = " ".join((SETUP / "basics" / "CLAUDE.md").read_text().split())
+        self.assertIn("the founder merges every one on GitHub", shipping)
+        self.assertNotIn("autoMode", (SETUP / "SKILL.md").read_text())
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,4 @@
-"""The merge guard blocks pushes to main and PR merges by every agent but the integrator."""
+"""The merge guard blocks pushes to main and PR merges by every session and agent: the founder merges."""
 
 import json
 import subprocess
@@ -98,14 +98,11 @@ class GuardTest(unittest.TestCase):
         self.assertBlocked("gh pr merge 1", agent="founding-agents:code-reviewer")
         self.assertBlocked("gh pr merge 1", agent="other-plugin:builder")
 
-    def test_blocks_an_integrator_from_outside_the_plugin(self):
-        for agent in ("integrator", "other-plugin:integrator"):
-            self.assertBlocked("gh pr merge 1", agent=agent)
+    def test_no_agent_name_is_exempt(self):
+        # The integrator was exempt until 9 Nov 2026; now the founder merges every PR.
+        for agent in ("founding-agents:integrator", "integrator", "other-plugin:integrator"):
+            self.assertBlocked("gh pr merge 1 --merge", agent=agent)
             self.assertBlocked("git push origin main", agent=agent)
-
-    def test_allows_the_integrator(self):
-        self.assertAllowed("gh pr merge 1 --merge", agent="founding-agents:integrator")
-        self.assertAllowed("git push origin main", agent="founding-agents:integrator")
 
     def test_ignores_commands_that_only_mention_push_or_merge(self):
         for command in (

@@ -81,15 +81,6 @@ class TaskTest(unittest.TestCase):
                 checkout = trial.Trial(task, folder).branch(task["github"]["prs"][0]["headRefName"])
                 self.assertTrue(trial.Trial(task, folder).suite(checkout))
 
-    def test_the_integrator_task_fails_only_once_merged(self):
-        task = trial.load("17-merge-that-breaks-main")
-        folder = Path(self.folder.name) / "merge"
-        work = trial.make(task, folder)
-        checks = trial.Trial(task, folder)
-        self.assertTrue(checks.suite(checks.branch("build/issue-19")))
-        trial.git(work, "merge", "-q", "--no-edit", "build/issue-19")
-        self.assertFalse(checks.suite(work))
-
     def test_the_red_line_is_graded_on_its_meaning_not_its_words(self):
         # Every phrasing here came from a real trial; the first run's grader failed all but the first.
         task = trial.load("12-status-from-the-repo")
@@ -170,8 +161,7 @@ class FindingsTest(unittest.TestCase):
 class RunnerTest(unittest.TestCase):
     def test_each_task_runs_the_prompt_its_workflow_sends_as_that_steps_agent_and_model(self):
         expected = {"code-reviewer": "founding-agents:code-reviewer", "qa": "founding-agents:qa",
-                    "builder": "founding-agents:builder", "integrator": "founding-agents:integrator",
-                    "product-lead": "founding-agents:product-lead", "architect": "founding-agents:architect",
+                    "builder": "founding-agents:builder", "product-lead": "founding-agents:product-lead", "architect": "founding-agents:architect",
                     "build-check": None}
         for name in trial.tasks():
             task = trial.load(name)
