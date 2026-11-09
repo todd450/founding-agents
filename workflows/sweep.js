@@ -6,7 +6,7 @@ export const meta = {
     { title: 'Check', detail: 'no red issue is open; which sweep findings are open already', model: 'haiku' },
     { title: 'Find', detail: 'the finder reads and runs the product and ranks up to five findings', model: 'opus' },
     { title: 'File', detail: 'one issue per finding, then one needs-founder queue item', model: 'haiku' },
-    { title: 'Report', detail: "the run's time, tokens and cost, posted on the queue item", model: 'haiku' },
+    { title: 'Tidy', detail: 'remove the worktrees whose work is on GitHub', model: 'haiku' },
   ],
 }
 
@@ -39,8 +39,6 @@ if (!k) throw new Error('Name what to sweep, e.g. /founding-agents:sweep codebas
 
 // At most this many findings reach the founder from one sweep.
 const MAX = 5
-// Dollars at API prices one run should stay under; the run report flags a run over it.
-const BUDGET = 5
 
 // What counts as a technical one-way door; build.js, propose.js, plan.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
@@ -125,28 +123,14 @@ const TIDIED = {
   properties: { removed: { type: 'integer' }, kept: { type: 'array', items: { type: 'string' }, description: 'each kept worktree and why' } },
   required: ['removed', 'kept'],
 }
-const REPORTED = {
-  type: 'object',
-  properties: {
-    comment_url: { type: 'string', description: 'the posted comment; empty when it was not posted' },
-    reason: { type: 'string', description: 'why it was not posted; empty when it was' },
-  },
-  required: ['comment_url', 'reason'],
-}
-
-// A run that got past its first step removes the worktrees whose work is on GitHub, then posts its
-// time, tokens and cost on the queue item when there is one.
+// A run that got past its first step removes the worktrees whose work is on GitHub.
 const report = async (result, issue) => {
-  phase('Report')
+  phase('Tidy')
   const tidied = await agent(
     'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
-    { label: 'tidy worktrees', phase: 'Report', model: 'haiku', effort: 'low', schema: TIDIED },
+    { label: 'tidy worktrees', phase: 'Tidy', model: 'haiku', effort: 'low', schema: TIDIED },
   )
-  const posted = issue ? await agent(
-    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow sweep --issue ${issue} --budget ${BUDGET} --post\`. Return the comment's URL, or why it was not posted.`,
-    { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
-  ) : null
-  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted', worktrees_kept: tidied ? tidied.kept : [] }
+  return { ...result, worktrees_kept: tidied ? tidied.kept : [] }
 }
 
 phase('Check')

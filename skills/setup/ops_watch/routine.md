@@ -49,10 +49,6 @@ Run every check below, then every check in `.github/ops-watch/watch.md`.
    live site cannot be fetched from the cloud, so the served commit is the evidence. A product
    served elsewhere says in `watch.md` how to read what is deployed; with neither, this check is
    not run.
-4. **Spend.** When `watch.md` sets a weekly budget: add up the totals of the run reports posted in
-   the last seven days (issue comments starting `**Run report**`, from `gh api
-   "repos/<owner>/<repo>/issues/comments?since=<seven days ago>&per_page=100"`). Red when the sum
-   passes the budget. A single run over its own budget is not red; its report already says so.
 
 ## Check-backs on shipped briefs
 

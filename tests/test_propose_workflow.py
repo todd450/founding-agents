@@ -153,7 +153,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_a_no_go_skips_the_designer_and_still_reaches_the_founder_with_every_view(self):
         run = run_workflow("propose", replies(lead=NO_GO, design=None, team=view("no-go", why="Nobody has asked yet.")), 7)
-        self.assertEqual(self.labels(run), ["product lead", *VOICES, "team", "queue item", "tidy worktrees", "run report"])
+        self.assertEqual(self.labels(run), ["product lead", *VOICES, "team", "queue item", "tidy worktrees"])
         item = self.queue_item(run)
         self.assertIn("**The team: no-go.** Nobody has asked yet.", item)
         self.assertIn("- **Product lead:** no-go. no evidence anyone wants it yet", item)
@@ -165,7 +165,7 @@ class ProposeWorkflowTest(unittest.TestCase):
         run = run_workflow("propose", replies(lead={**NO_GO, "overruled": True}), 7)
         self.assertEqual(self.labels(run),
                          ["product lead", "storyboard", "option A", "option B", "design check", *VOICES, "team", "queue item",
-                          "tidy worktrees", "run report"])
+                          "tidy worktrees"])
         item = self.queue_item(run)
         self.assertIn("- **Product lead:** no-go.", item)
         self.assertIn("You overruled the no-go", item)
@@ -249,10 +249,6 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"]["status"], "stopped in design")
         self.assertEqual(run["result"]["reason"], "the branch holds more than mockups: src/index.html")
 
-    def test_the_report_goes_on_the_issue_the_product_lead_shaped(self):
-        run = run_workflow("propose", replies(), "a pricing page")
-        self.assertIn("--workflow propose --issue 7 --budget 5 --post", run["calls"][-1]["prompt"])
-
     def test_each_technical_decision_shows_the_teams_choice_and_each_roles(self):
         door = {"decision": "How the site is built", "options": ["plain HTML", "a static site generator"],
                 "recommend": "plain HTML", "why": "One page needs nothing more.", "reverse": "half a day while it is one page"}
@@ -281,7 +277,7 @@ class ProposeWorkflowTest(unittest.TestCase):
 
     def test_a_brief_with_nothing_on_screen_skips_the_designer_and_asks_only_the_decisions(self):
         run = run_workflow("propose", replies(lead=BUILT, design=None), 7)
-        self.assertEqual(self.labels(run), ["product lead", *VOICES, "team", "queue item", "tidy worktrees", "run report"])
+        self.assertEqual(self.labels(run), ["product lead", *VOICES, "team", "queue item", "tidy worktrees"])
         self.assertNotIn("one option", self.call(run, "builder")["prompt"])
         item = self.queue_item(run)
         self.assertIn("**D1. How the site deploys:** GitHub Pages / Netlify", item)

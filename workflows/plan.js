@@ -8,7 +8,6 @@ export const meta = {
     { title: 'Views', detail: 'when decisions are open, every other role recommends from what its job knows, and says why', model: 'sonnet' },
     { title: 'Team', detail: "the team's choice on each open decision, weighing every role's", model: 'opus' },
     { title: 'Queue', detail: "one needs-founder item for the technical decisions the brief left open, with each role's choice and the team's", model: 'haiku' },
-    { title: 'Report', detail: "the run's time, tokens and cost, posted on the brief", model: 'haiku' },
   ],
 }
 
@@ -27,9 +26,6 @@ const RISK = 'low: only wording or static content, with nothing that changes lay
 // so parallel builders idled; and the issues served the site with an unbound `http.server` from a
 // folder that held a Vercel token.
 const PLAN_RULES = `Write "Build after" only for a real dependency, and link issues that only need to stay consistent with "Matches". Put every pass mark the reviewers cannot check before the merge under "The founder checks". Any command that serves the product binds to 127.0.0.1, and serves a folder that holds no secret (.env*, .vercel/, a key); if the folder holds one, say so in the plan.`
-
-// Dollars at API prices one run should stay under; the run report flags a run over it.
-const BUDGET = 5
 
 const BRIEF = {
   type: 'object',
@@ -119,25 +115,6 @@ const POSTED = {
   properties: { comment_url: { type: 'string' } },
   required: ['comment_url'],
 }
-const REPORTED = {
-  type: 'object',
-  properties: {
-    comment_url: { type: 'string', description: 'the posted comment; empty when it was not posted' },
-    reason: { type: 'string', description: 'why it was not posted; empty when it was' },
-  },
-  required: ['comment_url', 'reason'],
-}
-
-// A run that got past its first step posts its time, tokens and cost on the brief, stalled runs too.
-const report = async result => {
-  phase('Report')
-  const posted = await agent(
-    `Use the run-report skill to post this run's report on issue #${issue}: from this repo's folder, run its script with \`--workflow plan --issue ${issue} --budget ${BUDGET} --post\`. Return the comment's URL, or why it was not posted.`,
-    { label: 'run report', phase: 'Report', model: 'haiku', effort: 'low', schema: REPORTED },
-  )
-  return { ...result, report: posted ? (posted.comment_url || posted.reason) : 'not posted' }
-}
-
 phase('Check')
 const brief = await agent(
   `Check whether brief #${issue} in this repo can be planned. Read only; change nothing.
@@ -249,14 +226,14 @@ Weigh them on their reasons; do not count votes. Choose one option for each, and
 ${lines.join('\n')}`,
     { label: 'queue item', phase: 'Queue', model: 'haiku', effort: 'low', schema: POSTED },
   )
-  return await report({ issue, status: 'needs the founder', decisions: plan.decisions.map(d => d.decision),
+  return ({ issue, status: 'needs the founder', decisions: plan.decisions.map(d => d.decision),
                         team: team ? team.decisions.map(c => `${c.id}: ${c.choice}`) : [],
                         queue_item: posted ? posted.comment_url : 'not posted' })
 }
 if (!plan.issues.length) {
-  return await report({ issue, status: 'stopped in plan', reason: plan.stopped_because || 'the architect opened no issues' })
+  return ({ issue, status: 'stopped in plan', reason: plan.stopped_because || 'the architect opened no issues' })
 }
-return await report({
+return ({
   issue,
   status: 'planned',
   plan: plan.plan_url,

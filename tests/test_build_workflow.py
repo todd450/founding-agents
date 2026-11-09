@@ -40,7 +40,6 @@ class BuildWorkflowTest(unittest.TestCase):
     def test_an_issue_that_is_not_ready_starts_nothing(self):
         run = self.run_workflow({"check": [{**READY, "ready": False, "reason": "a red issue is open"}]})
         self.assertEqual(run["result"], {"issue": 12, "status": "not started", "reason": "a red issue is open"})
-        self.assertNotIn("run report", self.labels(run))
         self.assertEqual(self.labels(run), ["check #12"])
 
     def test_an_issue_that_settles_an_unseen_technical_decision_waits_for_the_founder(self):
@@ -67,7 +66,7 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
         self.assertEqual(run["result"]["status"], "merged")
         self.assertEqual(self.labels(run), ["check #12", "builder #12, round 1", "qa #12, round 1", "code review #12, round 1",
-                                            "integrator, PR #4", "tidy worktrees", "run report"])
+                                            "integrator, PR #4", "tidy worktrees"])
 
     def test_the_integrator_is_told_not_to_rerun_checks_when_main_has_not_moved(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
@@ -81,8 +80,8 @@ class BuildWorkflowTest(unittest.TestCase):
                                  "ready for your merge": [{"comment_url": "https://github.com/o/r/pull/4#c1"}]})
         self.assertEqual(run["result"]["status"], "ready for your merge")
         self.assertEqual(run["result"]["queue_item"], "https://github.com/o/r/pull/4#c1")
-        self.assertEqual(self.labels(run)[-4:], ["integrator, PR #4", "ready for your merge, PR #4", "tidy worktrees", "run report"])
-        item = run["calls"][-3]
+        self.assertEqual(self.labels(run)[-3:], ["integrator, PR #4", "ready for your merge, PR #4", "tidy worktrees"])
+        item = run["calls"][-2]
         self.assertEqual(item["model"], "haiku")
         self.assertIn("**Ready for your merge:** PR #4 builds #12, Add slugify. QA, Code review approved it", item["prompt"])
         self.assertIn("**Why the merge is yours:** merging to main deploys to production", item["prompt"])
@@ -90,16 +89,15 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn('"The founder checks"', item["prompt"])
         self.assertIn("gh pr edit 4 --repo o/r --add-label needs-founder", item["prompt"])
         self.assertIn("Do not merge the PR.", item["prompt"])
-        self.assertIn("--outcome ready", run["calls"][-1]["prompt"])
 
     def test_the_integrator_is_told_never_to_work_around_a_refused_merge(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
-        prompt = run["calls"][-3]["prompt"]
+        prompt = run["calls"][-2]["prompt"]
         self.assertIn("or Claude Code refuses the merge, do not merge and do not look for another way", prompt)
 
     def test_the_integrator_merges_a_deploying_merge_only_where_the_product_hands_it_over(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
-        prompt = run["calls"][-3]["prompt"]
+        prompt = run["calls"][-2]["prompt"]
         self.assertIn("Where a merge deploys to production and the product's `CLAUDE.md` does not say the "
                       "integrator merges even though merging deploys", prompt)
 
@@ -108,7 +106,6 @@ class BuildWorkflowTest(unittest.TestCase):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [failed]})
         self.assertEqual(run["result"]["status"], "not merged")
         self.assertNotIn("ready for your merge, PR #4", self.labels(run))
-        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
 
     def test_a_pr_already_waiting_for_the_founders_merge_is_not_built_again(self):
         run = self.run_workflow({"check": [{**READY, "open_pr": 9, "awaiting_merge": True}], "builder": [PR]})
@@ -153,18 +150,9 @@ class BuildWorkflowTest(unittest.TestCase):
         for call in run["calls"][1:3]:
             self.assertIn("The founder decided: B, with a shorter headline", call["prompt"])
 
-    def test_a_finished_run_posts_its_report_on_the_issue(self):
-        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED],
-                                 "run report": [{"comment_url": "https://github.com/o/r/issues/12#c1", "reason": ""}]})
-        report = run["calls"][-1]
-        self.assertEqual((report["label"], report["model"]), ("run report", "haiku"))
-        self.assertIn("--workflow build --issue 12 --budget 12 --outcome merged --post", report["prompt"])
-        self.assertEqual(run["result"]["report"], "https://github.com/o/r/issues/12#c1")
-
-    def test_a_stalled_run_still_posts_its_report_and_says_it_stopped(self):
+    def test_a_stalled_run_still_tidies_its_worktrees(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "qa": [CHANGES] * 3})
-        self.assertEqual(self.labels(run)[-1], "run report")
-        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
+        self.assertEqual(self.labels(run)[-1], "tidy worktrees")
 
     def test_findings_go_back_to_the_builder_on_the_same_pr(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, APPROVE],
@@ -205,7 +193,7 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("a test, a lint rule, a hook or a skill", lesson["prompt"])
         self.assertIn("say how to fix the problem, not only what failed", lesson["prompt"])
         self.assertEqual(run["result"]["lesson"], "https://github.com/o/r/issues/30")
-        self.assertEqual(self.labels(run)[-2:], ["tidy worktrees", "run report"])
+        self.assertEqual(self.labels(run)[-1], "tidy worktrees")
 
     def test_the_librarian_issue_is_not_opened_twice_for_one_pr(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, REPEATED]})
@@ -369,11 +357,11 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("build/issue-12", check["prompt"])
         self.assertIn("open_pr", check["prompt"])
 
-    def test_every_run_after_the_check_tidies_worktrees_before_its_report(self):
+    def test_every_run_after_the_check_tidies_worktrees(self):
         run = self.run_workflow({"check": [READY], "builder": [PR, PR, PR], "qa": [CHANGES] * 3,
                                  "tidy": [{"removed": 2, "kept": ["wf_1: 1 uncommitted change(s)"]}]})
-        self.assertEqual(self.labels(run)[-2:], ["tidy worktrees", "run report"])
-        self.assertIn("tidy-worktrees skill", run["calls"][-2]["prompt"])
+        self.assertEqual(self.labels(run)[-1], "tidy worktrees")
+        self.assertIn("tidy-worktrees skill", run["calls"][-1]["prompt"])
         self.assertEqual(run["result"]["worktrees_kept"], ["wf_1: 1 uncommitted change(s)"])
 
     def test_a_builder_that_stops_without_a_pr_ends_the_run(self):
@@ -413,7 +401,6 @@ class RiskTierTest(unittest.TestCase):
                                  "integrator": [MERGED]})
         self.assertEqual(reviewers(run), [("code review", "sonnet")])
         self.assertEqual(run["result"]["status"], "merged")
-        self.assertIn("--budget 5 ", run["calls"][-1]["prompt"])
 
     def test_a_medium_risk_issue_gets_qa_and_code_review_on_opus(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "code review": [APPROVE],
@@ -424,7 +411,6 @@ class RiskTierTest(unittest.TestCase):
         run = self.run_workflow({"check": [HIGH], "builder": [PR], "qa": [APPROVE], "code review": [APPROVE],
                                  "security review": [APPROVE], "integrator": [MERGED]})
         self.assertEqual(reviewers(run), [("qa", "opus"), ("code review", "opus"), ("security review", "opus")])
-        self.assertIn("--budget 20 ", run["calls"][-1]["prompt"])
 
     def test_an_issue_with_no_known_risk_gets_the_most_review(self):
         run = self.run_workflow({"check": [{**READY, "risk": "unsure"}], "builder": [PR], "qa": [APPROVE],
@@ -437,7 +423,6 @@ class RiskTierTest(unittest.TestCase):
                                  "security review": [APPROVE], "integrator": [MERGED]})
         self.assertEqual(reviewers(run), [("code review", "sonnet"), ("qa", "opus"), ("security review", "opus")])
         self.assertEqual(run["result"]["status"], "merged")
-        self.assertIn("--budget 20 ", run["calls"][-1]["prompt"])
 
     def test_the_raised_tier_holds_for_the_next_round(self):
         run = self.run_workflow({"check": [{**READY, "risk": "low"}], "builder": [PR, PR],
@@ -559,53 +544,6 @@ class ReachTest(unittest.TestCase):
         self.assertEqual(run["result"]["status"], "merged")
 
 
-@unittest.skipUnless(HAVE_NODE, "needs node")
-class BudgetTest(unittest.TestCase):
-    """An issue that passes its tier's budget stops for the founder, the way three rounds do."""
-
-    def run_workflow(self, spent, ticket=READY, rounds=3, **replies):
-        base = {"check": [ticket], "builder": [PR] * rounds, "qa": [CHANGES] * (rounds - 1) + [APPROVE],
-                "code review": [APPROVE] * rounds, "integrator": [MERGED], "spend": [{"dollars": d} for d in spent]}
-        return run_workflow("build", {**base, **replies}, 12)
-
-    def labels(self, run):
-        return [c["label"] for c in run["calls"]]
-
-    def test_an_issue_past_its_budget_stops_before_another_round(self):
-        run = self.run_workflow([13.0])
-        self.assertEqual(run["result"]["status"], "over its medium-risk budget, $13.00 against $12; the founder decides")
-        self.assertEqual(run["result"]["pr"], PR["pr_url"])
-        self.assertEqual(run["result"]["findings"][0]["what"], "empty title crashes")
-        self.assertNotIn("builder #12, round 2", self.labels(run))
-        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
-
-    def test_an_issue_within_its_budget_goes_on(self):
-        run = self.run_workflow([6.0, 11.0])
-        self.assertEqual(run["result"]["status"], "merged")
-
-    def test_each_tier_has_its_own_budget(self):
-        self.assertIn("over its low-risk budget",
-                      self.run_workflow([6.0], ticket={**READY, "risk": "low"},
-                                        **{"code review": [CHANGES, APPROVE]})["result"]["status"])
-        self.assertEqual(self.run_workflow([19.0, 19.5], ticket=HIGH, **{"security review": [APPROVE] * 3})
-                         ["result"]["status"], "merged")
-
-    def test_the_spend_is_read_from_the_runs_logs_on_haiku(self):
-        spend = next(c for c in self.run_workflow([1.0, 2.0])["calls"] if c["label"].startswith("spend"))
-        self.assertEqual((spend["label"], spend["model"]), ("spend #12", "haiku"))
-        self.assertIn("run-report skill", spend["prompt"])
-        self.assertIn("--workflow build --issue 12 --spent-on 12", spend["prompt"])
-
-    def test_a_spend_it_cannot_read_does_not_stop_the_run(self):
-        self.assertEqual(self.run_workflow([])["result"]["status"], "merged")
-
-    def test_spend_is_read_only_before_another_round(self):
-        approved = self.run_workflow([], rounds=1)
-        self.assertFalse([label for label in self.labels(approved) if label.startswith("spend")])
-        third = self.run_workflow([1.0, 1.0], **{"qa": [CHANGES] * 3})
-        self.assertEqual([label for label in self.labels(third) if label.startswith("spend")], ["spend #12", "spend #12"])
-
-
 def part(n, *after):
     return {"number": n, "after": list(after)}
 
@@ -630,13 +568,11 @@ class BuildBriefTest(unittest.TestCase):
     def labels(self, run):
         return [call["label"] for call in run["calls"]]
 
-    def test_builds_every_issue_and_reports_once_on_the_brief(self):
+    def test_builds_every_issue_and_tidies_once(self):
         run = self.run_brief()
         self.assertEqual(run["result"]["status"], "3 of 3 issues merged")
         self.assertEqual(sorted(r["issue"] for r in run["result"]["issues"]), [21, 32, 43])
-        self.assertEqual(self.labels(run).count("run report"), 1)
-        self.assertIn("--workflow build --issue 7 ", run["calls"][-1]["prompt"])
-        self.assertIn("--outcome merged", run["calls"][-1]["prompt"])
+        self.assertEqual(self.labels(run).count("tidy worktrees"), 1)
 
     def test_an_issue_waits_until_the_one_it_builds_after_has_merged(self):
         labels = self.labels(self.run_brief())
@@ -666,7 +602,6 @@ class BuildBriefTest(unittest.TestCase):
         self.assertIn("#21", by_issue[32]["reason"])
         self.assertEqual(by_issue[43]["status"], "merged")
         self.assertNotIn("check #32", self.labels(run))
-        self.assertIn("--outcome stopped", run["calls"][-1]["prompt"])
 
     def test_an_issue_after_one_left_for_the_founders_merge_waits_for_the_next_run(self):
         run = self.run_brief(slow={"integrator": 20}, **{"integrator": [FOUNDERS, MERGED],
@@ -677,7 +612,6 @@ class BuildBriefTest(unittest.TestCase):
         self.assertIn("waits for your merge", by_issue[32]["reason"])
         self.assertEqual(by_issue[43]["status"], "merged")
         self.assertEqual(run["result"]["status"], "1 of 3 issues merged, 1 ready for your merge")
-        self.assertIn("--outcome ready", run["calls"][-1]["prompt"])
         # The item goes up before the next merge starts, not when the run ends.
         events = run["events"]
         self.assertLess(events.index("end ready for your merge, PR #121"), events.index("start integrator, PR #143"))
@@ -687,15 +621,6 @@ class BuildBriefTest(unittest.TestCase):
         by_issue = {r["issue"]: r for r in run["result"]["issues"]}
         self.assertEqual(by_issue[43], {"issue": 43, "status": "not started", "reason": "a red issue is open"})
         self.assertNotIn("builder #43, round 1", self.labels(run))
-
-    def test_a_briefs_report_budget_is_its_issues_budgets_added_up(self):
-        run = self.run_brief(**{"check #43": [{**READY, "risk": "low"}]})
-        self.assertIn("--budget 29 ", run["calls"][-1]["prompt"])
-
-    def test_spend_on_a_briefs_issue_is_read_from_the_briefs_run(self):
-        run = self.run_brief(**{"builder #21": [built(21), built(21)], "qa": [CHANGES] + [APPROVE] * 3})
-        spend = next(c["prompt"] for c in run["calls"] if c["label"].startswith("spend"))
-        self.assertIn("--workflow build --issue 7 --spent-on 21", spend)
 
     def test_the_check_recognises_a_brief_by_the_issues_cut_from_it(self):
         prompt = self.run_brief()["calls"][0]["prompt"]

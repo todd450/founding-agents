@@ -6,8 +6,6 @@ does not have. Each check is red only when someone has to act.
 
 - **Address:** <where the live product is served, such as https://owner.github.io/site/; leave blank
   for none>
-- **Weekly budget:** <dollars of API-equivalent cost across the week's run reports; leave blank
-  until the founder sets one>
 - **The one metric:** <the number that shows whether the product works for the people it is for,
   as the founder decided it, and where to read it inside this repo, such as `metrics.md` or a
   standing issue the founder updates; leave blank until there is one>

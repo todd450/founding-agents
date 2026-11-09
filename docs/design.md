@@ -13,15 +13,14 @@ A team of agents that builds products with one founder.
 | | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the fixtures and the running product | read and run |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
-| | **Optimiser** | a weekly routine, for team cost; an agent in a `codebase` or `tests` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does (sweep) | proposes builder tasks |
+| | **Optimiser** | an agent in a `codebase` or `tests` sweep | page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does | proposes builder tasks |
 | Ship & run | **Integrator** | the only agent that merges | rebase, run checks, gate production, cut releases; where a merge deploys to production, readies it for the founder's merge unless they handed it over | `main` and production |
-| | **Ops watch** | a daily routine, and a nightly GitHub Actions check | backups, release verdicts, production errors, spend; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
+| | **Ops watch** | a daily routine, and a nightly GitHub Actions check | backups, release verdicts, production errors; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
 | | **Librarian** | a weekly routine: the week's incidents, and a prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
 
 Every role is an agent in `agents/` except where its row says routine. A routine runs in the cloud
 on a schedule, from instructions `setup` copies into each product, since a routine loads no plugin.
-So there are nine agents and eleven roles: ops watch and the librarian are routines only, and the
-optimiser is both.
+So there are nine agents and eleven roles: ops watch and the librarian are routines only.
 
 Each role borrows the practices of a team or person known for that job, such as Airbnb for the
 designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
@@ -76,11 +75,10 @@ screen, one design-token source that generates every copy.
 
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
-- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
-  `run-report`, `compare-changes`).
+- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`).
 - **The per-change pipeline** → three saved workflows in the plugin: `propose`, `plan` and `build`,
   and a fourth, `sweep`, that finds work for `build` instead of starting from the founder's idea.
-- **Scheduled roles** (optimiser, librarian) → routines, which `setup` creates in each product
+- **Scheduled roles** (ops watch, librarian) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
 - **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` before a version
@@ -236,15 +234,13 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   brings at most five ranked findings, each with its evidence, size and pass marks. They go to the
   founder as `sweep` issues in one queue item; the founder decides which to fix, and the rest are
   closed. On a public repo a security finding's details go in a private draft advisory.
-- **Routines propose, never change.** The optimiser measures what the team costs to run, and the
-  librarian asks which check would have stopped each of the week's incidents. Each runs weekly and
-  files at most three `needs-founder` proposals, built through `build` like any change; neither
-  proposes cutting a check or a review for tokens alone. A routine loads no plugin, so its
+- **Routines propose, never change.** The librarian asks which check would have stopped each of
+  the week's incidents. It runs weekly and files at most three `needs-founder` proposals, built
+  through `build` like any change, and never proposes cutting a check or a review for tokens alone. A routine loads no plugin, so its
   instructions are a file `setup` copies into the product and keeps current.
 - **Ops watch is a nightly check with no model, plus a daily routine.** The nightly GitHub Actions
   job checks the deploy and every link, so it runs even when the week's limit is used up. The daily
-  routine checks that scheduled jobs still run, `main` passes, merges are live, spend is within the
-  product's budget, and whatever the product lists in `.github/ops-watch/watch.md`. A failing check
+  routine checks that scheduled jobs still run, `main` passes, merges are live, and whatever the product lists in `.github/ops-watch/watch.md`. A failing check
   opens one `red` issue that the next green run closes; a check that could not run is reported,
   never red.
 
@@ -255,12 +251,10 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   runs the integrator, the weekly routines, the roles' views and low-risk code review; Haiku 5.5
   runs ops watch and the workflows' small steps. `setup` pins Opus 5.5 in full, since the `opus`
   alias can resolve to an older, dearer Opus.
-- **Every run reports its cost.** The `run-report` skill posts each run's time, tokens and cost by
-  role and model on its issue, stalled runs included, and flags a run over its budget. The
-  optimiser tracks tokens per merged change, and ops watch raises red when spend passes the
-  product's budget.
-- **Whether the plugin pays is measured.** The `compare-changes` skill compares merged PRs made
-  with and without the plugin on cost, time to merge and fixes needed within two weeks.
+- **The team does not measure its own cost.** Run reports, per-issue budgets, a weekly token
+  routine and a skill comparing PRs made with and without the plugin were dropped: measuring the
+  team had become work of its own. Claude Code's own usage view covers what a run costs, and a
+  change sent back three times still stops for the founder.
 - **Nothing falls through to paid billing by accident.** No run meant for the plan sets
   `ANTHROPIC_API_KEY` or uses `--bare`, fast mode or `/code-review ultra`. Whether usage credits
   are on is the founder's call.

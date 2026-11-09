@@ -46,8 +46,7 @@ stays open for next week.
   kept coming back. Skip one a `librarian` issue already names.
 - Fixes merged for something an earlier merge broke: a revert, or a pull request whose issue says
   what broke after a merge.
-- A run that stopped for the founder ("the founder decides", or a run report on an issue still
-  open).
+- A run that stopped for the founder ("the founder decides").
 
 For each, find how it got through: which check would have stopped it, and why none did. "The
 builder should have known" is not a finding; the missing check is.
