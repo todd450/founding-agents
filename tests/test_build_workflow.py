@@ -95,7 +95,13 @@ class BuildWorkflowTest(unittest.TestCase):
     def test_the_integrator_is_told_never_to_work_around_a_refused_merge(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
         prompt = run["calls"][-3]["prompt"]
-        self.assertIn("Where a merge deploys to production, or Claude Code refuses the merge, do not merge and do not look for another way", prompt)
+        self.assertIn("or Claude Code refuses the merge, do not merge and do not look for another way", prompt)
+
+    def test_the_integrator_merges_a_deploying_merge_only_where_the_product_hands_it_over(self):
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "integrator": [MERGED]})
+        prompt = run["calls"][-3]["prompt"]
+        self.assertIn("Where a merge deploys to production and the product's `CLAUDE.md` does not say the "
+                      "integrator merges even though merging deploys", prompt)
 
     def test_a_merge_that_fails_its_checks_is_not_the_founders(self):
         failed = {"merged": False, "merge_commit": "", "founder": False, "reason": "check failed on the merge"}
