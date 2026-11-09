@@ -138,7 +138,7 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertIn("https://github.com/o/site/blob/propose/issue-7/mockups/issue-7/b-phone.png?raw=true", item)
         self.assertIn("**Cost:** 6 days", item)
         self.assertIn("add the `decided` label", item)
-        self.assertIn("/founding-agents:plan 7", item)
+        self.assertIn("/founding-agents:build 7", item)
 
     def test_a_role_or_team_that_returns_nothing_still_leaves_a_queue_item(self):
         r = replies()

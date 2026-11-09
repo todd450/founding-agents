@@ -8,14 +8,12 @@ decides scope and taste and talks to users; the agents plan, build, check, ship 
 `setup` skill that turns on branch protection and installs ops watch's nightly site check,
 `/founding-agents:propose`, which turns an idea into a brief and mockups for the founder to decide,
 and `/founding-agents:build`, which has merged eight decided issues on the site. Step 5,
-growing the team on demand, has begun with the architect: `/founding-agents:plan` cuts a decided
-brief into build issues, asking the founder first about any technical decision the brief left
-open, and `/founding-agents:build <brief>` builds them two to four at a time. Every role now
-exists: edge-case QA, code and security review in `build`; ops watch and the librarian as
-routines `setup` creates. For a sprint,
+growing the team on demand, has begun: every role now
+exists: edge-case QA, code and security review in `build`; ops watch, the librarian and the
+architect's weekly architecture review as routines `setup` creates. For a sprint,
 `/founding-agents:sweep codebase|tests|security` runs the optimiser (for the codebase or the
 tests) or the security reviewer and puts up to five findings to the founder for `build`. On the
-website, `plan` has cut its first brief into build issues, and a codebase sweep, a security review and the librarian have all run. Still to run on a real product:
+website, a codebase sweep, a security review and the librarian have all run. Still to run on a real product:
 a `tests` or `security` sweep, risk tiers and the check-back.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
@@ -36,9 +34,9 @@ read the commits before you update. Issues are welcome; pull requests by invitat
 How much of the team a change uses depends on its size:
 
 - **A new idea:** `/founding-agents:propose <idea>` writes the brief and mockups. Once you have
-  decided, `/founding-agents:plan <brief>` cuts it into issues and `/founding-agents:build <brief>`
-  builds them.
-- **A small change** (a typo, a colour, a line of copy): skip `propose` and `plan`. Open an issue
+  decided, `/founding-agents:build <brief>` builds it. A brief too big for one change: cut it into
+  issues in a session first, each labelled `decided`.
+- **A small change** (a typo, a colour, a line of copy): skip `propose`. Open an issue
   that says what to change, add the `decided` label, and run `/founding-agents:build <issue>`.
   Wording alone gets one code review, on Sonnet.
 - **Smaller than that:** no Claude session merges except the integrator, yours included. Have

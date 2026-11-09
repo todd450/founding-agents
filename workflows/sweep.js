@@ -40,7 +40,7 @@ if (!k) throw new Error('Name what to sweep, e.g. /founding-agents:sweep codebas
 // At most this many findings reach the founder from one sweep.
 const MAX = 5
 
-// What counts as a technical one-way door; build.js, propose.js, plan.js and sweep.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 const CHECKED = {

@@ -436,12 +436,10 @@ class RiskTierTest(unittest.TestCase):
                                  "integrator": [MERGED]})
         self.assertEqual(reviewers(run, 2), [("qa", "opus"), ("code review", "opus"), ("security review", "opus")])
 
-    def test_build_and_plan_rate_risk_in_the_same_words(self):
-        root = Path(__file__).resolve().parent.parent / "workflows"
-        risk = [re.search(r"^const RISK = '(.+)'$", (root / name).read_text(), re.M) for name in ("build.js", "plan.js")]
-        self.assertTrue(all(risk))
-        self.assertEqual(risk[0].group(1), risk[1].group(1))
-        self.assertIn("medium: styling, layout or ordinary logic", risk[0].group(1))
+    def test_build_names_what_each_risk_tier_covers(self):
+        source = (Path(__file__).resolve().parent.parent / "workflows" / "build.js").read_text()
+        risk = re.search(r"^const RISK = '(.+)'$", source, re.M)
+        self.assertIn("medium: styling, layout or ordinary logic", risk.group(1))
 
 
 @unittest.skipUnless(HAVE_NODE, "needs node")

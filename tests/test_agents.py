@@ -80,9 +80,6 @@ class ProportionTest(unittest.TestCase):
         for role in ("code-reviewer", "security-reviewer"):
             self.assertIn("refuses", self.read(role))
 
-    def test_the_architect_rates_each_issues_risk(self):
-        self.assertIn("Rate each issue's risk", self.read("architect"))
-
     def test_reviewers_review_only_what_changed_from_the_second_round(self):
         # On the website's #35, each of 13 rounds re-read the whole PR and found something new.
         for name in ("qa", "code-reviewer", "security-reviewer"):
@@ -102,12 +99,13 @@ class ProportionTest(unittest.TestCase):
         self.assertIn("A merge Claude Code refuses is the founder's,** even one handed to you.", integrator)
         self.assertIn("Do not run `gh pr merge`", integrator)
 
-    def test_the_architect_writes_pass_marks_reviewers_can_check_and_only_real_dependencies(self):
+    def test_the_architect_reviews_and_leaves_one_way_doors_to_the_founder(self):
         architect = self.read("architect")
-        self.assertIn('"Build after" only for a real dependency', architect)
-        self.assertIn('"Matches #<n>: <what stays the same>"', architect)
-        self.assertIn('goes under "The founder checks"', architect)
-        self.assertIn("binds to `127.0.0.1`", architect)
+        self.assertIn("The founder decides every one-way door.", architect)
+        self.assertIn("At most three findings", architect)
+        self.assertIn("never twice", architect)
+        self.assertIn("python3 -m http.server 0 --bind 127.0.0.1", architect)
+        self.assertIn(".github/architect/routine.md", architect)
 
     def test_every_agent_that_serves_the_product_binds_it_to_this_machine(self):
         for name in ("builder", "qa", "code-reviewer", "security-reviewer"):
