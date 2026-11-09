@@ -105,7 +105,7 @@ class ProportionTest(unittest.TestCase):
         self.assertIn("At most three findings", architect)
         self.assertIn("never twice", architect)
         self.assertIn("python3 -m http.server 0 --bind 127.0.0.1", architect)
-        self.assertIn(".github/architect/routine.md", architect)
+        self.assertIn(".github/sweeps/architecture.md", architect)
 
     def test_every_agent_that_serves_the_product_binds_it_to_this_machine(self):
         for name in ("builder", "qa", "code-reviewer", "security-reviewer"):

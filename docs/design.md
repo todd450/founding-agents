@@ -7,21 +7,23 @@ A team of agents that builds products with one founder.
 | lane | role | runs | produces | may touch |
 |---|---|---|---|---|
 | Decide | **Product lead** | each new idea; a weekly scope review | a one-paragraph brief (who, what evidence, how we'll know); says no by default; owns the decision queue | no code |
-| | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
-| Build | **Architect** | a weekly routine; its view on each brief in `propose` | at most three findings a week: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
+| | **Designer** | before code, and again after the build; the `design` sweep | mockups to pick from; a review of the rendered screens; at most three findings a sweep: screens that differ, values outside the token source, phone width, states nobody designed | mockups and issues |
+| Build | **Architect** | the `architecture` sweep, weekly by default; its view on each brief in `propose` | at most three findings a sweep: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
 | | **Builder** | one decided issue at a time, in its own worktree | the change, with tests written first from the edge-case fixtures | its own worktree |
 | | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the fixtures and the running product | read and run |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
-| | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
-| | **Optimiser** | an agent in a `codebase` or `tests` sweep | page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does | proposes builder tasks |
+| | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; the `security` sweep | findings | read only, apart from issues and advisories |
+| | **Optimiser** | the `codebase` and `tests` sweeps, on demand | page cost, dead code, copied code, and the test suite's missing cases, faults it misses, slow or flaky tests, tests of wording and hand-written checks a standard tool does | issues only |
 | Ship & run | **Integrator** | the only agent that merges | rebase, run checks, gate production, cut releases; where a merge deploys to production, readies it for the founder's merge unless they handed it over | `main` and production |
 | | **Ops watch** | a daily routine, and a nightly GitHub Actions check | backups, release verdicts, production errors; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
 | | **Librarian** | a weekly routine: the week's incidents, and a prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
 
-Every role is an agent in `agents/` except where its row says routine. A routine runs in the cloud
-on a schedule, from instructions `setup` copies into each product, since a routine loads no plugin.
-So there are nine agents and eleven roles: ops watch and the librarian are routines only, and the
-architect is both, an agent for `propose` and a session, and a weekly routine.
+Every role is an agent in `agents/` except where its row says routine or sweep. A routine runs in
+the cloud on a schedule, from instructions `setup` copies into each product, since a routine loads
+no plugin; a sweep's instructions are the sweep skill's own files, run on demand or as a routine.
+So there are eight agents and eleven roles: ops watch and the librarian are routines, the optimiser
+is the `codebase` and `tests` sweeps, and the architect, the designer and the security reviewer are
+agents that also each run a sweep of the whole product.
 
 Each role borrows the practices of a team or person known for that job, such as Airbnb for the
 designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
@@ -67,7 +69,7 @@ starts with the context it needs.
     team's recommendation and each role's, with why in plain English, a picture, and what each
     option costs.
 
-Day-one engineering defaults the architect checks a product for: one front end (no second
+Day-one engineering defaults the architecture and design sweeps check a product for: one front end (no second
 document surface), writes that change only the field that changed, string keys from the first
 screen, one design-token source that generates every copy.
 
@@ -76,9 +78,9 @@ screen, one design-token source that generates every copy.
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`).
-- **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`, and a
-  third, `sweep`, that finds work for `build` instead of starting from the founder's idea.
-- **Scheduled roles** (ops watch, librarian, architect) → routines, which `setup` creates in each product
+- **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`. The
+  `sweep` skill finds work for `build` instead of starting from the founder's idea.
+- **Scheduled roles** (ops watch, librarian, and any sweep the founder schedules) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
 - **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` before a version
@@ -118,8 +120,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   live there, and GitHub's phone app notifies.
 - **Saved workflows run subagents, not agent teams,** since the pipeline is sequential.
 - **Workflows split where the founder decides,** since a workflow cannot stop mid-run to ask:
-  `propose` ends at the brief and mockups, and `build` at the merge.
-  `sweep` finds work for `build`. A workflow never reads the clock or random numbers.
+  `propose` ends at the brief and mockups, and `build` at the merge. A workflow never reads the clock or random numbers.
 - **Every decision put to the founder is a script-built queue item** with every role's
   recommendation and the team's. Each role picks without seeing the others; an Opus step weighs
   them on their reasons and names any role that disagrees.
@@ -228,20 +229,30 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Finding work: sweeps and routines
 
-- **Sweeps find work for `build`.** `/founding-agents:sweep codebase|tests|security` runs a finder
-  (the optimiser, or the security reviewer for security) that only reads and runs the product and
-  brings at most five ranked findings, each with its evidence, size and pass marks. They go to the
-  founder as `sweep` issues in one queue item; the founder decides which to fix, and the rest are
-  closed. On a public repo a security finding's details go in a private draft advisory.
+- **Five sweeps, each standing alone.** `/founding-agents:sweep <kind>` reviews the whole product
+  for one kind of work: architecture, design, security, the codebase or the tests. A kind needs
+  nothing another found and files only its own issues, so the founder runs or schedules any one
+  alone. Each files at most three `needs-founder` issues a run, titled `Sweep (<kind>): …`, with
+  evidence, pass marks and any technical decisions; the founder adds `decided` to the ones to
+  build. On a public repo a security finding's details go in a private draft advisory.
+- **A sweep is a file, not a workflow.** Each kind is one file in the sweep skill, beside one file
+  of rules all five share, and the same files serve a run on demand (a subagent on the kind's
+  model, in its own worktree) and a routine (`setup` copies them into the product). The `sweep`
+  workflow they replaced ran only three kinds, and a routine can run no workflow, so the weekly
+  architecture review had needed a second copy of its instructions. A kind runs on one model
+  rather than a model per step. The optimiser agent went with the workflow: its practices are the
+  `codebase` and `tests` files. The architect's agent file still repeats the architecture sweep's
+  practices, for its view in `propose`.
 - **Routines propose, never change.** The librarian asks which check would have stopped each of
   the week's incidents. It runs weekly and files at most three `needs-founder` proposals, built
   through `build` like any change, and never proposes cutting a check or a review for tokens alone.
-  The architect reviews the week's merges, then the product, and also files at most three. A
-  routine loads no plugin, so its instructions are a file `setup` copies into the product and keeps
-  current; the architect's routine repeats its agent file's practices for that reason.
+  A routine loads no plugin, so its instructions are a file `setup` copies into the product and
+  keeps current.
 - **Architecture review is weekly, not per change.** It was the architect's `plan` step for each
-  brief; with `plan` gone, a weekly look at what merged catches the same drift for one Opus run a
-  week, and the founder wanted it periodic.
+  brief; with `plan` gone, the architecture sweep run weekly looks at what merged and catches the
+  same drift for one Opus run a week, and the founder wanted it periodic. `setup` suggests design
+  and security monthly and the rest on demand, since five weekly sweeps could add fifteen issues a
+  week to the queue.
 - **Ops watch is a nightly check with no model, plus a daily routine.** The nightly GitHub Actions
   job checks the deploy and every link, so it runs even when the week's limit is used up. The daily
   routine checks that scheduled jobs still run, `main` passes, merges are live, and whatever the product lists in `.github/ops-watch/watch.md`. A failing check
@@ -251,8 +262,9 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 ### Cost, models and evals
 
 - **Every agent and step names its model.** Opus 5.5 plans, judges and builds: the product lead,
-  architect, designer, builders, QA, the code and security reviewers, and the finders. Sonnet 5.5
-  runs the integrator, the librarian's routine, the roles' views and low-risk code review; Haiku 5.5
+  architect, designer, builders, QA, the code and security reviewers, and the architecture, design
+  and security sweeps. Sonnet 5.5 runs the integrator, the librarian's routine, the codebase and
+  tests sweeps, the roles' views and low-risk code review; Haiku 5.5
   runs ops watch and the workflows' small steps. `setup` pins Opus 5.5 in full, since the `opus`
   alias can resolve to an older, dearer Opus.
 - **The team does not measure its own cost.** Run reports, per-issue budgets, a weekly token
@@ -285,11 +297,10 @@ fresh one shows the team from its first commit, with no history to work around.
    product that can build nothing until its words and look are decided, such as a website, takes
    this step before step 3.
 5. **Grow on demand:** review split into QA, code and
-   security review, the optimiser and the librarian, and `sweep`, each once its kind of work
-   appears.
+   security review, the librarian, and the sweeps, each once its kind of work appears.
 
-Every step is built. Still to run on a real product: a `tests` or `security` sweep, risk tiers and
-the check-back.
+Every step is built. Still to run on a real product: a `tests`, `design` or `security` sweep, a
+sweep as a routine, risk tiers and the check-back.
 
 ## Sources
 

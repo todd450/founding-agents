@@ -21,7 +21,7 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Edge-case QA | Elisabeth Hendrickson's test heuristics |
 | Code reviewer | Google's code review guide |
 | Security reviewer | Trail of Bits findings, against OWASP ASVS |
-| Optimiser | Performance budgets; DRY; Google's test sizes, flaky-test work and mutation testing for the suite |
+| Optimiser (the `codebase` and `tests` sweeps) | Performance budgets; DRY; Google's test sizes, flaky-test work and mutation testing for the suite |
 | Integrator | Rust's bors and the Not Rocket Science Rule |
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
@@ -58,7 +58,7 @@ The architect's decisions cost the most to change later: schema, shared code, th
 between parts. Bezos's 2015 letter splits decisions into the irreversible, which deserve slow care,
 and the reversible, which should be made fast by whoever is closest; Stripe has kept every version
 of its API working since 2011. The practices are in [agents/architect.md](../agents/architect.md),
-and run weekly as a review of what merged. One change from the letter: on this team the architect
+and in the `architecture` sweep, which reviews what merged each week. One change from the letter: on this team the architect
 recommends each one-way door and the founder decides it.
 
 Sources: Jeff Bezos, [2015 letter to shareholders](https://s2.q4cdn.com/299287126/files/doc_financials/annual/2015-Letter-to-Shareholders.PDF);
@@ -107,15 +107,15 @@ OWASP, [Application Security Verification Standard](https://owasp.org/www-projec
 
 The optimiser looks after what the product costs to run (page weight, dead code, duplication).
 Performance budgets turn "too slow" into a number CI checks; DRY gives every piece of knowledge
-one home. Its sweeps of the codebase and the tests, run on demand by `sweep`, are in
-[agents/optimiser.md](../agents/optimiser.md).
+one home. It has no agent file: it is the `codebase` and `tests` sweeps, in
+[skills/sweep/kinds/](../skills/sweep/kinds/).
 
 The optimiser also judges the test suite itself, which nobody else does: the builder writes tests
 for one change and the reviewers run them. A suite that misses faults, flakes or crawls makes the
 product cost more to change. Google's test sizes and flaky-test work, and mutation testing, which
 plants faults to see what the suite misses, turn "are the tests good" into numbers. Chosen by
-Claude for the test auditor on 27 Oct 2026, which joined the optimiser on 28 Oct 2026; the founder
-may swap it.
+Claude for the test auditor on 27 Oct 2026, which joined the optimiser on 28 Oct 2026 and became
+the `tests` sweep on 9 Nov 2026; the founder may swap it.
 
 Sources: Milica Mihajlija, [Performance budgets 101](https://web.dev/articles/performance-budgets-101)
 (web.dev); Andrew Hunt and David Thomas, *The Pragmatic Programmer* (1999); Titus Winters, Tom Manshreck and
