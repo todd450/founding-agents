@@ -22,7 +22,6 @@ practice gives an agent something concrete to do, and gives the founder words to
 | Code reviewer | Google's code review guide |
 | Security reviewer | Trail of Bits findings, against OWASP ASVS |
 | Optimiser (the `codebase` and `tests` sweeps) | Performance budgets; DRY; Google's test sizes, flaky-test work and mutation testing for the suite |
-| Integrator | Rust's bors and the Not Rocket Science Rule |
 | Ops watch | Google SRE |
 | Librarian | Toyota's poka-yoke; blameless postmortems |
 
@@ -123,16 +122,6 @@ Hyrum Wright, [*Software Engineering at Google*](https://abseil.io/resources/swe
 2020), chapters 11 to 14 on test size, unit tests and flaky tests; Goran Petrović and Marko
 Ivanković, [State of mutation testing at Google](https://research.google/pubs/state-of-mutation-testing-at-google/)
 (ICSE SEIP, 2018).
-
-## Integrator — Rust's bors
-
-The integrator exists to keep `main` passing. Graydon Hoare's "Not Rocket Science Rule" is exactly
-that job: keep a repository that always passes all its tests, by testing each change merged onto
-the current tip before it becomes the tip. bors, which he wrote for Rust, and GitHub's merge queue
-implement it. The practices are in [agents/integrator.md](../agents/integrator.md).
-
-Sources: Graydon Hoare, [The Not Rocket Science Rule of Software Engineering](https://graydon2.dreamwidth.org/1597.html)
-(2014); [graydon/bors](https://github.com/graydon/bors).
 
 ## Ops watch — Google SRE
 

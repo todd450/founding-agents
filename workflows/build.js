@@ -1,12 +1,12 @@
 export const meta = {
   name: 'build',
-  description: "Build one decided issue: the builder in its own worktree, QA and code review (and security review when it is needed), then the integrator merges",
+  description: "Build one decided issue: the builder in its own worktree, QA and code review (and security review when it is needed), then leaves it ready for the founder's merge",
   whenToUse: 'When the founder asks to build a decided issue in the current product repo, e.g. /founding-agents:build 12',
   phases: [
     { title: 'Check', detail: 'the issue is decided, settles no technical decision the founder has not seen, and no red issue is open', model: 'sonnet' },
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
     { title: 'Review', detail: "the reviewers the issue's risk needs, side by side: code review alone on Sonnet for low, with edge-case QA for medium, and a security review too for high", model: 'opus' },
-    { title: 'Merge', detail: "the integrator tests the merge and merges, or readies it for the founder's merge where a merge deploys to production and the founder has not handed it over", model: 'sonnet' },
+    { title: 'Ready', detail: "bring the PR up to date with main, wait for its required checks, and leave a Ready for your merge comment; the founder merges", model: 'haiku' },
     { title: 'Tidy', detail: 'remove the worktrees whose work is on GitHub', model: 'haiku' },
   ],
 }
@@ -93,15 +93,14 @@ const REVIEW = {
   },
   required: ['verdict', 'risk', 'findings'],
 }
-const MERGED = {
+const READIED = {
   type: 'object',
   properties: {
-    merged: { type: 'boolean' },
-    merge_commit: { type: 'string' },
-    founder: { type: 'boolean', description: 'true when the PR is ready and only the merge itself is left for the founder: the merge deploys to production and the product\'s CLAUDE.md does not hand it to the integrator, or Claude Code refused it' },
-    reason: { type: 'string', description: 'why it was not merged, such as what the refusal said; empty when merged' },
+    ready: { type: 'boolean', description: 'true when the PR is up to date, its required checks passed, and the comment is posted' },
+    comment_url: { type: 'string', description: 'the Ready for your merge comment; empty when not posted' },
+    reason: { type: 'string', description: 'why it is not ready, such as the failing check; empty when ready' },
   },
-  required: ['merged', 'merge_commit', 'founder', 'reason'],
+  required: ['ready', 'comment_url', 'reason'],
 }
 
 const FILED = {
@@ -303,54 +302,45 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
   return { issue: n, status: `sent back ${ROUNDS} times; the founder decides`, pr: built.pr_url, findings: review.findings, risk: tier }
 }
 
-// A PR that is ready but whose merge is the founder's: where merging deploys to production the
-// founder merges unless the product's CLAUDE.md hands the merge to the integrator, and a merge
-// Claude Code refuses is never worked around. On Half Badger, auto mode refused the integrator's
-// merge of #10, #12 and #14 as a merge without review that deploys, and each approved PR then
-// waited for the whole run to end, about 30 minutes for #14. So the item goes up the moment the
-// integrator stops, built here so every one has the same shape.
+// The founder merges every PR: an agent never merges, and the merge gate blocks every session. So
+// an approved PR ends with one comment the founder acts on, posted once its required checks pass on
+// what the merge will be. Branch protection's "up to date" rule makes GitHub refuse a merge tested
+// against an older main, so this step only saves the founder that wait. On Half Badger, auto mode
+// refused an agent's merges that deploy, and each approved PR then waited for the whole run to end.
 const WAITING = 'ready for your merge'
 const NEEDS_FOUNDER_LABEL = 'gh label create needs-founder --color FBCA04 --description "Waiting on the founder\'s decision"'
-const readyForFounder = (n, ticket, built, why) => {
+// A reviewer whose only must-fix findings the workflow rated as Nits still says "Changes needed" on
+// the PR, so the comment says why the PR is approved and leaves those findings to the founder.
+const ready = async (n, ticket, developed) => {
+  const { built, risk } = developed
   const reviewers = built.reviewers || []
+  const trusted = developed.trusted_only || []
   const body = [
-    `**Ready for your merge:** PR #${built.pr_number} builds #${n}, ${ticket.title}. ${reviewers.length ? `${reviewers.join(', ')} approved it` : 'Its reviewers approved it'}, and the integrator found its required checks green on what the merge will be.${reviewers.includes('Security') ? '' : ' No security review ran: the change was not rated high risk.'}`,
+    `**Ready for your merge:** PR #${built.pr_number} builds #${n}, ${ticket.title}. ${reviewers.length ? `${reviewers.join(', ')} approved it` : 'Its reviewers approved it'}, and its required checks passed on what the merge will be.${reviewers.includes('Security') ? '' : ' No security review ran: the change was not rated high risk.'}`,
     '',
-    `**Why the merge is yours:** ${why}`,
-    '',
+    ...(trusted.length ? [
+      "**Left for you:** a review on the PR asks for changes the workflow rated as Nits, because only someone the team trusts could cause them, and review or the product's own loud refusal would catch them:",
+      ...trusted.map(f => `- ${f.where}: ${f.what}`),
+      '',
+    ] : []),
     `- If #${n} lists checks under "The founder checks", they are yours to make, before or after the merge as each says.`,
     `- To ship it, merge PR #${built.pr_number} on GitHub.`,
     `- To hold it, comment what is wrong; the next \`/founding-agents:build ${n}\` continues the PR from your comment.`,
   ]
-  return agent(
-    `Post this comment on PR #${built.pr_number} in ${ticket.repo} exactly as written, with \`gh pr comment ${built.pr_number} --repo ${ticket.repo} --body-file -\`, then label it with \`gh pr edit ${built.pr_number} --repo ${ticket.repo} --add-label needs-founder\`. If the label does not exist yet, create it first with \`${NEEDS_FOUNDER_LABEL} --repo ${ticket.repo}\`. Return the comment's URL. Do not merge the PR.
+  const posted = await agent(
+    `PR #${built.pr_number} in ${ticket.repo} is approved. Make sure its required checks pass on what the merge will be, then leave it for the founder's merge. Never merge it, and never push to \`main\`.
+1. If \`gh pr view ${built.pr_number} --repo ${ticket.repo} --json mergeStateStatus\` says \`BEHIND\`, \`main\` has moved since its last push: bring it up to date with \`gh pr update-branch ${built.pr_number} --repo ${ticket.repo}\`.
+2. Wait for its required checks with \`gh pr checks ${built.pr_number} --repo ${ticket.repo} --required --watch\`. If one fails, comment on the PR naming the failing check and what it said, with \`gh pr comment ${built.pr_number} --repo ${ticket.repo} --body-file -\`, post nothing else, and return ready false with the failure.
+3. If \`gh issue list --repo ${ticket.repo} --label red --state open --json number,title\` shows an open \`red\` issue, post nothing and return ready false naming it.
+4. Otherwise post this comment exactly as written, with \`gh pr comment ${built.pr_number} --repo ${ticket.repo} --body-file -\`, then label the PR with \`gh pr edit ${built.pr_number} --repo ${ticket.repo} --add-label needs-founder\`, creating the label first with \`${NEEDS_FOUNDER_LABEL} --repo ${ticket.repo}\` if it does not exist. Return ready true and the comment's URL.
 
 ${body.join('\n')}`,
-    { label: `ready for your merge, PR #${built.pr_number}`, phase: 'Merge', model: 'haiku', effort: 'low', schema: POSTED },
+    { label: `ready for your merge, PR #${built.pr_number}`, phase: 'Ready', model: 'haiku', effort: 'low', schema: READIED },
   )
-}
-
-// A reviewer whose only must-fix findings the workflow rated as Nits still says "Changes needed" on
-// the PR, so the integrator is told why it is approved, and leaves those findings on the PR for the
-// founder.
-const merge = async (n, ticket, developed) => {
-  const { built, risk } = developed
-  const trusted = developed.trusted_only || []
-  const why = trusted.length
-    ? `\n\nA reviewer's comment may ask for changes the workflow rated as Nits, because only someone the team trusts could cause them, and review or the product's own loud refusal would catch them. Count that review as an approval, and before merging post one comment on the PR, with \`gh pr comment ${built.pr_number} --body-file -\`, listing these as left for the founder:\n${trusted.map(f => `- ${f.where}: ${f.what}`).join('\n')}`
-    : ''
-  const merged = await agent(
-    `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push. Where a merge deploys to production and the product's \`CLAUDE.md\` does not say the integrator merges even though merging deploys, or Claude Code refuses the merge, do not merge and do not look for another way: return founder true with why, once the PR is up to date and its checks are green.${why}`,
-    { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
-  )
-  if (merged && !merged.merged && merged.founder) {
-    const posted = await readyForFounder(n, ticket, built, merged.reason || 'the integrator could not merge it')
-    return { issue: n, status: WAITING, reason: merged.reason, pr: built.pr_url, queue_item: posted ? posted.comment_url : 'not posted' }
+  if (!posted || !posted.ready) {
+    return { issue: n, status: 'not ready', reason: posted ? posted.reason : 'the ready step returned nothing', pr: built.pr_url, risk }
   }
-  if (!merged || !merged.merged) {
-    return { issue: n, status: 'not merged', reason: merged ? merged.reason : 'the integrator returned nothing', pr: built.pr_url, risk }
-  }
-  return { issue: n, status: 'merged', pr: built.pr_url, merge_commit: merged.merge_commit, risk }
+  return { issue: n, status: WAITING, pr: built.pr_url, queue_item: posted.comment_url, risk }
 }
 
 // A PR already waiting for the founder's merge is neither rebuilt nor reviewed again, and gets no
@@ -370,4 +360,4 @@ if (ticket.unseen.length || !ticket.ready) return notReady(issue, ticket)
 if (ticket.open_pr && ticket.awaiting_merge) return awaiting(issue, ticket)
 const developed = await develop(issue, ticket)
 if (developed.status !== 'approved') return await report(developed)
-return await report(await merge(issue, ticket, developed))
+return await report(await ready(issue, ticket, developed))

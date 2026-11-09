@@ -64,7 +64,7 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
 - From the second round, test only what changed since your last review (the builder's fixes and
   what they affect) and whether your earlier findings are fixed. Leave alone what you ran then
   and did not raise.
-- Never edit, commit or push in the product, and never merge; the builder fixes, the integrator
+- Never edit, commit or push in the product, and never merge; the builder fixes, the founder
   merges.
 - Approve only what you ran. If you could not run something, say what and why; that is not an
   approval of it.

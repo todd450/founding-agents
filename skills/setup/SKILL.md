@@ -166,24 +166,9 @@ alias and the alias has run an older Opus.
    rule worth keeping becomes a check, not a paragraph. Two facts every product states:
    - **Whether merging to `main` deploys to production.** Check rather than assume:
      `gh api repos/<owner>/<repo>/deployments --jq '[.[].environment] | unique'` lists
-     `Production`, `production` or `github-pages` when it does. Where it does, the merge is the
-     release, and Claude Code's auto mode refuses an agent's merge that deploys unless the founder
-     has approved it. Ask the founder which they want, with the team's pick:
-     - **The founder merges** each PR, the default: the integrator leaves a "Ready for your merge"
-       item on each one. Recommend it where a bad merge writes data or reaches users' accounts,
-       which a rollback does not undo.
-     - **The integrator merges even though merging deploys.** The Shipping line says so in those
-       words, and the founder adds a standing approval to their own `~/.claude/settings.json`,
-       since auto mode reads its rules only from the user's and managed settings, never from a
-       repo or a plugin. Give them the entry to add, with their GitHub owner, and do not add it
-       yourself; `$defaults` keeps auto mode's own rules:
-       ```json
-       {"autoMode": {"allow": ["$defaults", "Merging a pull request in <owner>'s GitHub repositories with gh pr merge, where the repository's CLAUDE.md says the integrator merges even though merging deploys, once its reviewers approved it on the PR and its required checks passed, even though the merge deploys to production"]}}
-       ```
-       Recommend it for a product a rollback undoes, such as a static site.
-
-     A product that deploys from a step the founder starts (a promoted release, a staging branch)
-     needs neither: the integrator merges, and the founder's step is the release.
+     `Production`, `production` or `github-pages` when it does. Either way the founder merges
+     every PR on GitHub; `build` leaves a "Ready for your merge" comment once a PR is reviewed and
+     its required checks pass. Where merging deploys, the merge is the release.
    - **The local preview command,** bound to this machine (`python3 -m http.server 0 --bind
      127.0.0.1`, with `--directory` for the web root). Then list the folder it serves, dotfiles
      included (`ls -a`), and look for secrets: `.env*`, `.vercel/`, a key. If one is there, tell the
@@ -209,6 +194,6 @@ gh label create librarian --color 1D76DB --description "A mistake a run made twi
 ## Needs
 
 The plugin's hooks need `python3` on the machine. The merge guard (`hooks/guard_main.py`) blocks
-every agent but the integrator from pushing to `main` or merging; branch protection is the hard
+every session and agent from pushing to `main` or merging; branch protection is the hard
 gate behind it. The serve guard (`hooks/guard_serve.py`) blocks a local
 `python3 -m http.server` that is not bound to `127.0.0.1`, or whose folder holds a secret.

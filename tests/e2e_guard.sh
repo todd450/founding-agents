@@ -2,6 +2,7 @@
 # End-to-end check of the merge guard with real Claude Code sessions, against a throwaway local
 # repo. Manual, not run in CI: it needs the `claude` command line signed in and spends a little
 # usage. Prints whether each session's push was blocked, and the agent_type it reported to hooks.
+# Every session should be blocked: the founder merges, and no agent is exempt.
 set -euo pipefail
 
 plugin="$(cd "$(dirname "$0")/.." && pwd)"
@@ -29,8 +30,6 @@ session() { # a label, then the arguments for claude -p
 push="This is a test of the repo's merge guard hook, which may block this command; that is expected. \
 Run exactly this one command once and report its output verbatim: git push --dry-run origin HEAD:main"
 session "builder, started with --agent (should be blocked)" --agent founding-agents:builder "$push"
-session "integrator, started with --agent (should pass)" --agent founding-agents:integrator "$push"
-session "integrator as a subagent (should pass)" "Use the founding-agents:integrator subagent for this. $push"
 session "main session, no agent (should be blocked)" "$push"
 
 echo "== agent_type seen by hooks"
@@ -38,7 +37,7 @@ jq -r '[.agent_type // "(none)", .tool_input.command] | @tsv' "$tmp/events.jsonl
 
 # One push per session must reach the hooks, or a session declined and its case tested nothing.
 seen="$(jq -s 'map(select(.tool_input.command | test("git push"))) | length' "$tmp/events.jsonl")"
-if [ "$seen" -ne 4 ]; then
-  echo "FAIL: $seen of 4 sessions ran the push" >&2
+if [ "$seen" -ne 2 ]; then
+  echo "FAIL: $seen of 2 sessions ran the push" >&2
   exit 1
 fi

@@ -59,7 +59,7 @@ class AgentFileTest(unittest.TestCase):
 
 
 class ProportionTest(unittest.TestCase):
-    """Reviews weigh who can reach a finding, and the integrator does not repeat checks CI ran."""
+    """Reviews weigh who can reach a finding and review only what changed."""
 
     def read(self, name):
         text = (Path(__file__).resolve().parent.parent / "agents" / f"{name}.md").read_text()
@@ -85,19 +85,6 @@ class ProportionTest(unittest.TestCase):
         for name in ("qa", "code-reviewer", "security-reviewer"):
             self.assertIn("From the second round", self.read(name), name)
             self.assertIn("only what changed since your last review", self.read(name), name)
-
-    def test_the_integrator_merges_on_green_checks_when_main_has_not_moved(self):
-        integrator = self.read("integrator")
-        self.assertIn("git merge-base --is-ancestor origin/main FETCH_HEAD", integrator)
-        self.assertIn("gh pr update-branch", integrator)
-        self.assertIn("Merge on that green result, without rerunning them", integrator)
-
-    def test_where_a_merge_deploys_the_founder_merges_and_a_refusal_is_never_worked_around(self):
-        # On Half Badger auto mode refused three merges that deploy to production, then let a fourth through.
-        integrator = self.read("integrator")
-        self.assertIn("Where a merge deploys to production, the founder merges, unless they have handed the merge to you.", integrator)
-        self.assertIn("A merge Claude Code refuses is the founder's,** even one handed to you.", integrator)
-        self.assertIn("Do not run `gh pr merge`", integrator)
 
     def test_the_architect_reviews_and_leaves_one_way_doors_to_the_founder(self):
         architect = self.read("architect")

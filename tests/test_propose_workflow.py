@@ -47,7 +47,7 @@ def view(recommend="go", option="", why="It is a day's work.", decisions=()):
     return {"recommend": recommend, "option": option, "why": why, "decisions": list(decisions)}
 
 
-VOICES = ["architect", "builder", "qa", "code reviewer", "security reviewer", "integrator"]
+VOICES = ["architect", "builder", "qa", "code reviewer", "security reviewer"]
 TEAM = view(option="B", why="Everyone agrees B is worth its six days.")
 
 
@@ -105,7 +105,7 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_the_queue_item_gives_the_teams_recommendation_then_each_roles_with_why(self):
         views = {"builder": view(option="A", why="A is two days less work."),
                  "qa": view(option="B", why="B is easier to check on a phone."),
-                 "integrator": view(option="B", why="Neither changes how the site goes live.")}
+                 "security reviewer": view(option="B", why="Neither touches people's data.")}
         team = view(option="B", why="B shows the whole journey; the builder prefers A to save two days.")
         item = self.queue_item(run_workflow("propose", replies(views=views, team=team), 7))
         self.assertIn("### What the team recommends", item)
@@ -114,7 +114,7 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertIn("- **Designer:** option B. B shows the whole journey.", item)
         self.assertIn("- **Builder:** go, option A. A is two days less work.", item)
         self.assertIn("- **QA:** go, option B. B is easier to check on a phone.", item)
-        self.assertIn("- **Integrator:** go, option B. Neither changes how the site goes live.", item)
+        self.assertIn("- **Security reviewer:** go, option B. Neither touches people's data.", item)
         self.assertLess(item.index("**The team:"), item.index("**Product lead:**"))
 
     def test_each_role_forms_its_own_view_and_the_team_weighs_them_all(self):
@@ -128,7 +128,7 @@ class ProposeWorkflowTest(unittest.TestCase):
         team = self.call(run, "team")["prompt"]
         self.assertIn("- Product lead: go. two founders asked for it", team)
         self.assertIn("- Designer: option B. B shows the whole journey.", team)
-        self.assertIn("- Integrator: go, option B.", team)
+        self.assertIn("- Security reviewer: go, option B.", team)
         self.assertIn("do not count votes", team)
 
     def test_the_queue_item_shows_every_option_with_screenshots_cost_and_the_teams_pick(self):

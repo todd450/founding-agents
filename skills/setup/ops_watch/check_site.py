@@ -161,7 +161,7 @@ def issue_body(problems, run):
     lines = ["Ops watch's site check failed:", ""]
     lines += [f"- {problem}" for problem in problems]
     lines += ["", f"Seen in {run}. This issue is kept current while the check stays red and closes "
-                  "when it passes again. The integrator merges nothing while a `red` issue is open."]
+                  "when it passes again. `build` readies nothing for a merge while a `red` issue is open."]
     return "\n".join(lines)
 
 
