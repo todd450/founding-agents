@@ -57,9 +57,9 @@ Karri Saarinen, [Airbnb Design Language System](https://karrisaarinen.com/dls/) 
 The architect's decisions cost the most to change later: schema, shared code, the interfaces
 between parts. Bezos's 2015 letter splits decisions into the irreversible, which deserve slow care,
 and the reversible, which should be made fast by whoever is closest; Stripe has kept every version
-of its API working since 2011. The practices are in [agents/architect.md](../agents/architect.md).
-One change from the letter: on this team the architect recommends each one-way door and the founder
-decides it.
+of its API working since 2011. The practices are in [agents/architect.md](../agents/architect.md),
+and run weekly as a review of what merged. One change from the letter: on this team the architect
+recommends each one-way door and the founder decides it.
 
 Sources: Jeff Bezos, [2015 letter to shareholders](https://s2.q4cdn.com/299287126/files/doc_financials/annual/2015-Letter-to-Shareholders.PDF);
 Brandur Leach, [APIs as infrastructure: future-proofing Stripe with versioning](https://stripe.com/blog/api-versioning)

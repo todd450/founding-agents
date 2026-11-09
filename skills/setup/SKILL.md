@@ -1,12 +1,12 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the librarian's weekly routine, or the check-backs on shipped briefs, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the librarian's or the architect's weekly routine, or the check-backs on shipped briefs, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
 This version covers CI, branch protection, ops watch's site check and daily routine, the
-librarian's weekly routine, the check-backs on shipped briefs, the product's `CLAUDE.md` and fixtures, and the labels (`docs/design.md` in the Founding Agents repo, "Build order").
+librarian's and the architect's weekly routines, the check-backs on shipped briefs, the product's `CLAUDE.md` and fixtures, and the labels (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
 
@@ -126,6 +126,23 @@ to the ones to build. It never changes the product itself.
    ops watch.
 5. **Run it once now** and read its last lines. A measure it could not take is a setup problem to
    fix.
+
+## The architect's weekly routine
+
+Once a week the architect reviews the product's architecture: the week's merges first, then the
+product as it is. It looks for one-way doors that went in without a decision, interfaces that broke
+a caller, one thing defined in several places, missing day-one defaults and a local preview that
+could leak. It files at most three `needs-founder` issues a week; the founder adds `decided` to the
+ones to build. It never changes the product itself.
+
+1. **Dry run.** `python3 <this skill's directory>/install_kit.py architect`.
+2. **Apply on a branch.** Rerun with `--apply`, commit, open a PR, and wait for the merge.
+3. **Ask for a clear yes** to create the routine, since it runs every week on the founder's plan.
+4. **Create it** with the `schedule` skill: a weekly task on this repo, early on a Thursday at an
+   odd minute, on Opus, with the prompt "Follow .github/architect/routine.md in this repo." Use the
+   cloud environment, the tools `Bash`, `Read`, `Glob` and `Grep` only, and no connectors, as for
+   ops watch.
+5. **Run it once now** and read its last lines. A step it could not take is a setup problem to fix.
 
 ## The map and the fixtures
 

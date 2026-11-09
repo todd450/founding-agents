@@ -15,9 +15,9 @@ export const meta = {
 // sooner if the builder fails to fix the same finding twice.
 const ROUNDS = 3
 
-// How much review a change gets follows what it could break. The architect rates each issue it cuts,
-// and the check rates one it did not; a reviewer can raise the tier, never lower it. Each tier names
-// its reviewers and their model. build.js and plan.js keep the same words (a test checks).
+// How much review a change gets follows what it could break. The check takes the tier an issue's
+// "Risk" section names, or rates it; a reviewer can raise the tier, never lower it. Each tier names
+// its reviewers and their model.
 const RISK = 'low: only wording or static content, with nothing that changes layout, styling or behaviour; medium: styling, layout or ordinary logic; high: it touches routes, sign-in, permissions, stored data, secrets, input from outside, calls to a model, or a dependency that ships to users. When unsure, rate it higher'
 const TIERS = {
   low: { reviewers: ['code'], model: 'sonnet' },
@@ -38,7 +38,7 @@ const issue = Number(named[0] || 0)
 if (!issue) throw new Error('Name the issue to build, e.g. /founding-agents:build 12')
 const builders = Math.min(MAX_BUILDERS, Math.max(1, Number(named[1]) || BUILDERS))
 
-// What counts as a technical one-way door; build.js, propose.js, plan.js and sweep.js keep the same words (a test checks).
+// What counts as a technical one-way door; build.js, propose.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
 
 // A fix that changes the screen leaves the PR's before-and-after screenshots stale unless retaken.

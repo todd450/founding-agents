@@ -8,7 +8,7 @@ A team of agents that builds products with one founder.
 |---|---|---|---|---|
 | Decide | **Product lead** | each new idea; a weekly scope review | a one-paragraph brief (who, what evidence, how we'll know); says no by default; owns the decision queue | no code |
 | | **Designer** | before code, and again after the build | mockups to pick from; a review of the rendered screens | mockups only |
-| Build | **Architect** | each new surface; any schema or shared change | the plan builders work from, with the day-one defaults set | plans, schema review |
+| Build | **Architect** | a weekly routine; its view on each brief in `propose` | at most three findings a week: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
 | | **Builders** (2–4) | in parallel, one worktree each | the change, with tests written first from the edge-case fixtures | their own worktree |
 | | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the fixtures and the running product | read and run |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
@@ -20,7 +20,8 @@ A team of agents that builds products with one founder.
 
 Every role is an agent in `agents/` except where its row says routine. A routine runs in the cloud
 on a schedule, from instructions `setup` copies into each product, since a routine loads no plugin.
-So there are nine agents and eleven roles: ops watch and the librarian are routines only.
+So there are nine agents and eleven roles: ops watch and the librarian are routines only, and the
+architect is both, an agent for `propose` and a session, and a weekly routine.
 
 Each role borrows the practices of a team or person known for that job, such as Airbnb for the
 designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
@@ -29,8 +30,8 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 
 1. Idea → **product lead** writes the brief → founder decides.
 2. **Designer** mocks it up → each role recommends, then the team → founder picks.
-3. **Architect** writes the plan and cuts it into build issues → **builders** build, each in its own
-   worktree.
+3. **Builders** build the decided issue, each in its own worktree. A brief too big for one change
+   is cut into issues in a session first.
 4. The reviewers the issue's risk calls for run in parallel: **code review** always, **edge-case QA** from
    medium, the **security reviewer** at high.
 5. **Integrator** merges and gates production, or, where a merge deploys to production and the
@@ -40,8 +41,7 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
    checks whether it did what "how we'll know" said; a "didn't" goes back to the founder as keep,
    change or remove.
 
-The founder sees steps 1 and 2, step 3 only when the plan needs a technical decision the brief
-left open, step 5 when a merge is the release they kept, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
+The founder sees steps 1 and 2, step 3 only when a cut is needed, step 5 when a merge is the release they kept, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
 starts with the context it needs.
 
 ## Principles
@@ -67,7 +67,7 @@ starts with the context it needs.
     team's recommendation and each role's, with why in plain English, a picture, and what each
     option costs.
 
-Day-one engineering defaults the architect sets for a new product: one front end (no second
+Day-one engineering defaults the architect checks a product for: one front end (no second
 document surface), writes that change only the field that changed, string keys from the first
 screen, one design-token source that generates every copy.
 
@@ -76,9 +76,9 @@ screen, one design-token source that generates every copy.
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
 - **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`).
-- **The per-change pipeline** → three saved workflows in the plugin: `propose`, `plan` and `build`,
-  and a fourth, `sweep`, that finds work for `build` instead of starting from the founder's idea.
-- **Scheduled roles** (ops watch, librarian) → routines, which `setup` creates in each product
+- **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`, and a
+  third, `sweep`, that finds work for `build` instead of starting from the founder's idea.
+- **Scheduled roles** (ops watch, librarian, architect) → routines, which `setup` creates in each product
   because a plugin cannot ship them. Ops watch's checks that need no judgement run as GitHub
   Actions schedules instead, which `setup` installs in the product.
 - **How the agents behave** → the eval tasks in `evals/`, run with `claude -p` before a version
@@ -118,7 +118,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   live there, and GitHub's phone app notifies.
 - **Saved workflows run subagents, not agent teams,** since the pipeline is sequential.
 - **Workflows split where the founder decides,** since a workflow cannot stop mid-run to ask:
-  `propose` ends at the brief and mockups, `plan` at the build issues, and `build` at the merge.
+  `propose` ends at the brief and mockups, and `build` at the merge.
   `sweep` finds work for `build`. A workflow never reads the clock or random numbers.
 - **Every decision put to the founder is a script-built queue item** with every role's
   recommendation and the team's. Each role picks without seeing the others; an Opus step weighs
@@ -145,17 +145,18 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   the branch holds: a missing option is left out and named, and the run stops when fewer than two
   remain, the pick is missing, or the branch holds anything outside the issue's mockups folder.
 
-### Planning: one-way doors and build issues
+### One-way doors and build issues
 
 - **Technical one-way doors reach the founder before they are built in.** A one-way door is a
   choice that costs a lot to reverse once code or people depend on it, such as a framework, a build
   step, how the product deploys or stores data, or a dependency that ships to users. The product
-  lead and the architect name each one, the founder answers it in a queue item, and `build`, the
+  lead names each one in the brief, the founder answers it in a queue item, and `build`, the
   builder and the code reviewer each refuse one the founder has not said yes to. A check tool run
   from `check.sh` is never one.
-- **`plan`: the architect cuts a decided brief into build issues.** Once the founder has answered
-  every one-way door the plan needs, each issue names the files it owns (no two share one), its
-  risk tier and the decisions it settles. If any is unanswered, it opens nothing and asks.
+- **No planning workflow.** `plan`, where the architect cut a decided brief into build issues and
+  seven roles then weighed in on each open decision, was dropped: cutting a brief takes a few
+  minutes in a session, and up to nine agent calls to advise on one decision cost more than the
+  advice was worth.
 - **Pass marks are ones the reviewers can check, or the founder's by name.** A pass mark that needs
   a dashboard, a login or the live site goes under "The founder checks", and no reviewer sends a
   change back for it.
@@ -236,8 +237,13 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   closed. On a public repo a security finding's details go in a private draft advisory.
 - **Routines propose, never change.** The librarian asks which check would have stopped each of
   the week's incidents. It runs weekly and files at most three `needs-founder` proposals, built
-  through `build` like any change, and never proposes cutting a check or a review for tokens alone. A routine loads no plugin, so its
-  instructions are a file `setup` copies into the product and keeps current.
+  through `build` like any change, and never proposes cutting a check or a review for tokens alone.
+  The architect reviews the week's merges, then the product, and also files at most three. A
+  routine loads no plugin, so its instructions are a file `setup` copies into the product and keeps
+  current; the architect's routine repeats its agent file's practices for that reason.
+- **Architecture review is weekly, not per change.** It was the architect's `plan` step for each
+  brief; with `plan` gone, a weekly look at what merged catches the same drift for one Opus run a
+  week, and the founder wanted it periodic.
 - **Ops watch is a nightly check with no model, plus a daily routine.** The nightly GitHub Actions
   job checks the deploy and every link, so it runs even when the week's limit is used up. The daily
   routine checks that scheduled jobs still run, `main` passes, merges are live, and whatever the product lists in `.github/ops-watch/watch.md`. A failing check
@@ -248,7 +254,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 - **Every agent and step names its model.** Opus 5.5 plans, judges and builds: the product lead,
   architect, designer, builders, QA, the code and security reviewers, and the finders. Sonnet 5.5
-  runs the integrator, the weekly routines, the roles' views and low-risk code review; Haiku 5.5
+  runs the integrator, the librarian's routine, the roles' views and low-risk code review; Haiku 5.5
   runs ops watch and the workflows' small steps. `setup` pins Opus 5.5 in full, since the `opus`
   alias can resolve to an older, dearer Opus.
 - **The team does not measure its own cost.** Run reports, per-issue budgets, a weekly token
@@ -280,7 +286,7 @@ fresh one shows the team from its first commit, with no history to work around.
 4. **The decide lane:** the product lead and the designer as `propose`, feeding `needs-founder`. A
    product that can build nothing until its words and look are decided, such as a website, takes
    this step before step 3.
-5. **Grow on demand:** the architect's `plan`, parallel builders, review split into QA, code and
+5. **Grow on demand:** parallel builders, review split into QA, code and
    security review, the optimiser and the librarian, and `sweep`, each once its kind of work
    appears.
 
