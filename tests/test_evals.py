@@ -9,6 +9,7 @@ import tempfile
 import threading
 import time
 import unittest
+from unittest import mock
 from pathlib import Path
 
 EVALS = Path(__file__).resolve().parent.parent / "evals"
@@ -132,6 +133,7 @@ class TaskTest(unittest.TestCase):
         test = '''"""The record's count of the shell's review rounds."""
 
 import unittest
+from unittest import mock
 
 
 def count_before(text, noun):
@@ -262,6 +264,54 @@ class ResultTest(unittest.TestCase):
         self.assertEqual((group["passed"], group["trials"]), (5, 6))
         self.assertEqual((group["all_passed"], group["tasks"]), (1, 2))
         self.assertIn("| qa | opus | 2 | 3 | 83% | 50% |", run.markdown(results, 3))
+
+
+class PreflightTest(unittest.TestCase):
+    """On 9 Nov 2026 a claude CLI too old for Opus 5.5 failed all 60 Opus trials of a full run in their
+    first second. Each model a run needs starts once before any trial, and a run with one that cannot
+    start runs nothing."""
+
+    def fake_claude(self, broken):
+        """A stand-in for `claude -p` that refuses the models in `broken`, as the real CLI does."""
+        seen, real = [], subprocess.run
+
+        def fake(cmd, **kwargs):
+            if cmd[0] != "claude":  # the workflow harness's node, as the run plans its trials
+                return real(cmd, **kwargs)
+            model = cmd[cmd.index("--model") + 1]
+            seen.append((model, kwargs["env"]))
+            if model in broken:
+                body = {"is_error": True, "result": f"API Error: 400 {model} needs a newer Claude Code"}
+                return subprocess.CompletedProcess(cmd, 1, json.dumps(body), "")
+            return subprocess.CompletedProcess(cmd, 0, json.dumps({"is_error": False, "result": "ok"}), "")
+        return fake, seen
+
+    def test_names_each_model_that_cannot_start_and_why(self):
+        fake, _ = self.fake_claude({"opus"})
+        with mock.patch.object(run.subprocess, "run", fake):
+            self.assertEqual(run.unstartable({"opus", "sonnet", "haiku"}),
+                             {"opus": "API Error: 400 opus needs a newer Claude Code"})
+
+    def test_starts_each_model_as_a_trial_does_on_the_plans_login_and_setups_pins(self):
+        fake, seen = self.fake_claude(set())
+        with mock.patch.dict(os.environ, {"ANTHROPIC_API_KEY": "sk-test"}), mock.patch.object(run.subprocess, "run", fake):
+            run.unstartable({"opus"})
+        (model, env), = seen
+        self.assertNotIn("ANTHROPIC_API_KEY", env)
+        self.assertEqual(env["ANTHROPIC_DEFAULT_OPUS_MODEL"], "claude-opus-5-5")
+
+    @unittest.skipUnless(HAVE_NODE, "needs node")
+    def test_a_run_with_a_model_that_cannot_start_runs_no_trial(self):
+        fake, seen = self.fake_claude({"opus"})
+        out = Path(tempfile.mkdtemp()) / "run"
+        trial_ran = mock.Mock(side_effect=AssertionError("a trial ran"))
+        with mock.patch.object(run.subprocess, "run", fake), mock.patch.object(run.shutil, "which", return_value="claude"), \
+                mock.patch.object(run, "run_trial", trial_ran):
+            code = run.main(["--task", "01", "--trials", "1", "--out", str(out)])
+        self.assertEqual(code, 1)
+        self.assertEqual({model for model, _ in seen}, {"opus", "haiku"})
+        trial_ran.assert_not_called()
+        self.assertFalse(out.exists())
 
 
 class ScheduleTest(unittest.TestCase):

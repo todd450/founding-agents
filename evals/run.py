@@ -140,6 +140,33 @@ def environment(folder):
     return env
 
 
+# A model that cannot start fails every one of its trials in its first second, and the report reads
+# as the agents' failure: on 9 Nov 2026 a claude CLI too old for Opus 5.5 failed all 60 Opus trials
+# of a full run. So each model a run needs answers one short prompt first, started as a trial is.
+def unstartable(models):
+    """Each of `models` that cannot start, with the reason claude gave. Like a trial, the check runs on
+    the plan's login with setup's model pins, outside any repo's settings."""
+    env = {**{k: v for k, v in os.environ.items() if k not in SECRETS}, **PINNED}
+
+    def start(model, folder):
+        try:
+            done = subprocess.run(["claude", "-p", "Reply with the single word ok", "--model", model, "--output-format",
+                                   "json", "--setting-sources", "project,local", "--tools", ""],
+                                  cwd=folder, capture_output=True, text=True, env=env, timeout=120)
+        except subprocess.TimeoutExpired:
+            return model, "no reply in 2 minutes"
+        try:
+            result = json.loads(done.stdout or "{}")
+        except ValueError:
+            result = {}
+        if done.returncode == 0 and not result.get("is_error"):
+            return model, ""
+        return model, (result.get("result") or done.stderr.strip() or f"claude exited {done.returncode}")[:300]
+
+    with tempfile.TemporaryDirectory() as folder, ThreadPoolExecutor(max(len(models), 1)) as pool:
+        return {model: why for model, why in pool.map(lambda m: start(m, folder), sorted(models)) if why}
+
+
 def numbers(task):
     """The issue and PR numbers a task's trials work on. Agents name scratch paths after them
     (`/tmp/qa-pr8`), so two trials that share one must not run at once (seen on 27 Oct 2026)."""
@@ -367,6 +394,14 @@ def main(argv=None):
         return 0
     if not shutil.which("claude"):
         parser.error("needs the claude CLI on PATH")
+    # Haiku reads a result from any reply that has no usable JSON block.
+    broken = unstartable({model for _, _, model, _ in planned} | {"haiku"})
+    if broken:
+        for model, why in sorted(broken.items()):
+            print(f"{model} cannot start, so every trial on it would fail: {why}", file=sys.stderr)
+        print("Nothing ran. Fix that first (`claude update` for a model the CLI is too old for, "
+              "`claude auth login` for an expired login), then run again.", file=sys.stderr)
+        return 1
 
     out = args.out or EVALS / "runs" / datetime.now().strftime("%Y-%m-%d-%H%M")
     out.mkdir(parents=True, exist_ok=True)

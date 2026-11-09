@@ -26,6 +26,13 @@ run.
 
 ## How a trial runs
 
+Before any trial, `run.py` starts each model the run needs with a one-word prompt, on the plan's
+login and setup's model pins, as a trial starts it. If one cannot start, it names the model and
+why and runs nothing. That is often a `claude` CLI too old for a pinned model (`claude update`) or
+an expired login (`claude auth login`). Otherwise every trial on that model fails in its first
+second, and the report reads as the agents' failure, as all 60 Opus trials of a full run did on
+9 Nov 2026.
+
 1. `run.py` runs the task's workflow under `tests/workflow_harness.py`, with scripted replies up to
    the task's step, and takes the prompt, agent, model and schema that step gets. A prompt changed
    in `workflows/` is the prompt the eval tests.
