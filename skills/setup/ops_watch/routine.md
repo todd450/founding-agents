@@ -52,7 +52,7 @@ Run every check below, then every check in `.github/ops-watch/watch.md`.
 
 ## Check-backs on shipped briefs
 
-Every brief the product lead writes says how we'll know it worked. Two weeks after a brief ships
+Every brief `propose` writes says how we'll know it worked. Two weeks after a brief ships
 (or as long as it says), check whether it did: build what people want and watch the number that
 shows it, as Y Combinator puts it. This is never red. A brief that did not work is a decision for
 the founder, not an outage, and must not stop merges.

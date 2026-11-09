@@ -6,9 +6,9 @@ A team of agents that builds products with one founder.
 
 | lane | role | runs | produces | may touch |
 |---|---|---|---|---|
-| Decide | **Product lead** | each new idea; a weekly scope review | a one-paragraph brief (who, what evidence, how we'll know); says no by default; owns the decision queue | no code |
+| Decide | **Product lead** | each new idea, as `propose`'s brief step | a brief (who, what evidence, the appetite, how we'll know); says no by default | issues only |
 | | **Designer** | before code, and again after the build; the `design` sweep | mockups to pick from; a review of the rendered screens; at most three findings a sweep: screens that differ, values outside the token source, phone width, states nobody designed | mockups and issues |
-| Build | **Architect** | the `architecture` sweep, weekly by default; its view on each brief in `propose` | at most three findings a sweep: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
+| Build | **Architect** | the `architecture` sweep, weekly by default; in `propose`, its choice on any technical one-way door, or a full view when the founder puts it on the panel | at most three findings a sweep: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
 | | **Builder** | one decided issue at a time, in its own worktree | the change, with tests written first from the edge-case fixtures | its own worktree |
 | | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the fixtures and the running product | read and run |
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
@@ -17,12 +17,13 @@ A team of agents that builds products with one founder.
 | Ship & run | **Ops watch** | a daily routine, and a nightly GitHub Actions check | backups, release verdicts, production errors; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
 | | **Librarian** | a weekly routine: the week's incidents, and a prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
 
-Every role is an agent in `agents/` except where its row says routine or sweep. A routine runs in
-the cloud on a schedule, from instructions `setup` copies into each product, since a routine loads
-no plugin; a sweep's instructions are the sweep skill's own files, run on demand or as a routine.
-So there are seven agents and ten roles: ops watch and the librarian are routines, the optimiser
-is the `codebase` and `tests` sweeps, and the architect, the designer and the security reviewer are
-agents that also each run a sweep of the whole product.
+Every role is an agent in `agents/` except where its row says routine, sweep or step. A routine
+runs in the cloud on a schedule, from instructions `setup` copies into each product, since a
+routine loads no plugin; a sweep's instructions are the sweep skill's own files, run on demand or
+as a routine. So there are six agents and ten roles: the product lead is `propose`'s brief step,
+ops watch and the librarian are routines, the optimiser is the `codebase` and `tests` sweeps, and
+the architect, the designer and the security reviewer are agents that also each run a sweep of
+the whole product.
 
 Each role borrows the practices of a team or person known for that job, such as Airbnb for the
 designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
@@ -30,7 +31,7 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 ## How a change flows
 
 1. Idea → **product lead** writes the brief → founder decides.
-2. **Designer** mocks it up → each role recommends, then the team → founder picks.
+2. **Designer** mocks it up → the roles the founder put on the panel recommend → founder picks.
 3. **Builders** build the decided issue, each in its own worktree. A brief too big for one change
    is cut into issues in a session first.
 4. The reviewers the issue's risk calls for run in parallel: **code review** always, **edge-case QA** from
@@ -64,7 +65,7 @@ starts with the context it needs.
 8. **Least privilege per role, and per-action approval** by a checking model instead of prompts.
 9. **A red scheduled check stops other work** until it is fixed.
 10. **Protect the founder's attention.** One decision queue, read once a day; each item carries the
-    team's recommendation and each role's, with why in plain English, a picture, and what each
+    recommendations the founder asked for, with why in plain English, a picture, and what each
     option costs.
 
 Day-one engineering defaults the architecture and design sweeps check a product for: one front end (no second
@@ -119,19 +120,40 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 - **Saved workflows run subagents, not agent teams,** since the pipeline is sequential.
 - **Workflows split where the founder decides,** since a workflow cannot stop mid-run to ask:
   `propose` ends at the brief and mockups, and `build` at the merge. A workflow never reads the clock or random numbers.
-- **Every decision put to the founder is a script-built queue item** with every role's
-  recommendation and the team's. Each role picks without seeing the others; an Opus step weighs
+- **Every decision put to the founder is a script-built queue item** with the brief's
+  recommendation, the designer's pick and the view of each role the founder put on the panel.
+  Each role picks without seeing the others; with two or more on the panel, an Opus step weighs
   them on their reasons and names any role that disagrees.
 
 ### Deciding: `propose`
 
 - **`propose`: brief, then mockups, then one queue item.** `/founding-agents:propose <issue or
-  idea>`. The product lead writes the brief into the issue, recommends go or no-go, says whether it
+  idea>`. The brief step writes the brief into the issue, recommends go or no-go, says whether it
   changes anything on screen, and names every technical one-way door it settles. On a go with
   something on screen, the designer storyboards the journey and makes two or three options at
   different stars. A no-go skips the mockups, which would be spent allowance, but still reaches the
   founder, who can overrule it. The founder answers with a letter and `decided`, and `build` hands
   that answer to the builder and the reviewers.
+- **The founder chooses the panel on each run.** Decided 9 Nov 2026. `propose 7` asks no one
+  beyond the brief and the designer; `propose 7 builder qa` adds those two, `propose 7 all` every
+  role, and an idea takes `panel: ...` at its end. A role that does not exist is refused with the
+  choices. The architect still gives its choice on any technical one-way door the brief names,
+  panel or not, since those are the founder's and the costliest to get wrong. The team step runs
+  only with two or more roles on the panel; with fewer there is nothing to weigh. Until then every
+  brief got five roles' views and an Opus team step (the founder asked on 2 Nov for every role's
+  pick), and on small changes the views mostly repeated the designer's reasons. Choosing the panel
+  per run, as with a sweep's kind, keeps the views for the ideas that need them, and `propose`
+  does not change when the roles do.
+- **The product lead is a step, not an agent.** Since 9 Nov 2026 the brief step's prompt holds
+  what the product lead agent knew (Shape Up's appetite and no-gos, no by default, evidence apart
+  from inference, a check-back the routine can read), so `propose` is the only place it lives.
+- **A design iteration skips the brief.** `propose` on an issue labelled `design` changes how a
+  screen already built looks or reads, so there is no who or evidence to weigh, and the brief's
+  default no would only slow it. The issue names the screen, what is wrong with it and what must
+  stay, or `propose` does not start. The designer screenshots the screen as it is, then two
+  options close to it are built at once; no option may need a technical one-way door. "Keep it as
+  it is" stands beside the options, and the pick goes straight to `build`. It is a mode of
+  `propose` rather than a workflow of its own, because it ends at the same decision.
 - **Mockups: one HTML page per option on a `propose/issue-<n>` branch, with screenshots in the
   issue.** A page shows real content at real lengths at any width; phone and desktop screenshots
   from the `mockup-screenshots` skill let the founder compare options in the issue without opening
@@ -250,7 +272,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Cost, models and evals
 
-- **Every agent and step names its model.** Opus 5.5 plans, judges and builds: the product lead,
+- **Every agent and step names its model.** Opus 5.5 plans, judges and builds: the brief,
   architect, designer, builders, QA, the code and security reviewers, and the architecture, design
   and security sweeps. Sonnet 5.5 runs the librarian's routine, the codebase and
   tests sweeps, the roles' views and low-risk code review; Haiku 5.5
@@ -282,7 +304,7 @@ fresh one shows the team from its first commit, with no history to work around.
    product a check of the product itself.
 3. **`build` with three roles:** one builder and one reviewer, with the founder merging, run on three to five
    real issues.
-4. **The decide lane:** the product lead and the designer as `propose`, feeding `needs-founder`. A
+4. **The decide lane:** the brief and the designer as `propose`, feeding `needs-founder`. A
    product that can build nothing until its words and look are decided, such as a website, takes
    this step before step 3.
 5. **Grow on demand:** review split into QA, code and
