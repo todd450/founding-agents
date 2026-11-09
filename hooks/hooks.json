@@ -13,15 +13,6 @@
             "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard_serve.py\""
           }
         ]
-      },
-      {
-        "matcher": "Read|Grep|Glob|Bash|Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/hooks/guard_holdouts.py\""
-          }
-        ]
       }
     ]
   }

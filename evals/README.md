@@ -39,9 +39,7 @@ second, and the report reads as the agents' failure, as all 60 Opus trials of a 
 2. `trial.py` builds a throwaway repo from the task's commits, with a local `origin`, and the
    issues and PRs the [`gh` stand-in](gh.py) serves. `evals/bin` comes first on PATH, the trial
    gets an empty GitHub login, and git sends every GitHub address to a folder that does not exist,
-   with no saved login, so nothing reaches GitHub. The trial keeps the founder's home folder, where
-   the plan's login lives, so a hook ([`fence.py`](fence.py)) stops every agent naming the
-   machine's real holdouts: a trial runs as if holdouts were not set up.
+   with no saved login, so nothing reaches GitHub.
 3. `claude -p` runs the prompt as the step's agent (`--agent`, `--plugin-dir` this repo, project
    settings only, so other plugins stay out). A session started with `--agent` gets only its agent
    file's tools and cannot return structured output, so an agent step is asked to end its reply

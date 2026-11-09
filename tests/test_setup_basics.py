@@ -9,7 +9,6 @@ from pathlib import Path
 
 SETUP = Path(__file__).resolve().parent.parent / "skills" / "setup"
 sys.path.insert(0, str(SETUP))
-from holdouts import CLASSES  # noqa: E402
 from install_kit import install, plan  # noqa: E402
 
 
@@ -42,11 +41,6 @@ class BasicsTest(unittest.TestCase):
             (root / "CLAUDE.md").write_text("# Site\n")
             install(root, plan(root, "basics"))
             self.assertEqual((root / "CLAUDE.md").read_text(), "# Site\n")
-
-    def test_the_fixtures_and_the_holdouts_name_the_same_failure_classes(self):
-        readme = (SETUP / "basics" / "fixtures" / "README.md").read_text()
-        listed = dict(re.findall(r"^- `([a-z-]+)/`: (.+)$", readme, re.M))
-        self.assertEqual(listed, CLASSES)
 
     def test_the_founder_hands_the_merge_over_in_the_words_the_integrator_reads(self):
         # The product's CLAUDE.md and the integrator agree on one phrase; auto mode's approval lives in

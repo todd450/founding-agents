@@ -40,8 +40,6 @@ TIMEOUT = 25 * 60
 BUDGET = 5  # dollars at API prices one trial may spend before claude stops it
 SECRETS = {"ANTHROPIC_API_KEY", "GH_TOKEN", "GITHUB_TOKEN", "GH_ENTERPRISE_TOKEN", "GITHUB_ENTERPRISE_TOKEN"}
 GITHUB = ("https://github.com/", "http://github.com/", "git@github.com:", "ssh://git@github.com/", "git://github.com/")
-FENCE = {"hooks": {"PreToolUse": [{"matcher": "*", "hooks": [
-    {"type": "command", "command": f"python3 {shlex.quote(str(EVALS / 'fence.py'))}"}]}]}}
 
 
 def replies(task):
@@ -109,7 +107,7 @@ def extract(text, schema, env):
 def command(call, model):
     cmd = ["claude", "-p", prompt(call), "--output-format", "json", "--json-schema", json.dumps(call["schema"]),
            "--model", model, "--plugin-dir", str(PLUGIN), "--setting-sources", "project,local",
-           "--allowedTools", TOOLS, "--max-budget-usd", str(BUDGET), "--settings", json.dumps(FENCE)]
+           "--allowedTools", TOOLS, "--max-budget-usd", str(BUDGET)]
     if call["agentType"]:
         cmd += ["--agent", call["agentType"]]
     if call["effort"]:
@@ -125,8 +123,8 @@ def environment(folder):
     """The trial's environment: the gh stand-in first on PATH, an empty GitHub login, and never an API key.
 
     git sends every GitHub address to a folder that does not exist and forgets the founder's saved
-    logins, so nothing the agent pushes or clones can reach GitHub: on 27 Oct 2026 trial QA pushed
-    to the website's real holdouts repo with `git push`, which the gh stand-in never sees."""
+    logins, so nothing the agent pushes or clones can reach GitHub: on 27 Oct 2026 a trial pushed
+    to a real repo with `git push`, which the gh stand-in never sees."""
     env = {k: v for k, v in os.environ.items() if k not in SECRETS and not k.startswith("GIT_CONFIG")}
     env.update({"PATH": f"{EVALS / 'bin'}:{env.get('PATH', '')}", "EVAL_GH_STATE": str(folder / "github.json"),
                 "GH_CONFIG_DIR": str(folder / "gh-config"), "GH_PROMPT_DISABLED": "1", "TMPDIR": str(folder / "tmp"),

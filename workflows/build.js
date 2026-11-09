@@ -103,7 +103,7 @@ const REVIEW = {
           },
           review_would_see: { type: 'boolean', description: 'for a finding only someone trusted can reach: true when it is caught before it harms anyone: it takes a deliberate, crafted value that review of the change or the data would see, or the product refuses the value loudly (the build, a check or the command fails, and nothing wrong is shown, written or sent), so only the message whoever made it gets is at stake. false for an ordinary slip (empty, too long, a typo, a date in the wrong form) that gets past the product to readers, and for harm that reaches readers without anyone noticing. false for every other reach' },
           where: { type: 'string' },
-          what: { type: 'string', description: 'steps, expected, happened, and how to reproduce; for a holdout scenario, only its failure class and what went wrong, never its steps or data' },
+          what: { type: 'string', description: 'steps, expected, happened, and how to reproduce' },
           repeat: { type: 'boolean', description: "true only when a review from an earlier round, posted before the PR's latest push, raised it and it is still not fixed; never for one only this round's other reviewers raised" },
         },
         required: ['must_fix', 'reach', 'review_would_see', 'where', 'what', 'repeat'],
@@ -205,9 +205,8 @@ const REVIEWERS = {
 
 // The severity rule, held by the workflow rather than left to each reviewer: a must-fix only someone
 // the team trusts can reach, with a crafted value review would see or one the product refuses loudly,
-// is a Nit whatever the reviewer called it, a failing holdout included. On the website's #35 QA held
-// the PR for one after the rule was in its instructions; on #39 for a holdout whose only harm was a
-// stack trace where the build's refusal should have been a sentence.
+// is a Nit whatever the reviewer called it. On the website's #35 QA held the PR for one after the
+// rule was in its instructions; on #39 for a failure whose only harm was a stack trace where the build's refusal should have been a sentence.
 const trustedOnly = f => f.must_fix && f.reach === 'trusted' && f.review_would_see
 
 // A repeat is a finding an earlier round raised that the builder's push did not fix. The other

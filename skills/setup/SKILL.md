@@ -1,14 +1,13 @@
 ---
 name: setup
-description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the optimiser's or librarian's weekly routine, the check-backs on shipped briefs, or the holdout scenarios, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection and creates the private holdout repo after the founder confirms.
+description: Set up a product repo for Founding Agents. Use when adding Founding Agents to a product, when the founder asks to turn on or redo branch protection, to install or update CI or ops watch's nightly site check, to set up ops watch's daily routine, the optimiser's or librarian's weekly routine, or the check-backs on shipped briefs, or to add the product's CLAUDE.md, fixtures folder or labels. Installs CI and ops watch through PRs, and turns on branch protection after the founder confirms.
 ---
 
 # Set up a product for Founding Agents
 
 This version covers CI, branch protection, ops watch's site check and daily routine, the
-optimiser's and the librarian's weekly routines, the check-backs on shipped briefs, the holdout
-scenarios, the product's `CLAUDE.md`
-and fixtures, and the labels (`docs/design.md` in the Founding Agents repo, "Build order").
+optimiser's and the librarian's weekly routines, the check-backs on shipped briefs, the
+product's `CLAUDE.md` and fixtures, and the labels (`docs/design.md` in the Founding Agents repo, "Build order").
 
 Run everything from the product repo's folder. The scripts sit in this skill's directory.
 
@@ -135,25 +134,6 @@ adds `decided` to the ones to build. Neither changes the product itself.
 5. **Run each once now** and read its last lines. A measure it could not take is a setup problem
    to fix.
 
-## Holdout scenarios
-
-Edge-case scenarios the builders never see, so a change that passes every visible test still has
-to handle each failure class. They live in a private `<product>-holdouts` repo, cloned to
-`~/.founding-agents/holdouts/<owner>/<name>`, outside every product folder and worktree. Only
-edge-case QA reads them; the plugin's `guard_holdouts` hook blocks every other agent.
-
-1. **Dry run.** `python3 <this skill's directory>/holdouts.py` says whether the repo and its clone
-   exist and what it would do.
-2. **Ask for a clear yes.** Creating a repo on GitHub needs the founder's approval each time.
-3. **Apply.** Rerun with `--apply`. It creates the repo if missing, clones it (or pulls an existing
-   clone), and seeds a README with the scenario format and one folder per failure class.
-4. **Tell the founder** the scenarios are theirs to write: a few per class that matter for this
-   product, in the format the README gives. QA adds more where a change touches a class
-   with none. Write them in the founder's own session, never through an agent, so no builder's
-   context ever holds them.
-
-Rerunning it on another machine clones the same repo there.
-
 ## The map and the fixtures
 
 Every product gets a short `CLAUDE.md`, the map every session loads, a `fixtures/` folder for
@@ -214,6 +194,5 @@ gh label create librarian --color 1D76DB --description "A mistake a run made twi
 
 The plugin's hooks need `python3` on the machine. The merge guard (`hooks/guard_main.py`) blocks
 every agent but the integrator from pushing to `main` or merging; branch protection is the hard
-gate behind it. The holdout guard (`hooks/guard_holdouts.py`) blocks every agent but QA
-from the holdout scenarios. The serve guard (`hooks/guard_serve.py`) blocks a local
+gate behind it. The serve guard (`hooks/guard_serve.py`) blocks a local
 `python3 -m http.server` that is not bound to `127.0.0.1`, or whose folder holds a secret.
