@@ -48,6 +48,19 @@ class BasicsTest(unittest.TestCase):
         listed = dict(re.findall(r"^- `([a-z-]+)/`: (.+)$", readme, re.M))
         self.assertEqual(listed, CLASSES)
 
+    def test_the_founder_hands_the_merge_over_in_the_words_the_integrator_reads(self):
+        # The product's CLAUDE.md and the integrator agree on one phrase; auto mode's approval lives in
+        # the founder's own settings, since Claude Code never reads `autoMode` from a repo or a plugin.
+        words = "the integrator merges even though merging deploys"
+        root = SETUP.parent.parent
+        for path in [SETUP / "basics" / "CLAUDE.md", SETUP / "SKILL.md", root / "agents" / "integrator.md",
+                     root / "workflows" / "build.js"]:
+            self.assertIn(words, " ".join(path.read_text().split()).lower(), path.name)
+        entry = json.loads(re.search(r"```json\n\s*(\{\"autoMode\".*?)\n\s*```", (SETUP / "SKILL.md").read_text(), re.S).group(1))
+        allow = entry["autoMode"]["allow"]
+        self.assertEqual(allow[0], "$defaults")
+        self.assertIn(words, allow[1])
+
 
 if __name__ == "__main__":
     unittest.main()

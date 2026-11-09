@@ -6,7 +6,7 @@ export const meta = {
     { title: 'Check', detail: 'the issue is decided, settles no technical decision the founder has not seen, and no red issue is open', model: 'sonnet' },
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
     { title: 'Review', detail: "the reviewers the issue's risk needs, side by side: code review alone on Sonnet for low, with edge-case QA for medium, and a security review too for high", model: 'opus' },
-    { title: 'Merge', detail: "the integrator tests the merge and merges, or readies it for the founder's merge where a merge deploys to production", model: 'sonnet' },
+    { title: 'Merge', detail: "the integrator tests the merge and merges, or readies it for the founder's merge where a merge deploys to production and the founder has not handed it over", model: 'sonnet' },
     { title: 'Report', detail: "the run's time, tokens, cost and whether it merged, posted on the issue", model: 'haiku' },
   ],
 }
@@ -117,7 +117,7 @@ const MERGED = {
   properties: {
     merged: { type: 'boolean' },
     merge_commit: { type: 'string' },
-    founder: { type: 'boolean', description: 'true when the PR is ready and only the merge itself is left for the founder: the merge deploys to production, or Claude Code refused it' },
+    founder: { type: 'boolean', description: 'true when the PR is ready and only the merge itself is left for the founder: the merge deploys to production and the product\'s CLAUDE.md does not hand it to the integrator, or Claude Code refused it' },
     reason: { type: 'string', description: 'why it was not merged, such as what the refusal said; empty when merged' },
   },
   required: ['merged', 'merge_commit', 'founder', 'reason'],
@@ -368,10 +368,11 @@ ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`
 }
 
 // A PR that is ready but whose merge is the founder's: where merging deploys to production the
-// founder merges, and a merge Claude Code refuses is never worked around. On Half Badger, auto
-// mode refused the integrator's merge of #10, #12 and #14 as a merge without review that deploys,
-// and each approved PR then waited for the whole run to end, about 30 minutes for #14. So the item
-// goes up the moment the integrator stops, built here so every one has the same shape.
+// founder merges unless the product's CLAUDE.md hands the merge to the integrator, and a merge
+// Claude Code refuses is never worked around. On Half Badger, auto mode refused the integrator's
+// merge of #10, #12 and #14 as a merge without review that deploys, and each approved PR then
+// waited for the whole run to end, about 30 minutes for #14. So the item goes up the moment the
+// integrator stops, built here so every one has the same shape.
 const WAITING = 'ready for your merge'
 const NEEDS_FOUNDER_LABEL = 'gh label create needs-founder --color FBCA04 --description "Waiting on the founder\'s decision"'
 const readyForFounder = (n, ticket, built, why) => {
@@ -405,7 +406,7 @@ const merge = (n, ticket, developed) => {
     : ''
   const mine = turn.then(async () => {
     const merged = await agent(
-      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push. Where a merge deploys to production, or Claude Code refuses the merge, do not merge and do not look for another way: return founder true with why, once the PR is up to date and its checks are green.${why}`,
+      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push. Where a merge deploys to production and the product's \`CLAUDE.md\` does not say the integrator merges even though merging deploys, or Claude Code refuses the merge, do not merge and do not look for another way: return founder true with why, once the PR is up to date and its checks are green.${why}`,
       { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
     )
     if (merged && !merged.merged && merged.founder) {

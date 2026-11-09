@@ -99,8 +99,8 @@ class ProportionTest(unittest.TestCase):
     def test_where_a_merge_deploys_the_founder_merges_and_a_refusal_is_never_worked_around(self):
         # On Half Badger auto mode refused three merges that deploy to production, then let a fourth through.
         integrator = self.read("integrator")
-        self.assertIn("Where a merge deploys to production, the founder merges.", integrator)
-        self.assertIn("A merge Claude Code refuses is the founder's.", integrator)
+        self.assertIn("Where a merge deploys to production, the founder merges, unless they have handed the merge to you.", integrator)
+        self.assertIn("A merge Claude Code refuses is the founder's,** even one handed to you.", integrator)
         self.assertIn("Do not run `gh pr merge`", integrator)
 
     def test_the_architect_writes_pass_marks_reviewers_can_check_and_only_real_dependencies(self):

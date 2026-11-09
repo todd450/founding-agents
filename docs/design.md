@@ -14,7 +14,7 @@ A team of agents that builds products with one founder.
 | Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
 | | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; a `security` sweep | findings | read only |
 | | **Optimiser** | a weekly routine, for team cost; an agent in a `codebase` or `tests` sweep, for product cost | token cost per merged change, by role and model (weekly); page cost, dead code, one thing defined in several places, and the test suite's missing cases, slow or flaky tests, tests of wording and hand-written checks a standard tool does (sweep) | proposes builder tasks |
-| Ship & run | **Integrator** | the only agent that merges | rebase, run checks, gate production, cut releases; where a merge deploys to production, readies it for the founder's merge | `main` and production |
+| Ship & run | **Integrator** | the only agent that merges | rebase, run checks, gate production, cut releases; where a merge deploys to production, readies it for the founder's merge unless they handed it over | `main` and production |
 | | **Ops watch** | a daily routine, and a nightly GitHub Actions check | backups, release verdicts, production errors, spend; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
 | | **Librarian** | a weekly routine: the week's incidents, and a prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
 
@@ -34,14 +34,15 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
    worktree.
 4. The reviewers the issue's risk calls for run in parallel: **code review** always, **edge-case QA** from
    medium, the **security reviewer** at high.
-5. **Integrator** merges and gates production, or, where a merge deploys to production, readies
-   the PR for the founder to merge → **ops watch** watches it run.
+5. **Integrator** merges and gates production, or, where a merge deploys to production and the
+   founder has not handed it over, readies the PR for the founder to merge → **ops watch** watches
+   it run.
 6. Two weeks after a brief's last issue merges (or as long as the brief says), **ops watch**
    checks whether it did what "how we'll know" said; a "didn't" goes back to the founder as keep,
    change or remove.
 
 The founder sees steps 1 and 2, step 3 only when the plan needs a technical decision the brief
-left open, step 5 when a merge is the release, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
+left open, step 5 when a merge is the release they kept, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
 starts with the context it needs.
 
 ## Principles
@@ -203,10 +204,23 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 - **The integrator tests the merge, not the branch.** If `main` has not moved since the PR's last
   push, the PR's green checks already tested the merge. If it has, `gh pr update-branch` brings the
   PR up to date and the checks run again.
-- **Where a merge deploys to production, the founder merges.** The integrator gets the PR up to
-  date and green, then stops; `build` posts a `Ready for your merge` item and carries on with other
-  issues. The same happens when Claude Code refuses a merge, which the team never works around
-  (principle 8).
+- **Where a merge deploys to production, the founder merges, unless they hand the merge over.**
+  The integrator gets the PR up to date and green, then stops; `build` posts a `Ready for your
+  merge` item and carries on with other issues. The same happens when Claude Code refuses a merge,
+  which the team never works around (principle 8). On Half Badger auto mode refused three of four
+  such merges, so the founder's merge made a random outcome a fixed one; but a click per PR, and
+  issues that build after it waiting for the next run, cost the founder's attention (principle 10),
+  and the founder found it a chore.
+- **Handing the merge over takes two things, one per side.** The product's `CLAUDE.md` says the
+  integrator merges even though merging deploys, which the integrator reads; and the founder adds
+  an `autoMode.allow` entry to their own `~/.claude/settings.json`, which auto mode's checker
+  reads. The plugin cannot ship the second: Claude Code reads `autoMode` only from user and
+  managed settings, and a plugin's settings carry only `agent` and `subagentStatusLine`, so a repo
+  can never approve its own deploys. The entry is prose, not a `permissions.allow` rule for
+  `gh pr merge`: an allow rule skips the checker for every session and every merge, while the
+  prose keeps it judging each merge with the founder's standing intent (principle 8). It suits a
+  product a rollback undoes; where a bad merge writes data, the founder keeps the merge or deploys
+  from a step they start.
 - **Nothing merges while a `red` issue is open** (principle 9).
 
 ### Holdouts
