@@ -87,11 +87,11 @@ class BriefTest(unittest.TestCase):
         self.assertEqual(window("check back in 10 days"), timedelta(days=10))
         self.assertEqual(window("Sign-ups rise."), timedelta(days=14))
 
-    def test_the_product_leads_example_is_one_the_script_reads(self):
-        # The product lead writes when to check back; a wording the script cannot read falls back
-        # to two weeks without a word, so the agent's example is held to the script's pattern.
-        lead = (SETUP.parent.parent / "agents" / "product-lead.md").read_text()
-        example = re.search(r'"(Check back: [^"]+)"', lead).group(1)
+    def test_the_briefs_example_is_one_the_script_reads(self):
+        # propose's brief step writes when to check back; a wording the script cannot read falls back
+        # to two weeks without a word, so the step's example is held to the script's pattern.
+        brief = (SETUP.parent.parent / "workflows" / "propose.js").read_text()
+        example = re.search(r'"(Check back: [^"]+)"', brief).group(1)
         self.assertEqual(window(example), timedelta(weeks=3))
 
     def test_reads_every_page_gh_prints(self):

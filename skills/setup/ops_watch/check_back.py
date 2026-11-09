@@ -175,8 +175,8 @@ def decision_item(brief, verdict):
         "",
         "- **Keep** it as it is: nothing to build, but it stays in the product, and in every check and "
         "review from now on.",
-        "- **Change** it: the product lead shapes the change as a new brief, through `propose`.",
-        "- **Remove** it: the product lead shapes the removal as a brief, through `propose`. Removing "
+        "- **Change** it: shape the change as a new brief, through `propose`.",
+        "- **Remove** it: shape the removal as a brief, through `propose`. Removing "
         "is cheapest now, before more is built on it.",
         "",
         "To answer, reply with keep, change or remove. Keep closes this issue; for change or remove, "

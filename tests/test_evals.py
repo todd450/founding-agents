@@ -43,7 +43,8 @@ class TaskTest(unittest.TestCase):
         self.assertGreaterEqual(len(trial.tasks()), 10, trial.tasks())
 
     def test_every_task_names_its_role_kind_and_origin(self):
-        roles = {p.stem for p in (EVALS.parent / "agents").glob("*.md")} | {"build-check"}
+        # A workflow step that runs as no agent is a role too: build's check and propose's brief.
+        roles = {p.stem for p in (EVALS.parent / "agents").glob("*.md")} | {"build-check", "brief"}
         for name in trial.tasks():
             task = trial.load(name)
             with self.subTest(name):
@@ -161,7 +162,7 @@ class FindingsTest(unittest.TestCase):
 class RunnerTest(unittest.TestCase):
     def test_each_task_runs_the_prompt_its_workflow_sends_as_that_steps_agent_and_model(self):
         expected = {"code-reviewer": "founding-agents:code-reviewer", "qa": "founding-agents:qa",
-                    "builder": "founding-agents:builder", "product-lead": "founding-agents:product-lead", "architect": "founding-agents:architect",
+                    "builder": "founding-agents:builder", "brief": None, "architect": "founding-agents:architect",
                     "build-check": None}
         for name in trial.tasks():
             task = trial.load(name)

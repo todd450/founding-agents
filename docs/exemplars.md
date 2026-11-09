@@ -14,7 +14,7 @@ practice gives an agent something concrete to do, and gives the founder words to
 
 | role | learns from |
 |---|---|
-| Product lead | Basecamp's *Shape Up* |
+| Product lead (`propose`'s brief step) | Basecamp's *Shape Up* |
 | Designer | Airbnb |
 | Architect | Amazon's one-way and two-way doors; Stripe's API compatibility |
 | Builder | Kent Beck's test-driven development; Google's small changes |
@@ -32,7 +32,7 @@ when they became two agents.
 
 The product lead says no by default and hands the founder a decision small enough for one
 sitting. *Shape Up* is a whole method for a small team built on a fixed amount of time with
-flexible scope. The practices are in [agents/product-lead.md](../agents/product-lead.md).
+flexible scope. The practices are in the brief step of [workflows/propose.js](../workflows/propose.js).
 
 Source: Ryan Singer, [*Shape Up*](https://basecamp.com/shapeup) (Basecamp, 2019).
 
