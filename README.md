@@ -35,7 +35,7 @@ How much of the team a change uses depends on its size:
 
 - **A new idea:** `/founding-agents:propose <idea>` writes the brief and mockups. Once you have
   decided, `/founding-agents:build <brief>` builds it. A brief too big for one change: cut it into
-  issues in a session first, each labelled `decided`.
+  issues in a session first, each labelled `decided`, and build them one at a time.
 - **A small change** (a typo, a colour, a line of copy): skip `propose`. Open an issue
   that says what to change, add the `decided` label, and run `/founding-agents:build <issue>`.
   Wording alone gets one code review, on Sonnet.

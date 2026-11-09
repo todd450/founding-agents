@@ -1,7 +1,7 @@
 export const meta = {
   name: 'build',
-  description: "Build one decided issue, or every issue the architect cut from a decided brief with two to four builders at once: each builder in its own worktree, QA and code review (and security review when it is needed), then the integrator merges one at a time",
-  whenToUse: 'When the founder asks to build a decided issue or a planned brief in the current product repo, e.g. /founding-agents:build 12, or /founding-agents:build 7 3 for brief #7 with three builders at once',
+  description: "Build one decided issue: the builder in its own worktree, QA and code review (and security review when it is needed), then the integrator merges",
+  whenToUse: 'When the founder asks to build a decided issue in the current product repo, e.g. /founding-agents:build 12',
   phases: [
     { title: 'Check', detail: 'the issue is decided, settles no technical decision the founder has not seen, and no red issue is open', model: 'sonnet' },
     { title: 'Build', detail: 'the builder, tests first, in its own worktree', model: 'opus' },
@@ -28,15 +28,9 @@ const RANK = Object.keys(TIERS)
 // An issue whose risk is unknown gets the most review, not the least.
 const tierOf = rating => RANK.includes(rating) ? rating : 'high'
 
-// A brief's issues are built this many at a time unless the founder asks for another number, up to
-// MAX_BUILDERS. Builders and reviewers all draw on the same Opus allowance.
-const BUILDERS = 2
-const MAX_BUILDERS = 4
-
-const named = args && typeof args === 'object' ? [args.issue, args.builders] : String(args ?? '').match(/\d+/g) || []
-const issue = Number(named[0] || 0)
+const named = args && typeof args === 'object' ? args.issue : (String(args ?? '').match(/\d+/) || [])[0]
+const issue = Number(named || 0)
 if (!issue) throw new Error('Name the issue to build, e.g. /founding-agents:build 12')
-const builders = Math.min(MAX_BUILDERS, Math.max(1, Number(named[1]) || BUILDERS))
 
 // What counts as a technical one-way door; build.js, propose.js and sweep.js keep the same words (a test checks).
 const ONE_WAY = 'a technical one-way door: a choice that costs a lot to reverse once code or people depend on it, such as using a framework or none, adding a build step, how the product deploys or is hosted, its language or stack, where and how it stores data, a dependency that ships to users, an outside service, or an interface other code or people rely on'
@@ -59,20 +53,8 @@ const TICKET = {
     open_pr: { type: 'integer', description: 'the open PR that already builds this issue, which the builder continues; 0 if none. It never makes the issue unready' },
     risk: { type: 'string', enum: RANK, description: `the issue's risk: the tier its "Risk" section names, or your own rating when it names none, and yours when you rate it higher. ${RISK}` },
     awaiting_merge: { type: 'boolean', description: 'true when the newest comment on open_pr, leaving out run reports, is a "Ready for your merge" item: it waits only for the founder to merge it' },
-    parts: {
-      type: 'array',
-      description: 'when this is a brief, each open issue the architect cut from it; empty otherwise',
-      items: {
-        type: 'object',
-        properties: {
-          number: { type: 'integer' },
-          after: { type: 'array', items: { type: 'integer' }, description: 'the issues its body says to build it after' },
-        },
-        required: ['number', 'after'],
-      },
-    },
   },
-  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen', 'open_pr', 'awaiting_merge', 'risk', 'parts'],
+  required: ['ready', 'reason', 'repo', 'title', 'body', 'decision', 'unseen', 'open_pr', 'awaiting_merge', 'risk'],
 }
 const BUILT = {
   type: 'object',
@@ -153,18 +135,16 @@ const report = async result => {
   return { ...result, worktrees_kept: tidied ? tidied.kept : [] }
 }
 
-// Reads one issue and says whether it can be built, or lists the issues cut from it when it is a brief.
+// Reads the issue and says whether it can be built.
 const check = n => agent(
   `Check whether issue #${n} in this repo can be built. Read only; change nothing.
-- \`gh issue list --state all --search "\\"Part of #${n}\\" in:body" --json number,state,body\`: if any open issue's body starts "Part of #${n}", #${n} is a brief the architect cut into issues. Return each open one as parts, with the numbers its "Build after" lines name (a "Matches #<m>" line only keeps it consistent with #<m> and is not one of them), return ready true, the repo and the title, and skip every check below.
 - \`gh repo view --json nameWithOwner\` gives the repo.
-- \`gh issue view ${n} --json title,body,state,labels,comments\`: it must be open, and either labelled \`decided\` or cut by the architect from a decided brief: its body starts "Part of #<n>", and \`gh issue view <n> --json labels,comments\` shows that brief labelled \`decided\`.
-- If its body says "Build after #<m>", each #<m> must be closed. A "Matches #<m>" line is a consistency link, not a dependency: it never makes the issue wait.
+- \`gh issue view ${n} --json title,body,state,labels,comments\`: it must be open and labelled \`decided\`.
 - \`gh issue list --label red --state open --json number,title\`: no \`red\` issue may be open, unless #${n} is that issue. A red scheduled check stops other work until it is fixed.
-- Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` or \`plan\` queue item on this issue or on the brief it is part of, with the founder's choice; the \`decided\` label on the issue or its brief is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
+- Read what the issue asks for and list each ${ONE_WAY}, that building it would settle, including ones it takes for granted ("plain HTML", "add a database"). The founder has seen one only when it is named in the issue's "Technical decisions" section, or in a \`propose\` queue item on this issue, with the founder's choice; the \`decided\` label is the founder's yes to what those name. Return every one not named that way as unseen. A change that settles none, such as copy, a fix inside existing code or a test, has none.
 - \`gh pr list --state open --json number,headRefName,body\`: an open PR on the branch \`build/issue-${n}\`, or one whose description closes #${n}, already builds it. Return its number as open_pr, or 0. Return awaiting_merge true when the newest comment on that PR, leaving out run reports, starts "**Ready for your merge:**", so the PR waits only for the founder to merge it. An open PR is never a reason to stop: it does not make the issue unready, because the builder continues that PR from its reviews; only the checks above and below decide ready.
 - Return its risk, which decides how much review it gets. Take the tier its "Risk" section names when it has one; rate it yourself when it has none, and return your rating when it is higher than the section's. ${RISK}.
-Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments on the issue, or on the brief it is part of, hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-<the issue or brief the mockups were made for>\`) as the decision.`,
+Return ready, which is false when anything above fails or anything is unseen, and when it is not, the reason in one sentence. Return the title and body as they are. If the comments on the issue hold the founder's decision on a queue item, such as the option they picked from mockups, return their words and the mockup branch (\`propose/issue-${n}\`) as the decision.`,
   { label: `check #${n}`, phase: 'Check', model: 'sonnet', effort: 'medium', schema: TICKET },
 )
 
@@ -339,7 +319,7 @@ const readyForFounder = (n, ticket, built, why) => {
     `**Why the merge is yours:** ${why}`,
     '',
     `- If #${n} lists checks under "The founder checks", they are yours to make, before or after the merge as each says.`,
-    `- To ship it, merge PR #${built.pr_number} on GitHub. Issues that build after #${n} start on the next \`/founding-agents:build\` run once it has merged.`,
+    `- To ship it, merge PR #${built.pr_number} on GitHub.`,
     `- To hold it, comment what is wrong; the next \`/founding-agents:build ${n}\` continues the PR from your comment.`,
   ]
   return agent(
@@ -350,32 +330,27 @@ ${body.join('\n')}`,
   )
 }
 
-// The integrator merges one PR at a time, each tested on top of the one merged before it. A reviewer
-// whose only must-fix findings the workflow rated as Nits still says "Changes needed" on the PR, so
-// the integrator is told why it is approved, and leaves those findings on the PR for the founder.
-let turn = Promise.resolve()
-const merge = (n, ticket, developed) => {
+// A reviewer whose only must-fix findings the workflow rated as Nits still says "Changes needed" on
+// the PR, so the integrator is told why it is approved, and leaves those findings on the PR for the
+// founder.
+const merge = async (n, ticket, developed) => {
   const { built, risk } = developed
   const trusted = developed.trusted_only || []
   const why = trusted.length
     ? `\n\nA reviewer's comment may ask for changes the workflow rated as Nits, because only someone the team trusts could cause them, and review or the product's own loud refusal would catch them. Count that review as an approval, and before merging post one comment on the PR, with \`gh pr comment ${built.pr_number} --body-file -\`, listing these as left for the founder:\n${trusted.map(f => `- ${f.where}: ${f.what}`).join('\n')}`
     : ''
-  const mine = turn.then(async () => {
-    const merged = await agent(
-      `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push. Where a merge deploys to production and the product's \`CLAUDE.md\` does not say the integrator merges even though merging deploys, or Claude Code refuses the merge, do not merge and do not look for another way: return founder true with why, once the PR is up to date and its checks are green.${why}`,
-      { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
-    )
-    if (merged && !merged.merged && merged.founder) {
-      const posted = await readyForFounder(n, ticket, built, merged.reason || 'the integrator could not merge it')
-      return { issue: n, status: WAITING, reason: merged.reason, pr: built.pr_url, queue_item: posted ? posted.comment_url : 'not posted' }
-    }
-    if (!merged || !merged.merged) {
-      return { issue: n, status: 'not merged', reason: merged ? merged.reason : 'the integrator returned nothing', pr: built.pr_url, risk }
-    }
-    return { issue: n, status: 'merged', pr: built.pr_url, merge_commit: merged.merge_commit, risk }
-  })
-  turn = mine.catch(() => null)
-  return mine
+  const merged = await agent(
+    `Merge PR #${built.pr_number} in ${ticket.repo}. It builds issue #${n}, and its reviewers approved it in comments on the PR. Follow your instructions: test the merge, not the branch, and merge on its green checks without rerunning them when \`main\` has not moved since its last push. Where a merge deploys to production and the product's \`CLAUDE.md\` does not say the integrator merges even though merging deploys, or Claude Code refuses the merge, do not merge and do not look for another way: return founder true with why, once the PR is up to date and its checks are green.${why}`,
+    { label: `integrator, PR #${built.pr_number}`, phase: 'Merge', agentType: 'founding-agents:integrator', model: 'sonnet', schema: MERGED },
+  )
+  if (merged && !merged.merged && merged.founder) {
+    const posted = await readyForFounder(n, ticket, built, merged.reason || 'the integrator could not merge it')
+    return { issue: n, status: WAITING, reason: merged.reason, pr: built.pr_url, queue_item: posted ? posted.comment_url : 'not posted' }
+  }
+  if (!merged || !merged.merged) {
+    return { issue: n, status: 'not merged', reason: merged ? merged.reason : 'the integrator returned nothing', pr: built.pr_url, risk }
+  }
+  return { issue: n, status: 'merged', pr: built.pr_url, merge_commit: merged.merge_commit, risk }
 }
 
 // A PR already waiting for the founder's merge is neither rebuilt nor reviewed again, and gets no
@@ -391,59 +366,8 @@ phase('Check')
 const ticket = await check(issue)
 if (!ticket) throw new Error(`Could not read issue #${issue}`)
 
-if (!ticket.parts.length) {
-  if (ticket.unseen.length || !ticket.ready) return notReady(issue, ticket)
-  if (ticket.open_pr && ticket.awaiting_merge) return awaiting(issue, ticket)
-  const developed = await develop(issue, ticket)
-  if (developed.status !== 'approved') return await report(developed)
-  return await report(await merge(issue, ticket, developed))
-}
-
-// A brief: build its issues, up to `builders` at a time, each once every issue it builds after has
-// merged. The architect cut them so no two touch the same files.
-const parts = new Map(ticket.parts.map(p => [p.number, p]))
-log(`#${issue} is a brief with ${parts.size} issue(s) to build, ${builders} at a time`)
-const one = async n => {
-  const t = await check(n)
-  if (!t) return { issue: n, status: 'not started', reason: `could not read #${n}` }
-  if (t.unseen.length || !t.ready) return notReady(n, t)
-  if (t.open_pr && t.awaiting_merge) return awaiting(n, t)
-  const developed = await develop(n, t)
-  return developed.status === 'approved' ? await merge(n, t, developed) : developed
-}
-const results = []
-const running = new Map()
-const failed = new Set()
-// Issues held up only by a PR waiting for the founder's merge: the next run starts them.
-const waiting = new Map()
-while (parts.size || running.size) {
-  for (const p of [...parts.values()]) {
-    const blocker = p.after.find(m => failed.has(m))
-    const held = p.after.find(m => waiting.has(m))
-    if (blocker) {
-      parts.delete(p.number)
-      failed.add(p.number)
-      results.push({ issue: p.number, status: 'not started', reason: `#${blocker}, which it builds after, did not merge` })
-    } else if (held && !p.after.some(m => parts.has(m) || running.has(m))) {
-      parts.delete(p.number)
-      waiting.set(p.number, waiting.get(held))
-      results.push({ issue: p.number, status: 'not started', waits_for: waiting.get(held),
-                     reason: `it builds after #${held}, which waits for your merge; the next run starts it once that has merged` })
-    } else if (running.size < builders && !p.after.some(m => parts.has(m) || running.has(m))) {
-      parts.delete(p.number)
-      running.set(p.number, one(p.number).then(r => r || { issue: p.number, status: 'stopped', reason: 'no result' }))
-    }
-  }
-  if (!running.size) {
-    for (const p of parts.values()) results.push({ issue: p.number, status: 'not started', reason: `it builds after ${p.after.map(m => `#${m}`).join(', ')}, which no run can reach` })
-    break
-  }
-  const done = await Promise.race(running.values())
-  running.delete(done.issue)
-  if (done.status === WAITING) waiting.set(done.issue, done.issue)
-  else if (done.status !== 'merged') failed.add(done.issue)
-  results.push(done)
-}
-const merged = results.filter(r => r.status === 'merged').length
-const ready = results.filter(r => r.status === WAITING).length
-return await report({ issue, status: `${merged} of ${results.length} issues merged${ready ? `, ${ready} ready for your merge` : ''}`, builders, issues: results })
+if (ticket.unseen.length || !ticket.ready) return notReady(issue, ticket)
+if (ticket.open_pr && ticket.awaiting_merge) return awaiting(issue, ticket)
+const developed = await develop(issue, ticket)
+if (developed.status !== 'approved') return await report(developed)
+return await report(await merge(issue, ticket, developed))
