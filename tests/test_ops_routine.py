@@ -18,7 +18,7 @@ class RoutineTest(unittest.TestCase):
     def test_every_routine_uses_no_graphql_command_since_the_cloud_proxy_blocks_them(self):
         # In a routine, `gh issue`, `gh pr` and `gh repo view` go through GraphQL and get a 403.
         # A routine names those three to warn against them; every command it runs is `gh api`.
-        self.assertEqual([p.parent.name for p in ROUTINES], ["architect", "librarian", "ops_watch"])
+        self.assertEqual([p.parent.name for p in ROUTINES], ["librarian", "ops_watch"])
         for routine in ROUTINES:
             text = routine.read_text()
             commands = [c for c in re.findall(r"`(gh [^`]+)`", text) if c not in ("gh issue", "gh pr", "gh repo view")]
@@ -53,19 +53,6 @@ class RoutineTest(unittest.TestCase):
         self.assertIn("failure message says how to fix the problem",
                       (SETUP / "librarian" / "routine.md").read_text())
 
-    def test_the_architect_proposes_at_most_three_findings_and_never_changes_the_product(self):
-        text = (SETUP / "architect" / "routine.md").read_text()
-        self.assertIn("labels[]=needs-founder", text)
-        self.assertIn("At most three issues a week", text)
-        self.assertIn("Never push", text)
-        self.assertIn("never file a finding twice", text)
-        self.assertIn("A decision already made is never a finding.", text)
-
-    def test_the_architect_reads_the_weeks_merges_first(self):
-        text = (SETUP / "architect" / "routine.md").read_text()
-        self.assertLess(text.index("**The week's merges.**"), text.index("**The product as it is now.**"))
-        self.assertIn("merged_at", text)
-
     def test_runs_its_checks_then_the_products_own(self):
         for check in ("Scheduled checks ran", "`main` passes", "Merged changes are live",
                       ".github/ops-watch/watch.md", "disabled_inactivity"):
@@ -82,14 +69,12 @@ class RoutineTest(unittest.TestCase):
 
 
 class KitTest(unittest.TestCase):
-    def test_installs_each_weekly_routine_where_its_prompt_points(self):
-        for kit in ("librarian", "architect"):
-            with tempfile.TemporaryDirectory() as folder:
-                root = Path(folder)
-                install(root, plan(root, kit))
-                self.assertTrue((root / ".github" / kit / "routine.md").exists(), kit)
-                self.assertIn(f"Follow .github/{kit}/routine.md in this repo.",
-                              (SETUP / "SKILL.md").read_text())
+    def test_installs_the_librarians_routine_where_its_prompt_points(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            install(root, plan(root, "librarian"))
+            self.assertTrue((root / ".github/librarian/routine.md").exists())
+            self.assertIn("Follow .github/librarian/routine.md in this repo.", (SETUP / "SKILL.md").read_text())
 
     def test_keeps_the_routine_current_and_the_products_checks_its_own(self):
         with tempfile.TemporaryDirectory() as folder:

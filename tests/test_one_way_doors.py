@@ -1,10 +1,11 @@
-"""Every workflow defines a technical one-way door in the same words, so they judge the same way."""
+"""Every workflow and the sweeps define a technical one-way door in the same words, so they judge the same way."""
 
 import re
 import unittest
 from pathlib import Path
 
-WORKFLOWS = Path(__file__).resolve().parent.parent / "workflows"
+ROOT = Path(__file__).resolve().parent.parent
+WORKFLOWS = ROOT / "workflows"
 
 
 def one_way(name):
@@ -15,8 +16,11 @@ def one_way(name):
 class OneWayDoorTest(unittest.TestCase):
     def test_every_workflow_uses_the_same_definition(self):
         self.assertIsNotNone(one_way("build.js"))
-        for name in ("propose.js", "sweep.js"):
-            self.assertEqual(one_way("build.js"), one_way(name), name)
+        self.assertEqual(one_way("build.js"), one_way("propose.js"))
+
+    def test_the_sweeps_use_the_same_definition(self):
+        rules = " ".join((ROOT / "skills/sweep/kinds/every-sweep.md").read_text().split())
+        self.assertIn(one_way("build.js"), rules)
 
 
 if __name__ == "__main__":

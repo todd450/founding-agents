@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Install one of setup's kits in a product repo: `basics`, `ci`, `ops-watch`,
-`ops-routine`, `librarian` or `architect`. Prints the plan by default;
-writes nothing without --apply.
+`ops-routine`, `librarian`, or `sweep-<kind>` for one of the sweep skill's kinds. Prints the plan
+by default; writes nothing without --apply.
 
 Kits are copied, not referenced, because a product's workflow cannot read the private plugin repo.
 Rerunning brings the product's copies of setup's own files up to date. A starter file, such as
@@ -37,10 +37,16 @@ KITS = {
     "librarian": [
         (HERE / "librarian" / "routine.md", Path(".github/librarian/routine.md"), True),
     ],
-    "architect": [
-        (HERE / "architect" / "routine.md", Path(".github/architect/routine.md"), True),
-    ],
 }
+# Each sweep kind is a kit of its own, so the founder schedules only the kinds they want. Its file
+# reads the rules every sweep follows from beside it.
+SWEEPS = HERE.parent / "sweep" / "kinds"
+SWEEP_KINDS = ("architecture", "codebase", "design", "security", "tests")
+for _kind in SWEEP_KINDS:
+    KITS[f"sweep-{_kind}"] = [
+        (SWEEPS / f"{_kind}.md", Path(f".github/sweeps/{_kind}.md"), True),
+        (SWEEPS / "every-sweep.md", Path(".github/sweeps/every-sweep.md"), True),
+    ]
 
 
 def plan(root, kit):
