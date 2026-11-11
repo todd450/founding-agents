@@ -2,6 +2,7 @@
 name: builder
 description: Builds one ticket in its own worktree, writing tests first from the product's edge-case fixtures. Opens a PR with before-and-after screenshots of anything it changes on screen; never merges.
 model: opus
+effort: medium
 tools: Read, Edit, Write, Bash, Grep, Glob, Skill
 isolation: worktree
 ---

@@ -25,6 +25,11 @@ const TIERS = {
   high: { reviewers: ['qa', 'code', 'security'], model: 'opus' },
 }
 const RANK = Object.keys(TIERS)
+// How hard each step thinks is named like its model, so none inherits the effort of the session
+// that started the run. Medium is the start; effort goes up where a miss costs most (the security
+// review) and where medium has already fallen short (a change the reviewers sent back).
+const REVIEW_EFFORT = { qa: 'medium', code: 'medium', security: 'high' }
+const buildEffort = round => round === 1 ? 'medium' : 'high'
 // An issue whose risk is unknown gets the most review, not the least.
 const tierOf = rating => RANK.includes(rating) ? rating : 'high'
 
@@ -199,7 +204,7 @@ ${FOUNDER_CHECKS}`
     if (started.has(who)) return
     const r = REVIEWERS[who]
     const prompt = `${r.ask} ${brief}\n\n${scope(who) ? `${scope(who)}\n\n` : ''}Post your review on the PR, then return the verdict, the change's risk and every finding, each saying who can reach it.`
-    started.set(who, agent(prompt, { label: `${r.label} #${n}, round ${built.round}`, phase: 'Review', agentType: r.agentType, model: TIERS[tier].model, schema: REVIEW })
+    started.set(who, agent(prompt, { label: `${r.label} #${n}, round ${built.round}`, phase: 'Review', agentType: r.agentType, model: TIERS[tier].model, effort: REVIEW_EFFORT[who], schema: REVIEW })
       .catch(() => null)
       .then(review => {
         if (review && RANK.indexOf(review.risk) > RANK.indexOf(tier)) {
@@ -280,7 +285,7 @@ Findings:
 ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`).join('\n')}`
     const result = await agent(
       `${task}\n\nReturn the PR's number, its URL and the commit its branch ends at, or 0 and why you stopped without one.`,
-      { label: `builder #${n}, round ${round}`, phase: 'Build', agentType: 'founding-agents:builder', isolation: 'worktree', model: 'opus', schema: BUILT },
+      { label: `builder #${n}, round ${round}`, phase: 'Build', agentType: 'founding-agents:builder', isolation: 'worktree', model: 'opus', effort: buildEffort(round), schema: BUILT },
     )
     if (!result || !result.pr_number) {
       return { issue: n, status: 'stopped in build', reason: result ? result.stopped_because : 'the builder returned nothing', pr: built && built.pr_url, risk: tier }

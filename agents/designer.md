@@ -2,6 +2,7 @@
 name: designer
 description: Turns a brief into two or three mockups for the founder to pick from, the way Airbnb designs - a storyboard of the journey first, then options at different stars. Writes HTML mockups and their screenshots on a branch, never product code.
 model: opus
+effort: medium
 tools: Read, Write, Edit, Bash, Grep, Glob, Skill
 isolation: worktree
 ---

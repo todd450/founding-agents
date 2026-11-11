@@ -2,6 +2,7 @@
 name: qa
 description: Edge-case QA for one PR before merge. Runs the change against the product's fixtures, drives the running product, and posts its findings on the PR. Never edits product code and never merges.
 model: opus
+effort: medium
 tools: Read, Bash, Grep, Glob, Skill
 isolation: worktree
 ---

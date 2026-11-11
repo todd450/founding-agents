@@ -52,8 +52,10 @@ starts with the context it needs.
 2. **The builder never grades itself.** A separate evaluator drives the real app against hard pass
    marks. Expect to tune it: Anthropic found Claude a
    lenient QA agent out of the box.
-3. **The strongest model plans; cheaper models build.** Cursor's current swarm splits planners and
-   workers this way; workers used most of the tokens.
+3. **Judgement and edits stay on a strong model; cheap models do what is cheap to check.** Planning,
+   building and reviewing run on Opus; checks, queueing and tidying, where a wrong answer is easy
+   to spot, run on Haiku or Sonnet. Cursor's swarm puts its workers on cheaper models, but
+   Anthropic's own guide keeps code edits on the main model, and so does this team.
 4. **Work runs as tickets, not sessions.** One ticket, one agent run, one worktree (OpenAI's
    Symphony, Claude Code's agent-team task list).
 5. **Never two writers on the same files.** Parallelism pays only when work splits cleanly.
@@ -285,8 +287,26 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   architect, designer, builders, QA, the code and security reviewers, and the architecture, design
   and security sweeps. Sonnet 5.5 runs the librarian's routine, the codebase and
   tests sweeps, the roles' views and low-risk code review; Haiku 5.5
-  runs ops watch and the workflows' small steps. `setup` pins Opus 5.5 in full, since the `opus`
-  alias can resolve to an older, dearer Opus.
+  runs ops watch and the workflows' small steps. `setup` pins all three in full, since an alias
+  can resolve to an older model: `opus` has run an older, dearer Opus, and `haiku` still means
+  Haiku 4.5 on an older Claude Code.
+- **Every agent and step names its effort too, and effort goes up before the model does.** Decided
+  11 Nov 2026, from Anthropic's model guide. The builder, the reviewers, the designer and the brief
+  had named a model and no effort, so each ran on whatever the session that started the run was
+  set to. They now start at medium, where the guide measured Opus 5.5 about 2.5 points below high
+  for about 70% of the cost. Two steps run at high: the security review, where a miss costs most,
+  and the builder on a change the reviewers sent back, where medium has already fallen short.
+  That follows the guide's order when a result is not good enough: let the model check its own
+  work (the builder's tests), then raise effort, and only then move up a model. Running
+  everything at high costs more and, in the guide's numbers, passes less often than a cheap first
+  try with the failures run again harder.
+- **Fable 5.2 was tried and Opus 5.5 stays.** On 11 Nov 2026 the builder's seven eval tasks and
+  the brief's one ran on both, one trial each. Both passed every task; Fable cost $1.07 a builder
+  task against Opus's $0.46, and $1.52 for the brief against $0.54. The tasks are ordinary build
+  failures that Opus already passes, so they cannot show Fable doing better, only that it costs
+  more here. The guide recommends Fable for large refactors and architecture planning; the
+  architect has no eval task, so that is untested. Try it again when a real run fails on Opus at
+  high effort, which adds the task that could tell them apart.
 - **The team does not measure its own cost.** Run reports, per-issue budgets, a weekly token
   routine and a skill comparing PRs made with and without the plugin were dropped: measuring the
   team had become work of its own. Claude Code's own usage view covers what a run costs, and a
@@ -341,6 +361,8 @@ sweep as a routine, risk tiers and the check-back.
   [Symphony](https://openai.com/index/open-source-codex-orchestration-symphony/) (Apr 2026)
 - Ramp — [Why we built our background agent](https://builders.ramp.com/post/why-we-built-our-background-agent), for
   screenshots in every PR
+- Anthropic — [Which Claude model should you build with?](https://claude.dev/blog/which-claude-model-should-you-build-with/)
+  (Nov 2026), for effort before model and edits on the strong model
 - Claude Code docs — [agent teams](https://code.claude.com/docs/en/agent-teams),
   [plugins](https://code.claude.com/docs/en/plugins/components), [workflows](https://code.claude.com/docs/en/workflows),
   [routines](https://code.claude.com/docs/en/routines) and [costs](https://code.claude.com/docs/en/costs)

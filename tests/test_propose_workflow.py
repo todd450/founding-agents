@@ -106,6 +106,8 @@ class ProposeWorkflowTest(unittest.TestCase):
                              (f"founding-agents:{voice.replace(' ', '-')}", "sonnet"))
         self.assertEqual(self.call(run, "team")["model"], "opus")
         self.assertEqual(self.call(run, "queue item")["model"], "haiku")
+        for call in run["calls"]:
+            self.assertIn(call["effort"], ("low", "medium", "high"), call["label"])
 
     def test_the_queue_item_gives_the_teams_recommendation_then_each_roles_with_why(self):
         views = {"builder": view(option="A", why="A is two days less work."),

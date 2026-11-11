@@ -141,6 +141,21 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertEqual((qa["agentType"], qa["model"]), ("founding-agents:qa", "opus"))
         self.assertEqual((code["agentType"], code["model"]), ("founding-agents:code-reviewer", "opus"))
 
+    def test_the_builder_tries_harder_on_a_change_the_reviewers_sent_back(self):
+        # Effort goes up before the model does: round one at medium, a sent-back change at high.
+        run = self.run_workflow(with_code_review({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, APPROVE],
+                                                  "ready for your merge": [READIED]}))
+        efforts = [c["effort"] for c in run["calls"] if c["label"].startswith("builder")]
+        self.assertEqual(efforts, ["medium", "high"])
+
+    def test_every_step_names_its_effort_and_the_security_review_the_most(self):
+        run = self.run_workflow(with_code_review({"check": [{**READY, "risk": "high"}], "builder": [PR], "qa": [APPROVE],
+                                                  "security review": [APPROVE], "ready for your merge": [READIED]}))
+        for call in run["calls"]:
+            self.assertIn(call["effort"], ("low", "medium", "high"), call["label"])
+        efforts = {c["label"].split(" #")[0]: c["effort"] for c in run["calls"]}
+        self.assertEqual((efforts["qa"], efforts["code review"], efforts["security review"]), ("medium", "medium", "high"))
+
     def test_reviewers_see_the_issue_but_not_the_builders_reasoning(self):
         run = self.run_workflow({"check": [READY], "builder": [{**PR, "stopped_because": ""}],
                                  "qa": [APPROVE], "ready for your merge": [READIED]})

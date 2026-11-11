@@ -206,7 +206,7 @@ if (designing) {
       : `Shape this idea into a brief, and open it as a new issue titled "Brief: <the idea in a few words>". ${SHAPE} ${DOORS}
 
 ${text}`,
-    { label: 'brief', phase: 'Brief', model: 'opus', schema: BRIEF },
+    { label: 'brief', phase: 'Brief', model: 'opus', effort: 'medium', schema: BRIEF },
   )
   if (!brief) throw new Error('The brief step returned nothing')
 }
@@ -228,7 +228,7 @@ if ((brief.recommend === 'go' || brief.overruled) && brief.screens) {
     designing
       ? `Spec a design iteration for issue #${brief.issue} in ${brief.repo}. Read the issue and its comments: it names a screen already built, what is wrong with it and what must stay the same. ${shots} Then serve \`main\` on this machine, screenshot the screen as it is with the skill's script into a fresh \`mktemp -d\` folder, look at both, and copy them to \`${now.phone}\` and \`${now.desktop}\`; if the screen cannot be served or shot, stop and return why. Choose two options close to the screen as it is, each fixing what the issue says is wrong and keeping what it says must stay, and recommend one. No option may need ${ONE_WAY}; if the change cannot be made without one, stop and return that it needs \`/founding-agents:propose\` without the \`design\` label. Write each option's spec to \`${storyboard}\`, with the two screenshots, and ${commit}`
       : `Storyboard issue #${brief.issue} in ${brief.repo}. Read its brief first: the who, the appetite and the no-gos bound the options. ${shots} Storyboard the journey frame by frame and mark the key moment, then choose two or three options at different stars and recommend one. Write the storyboard, with each option's spec, to \`${storyboard}\`; ${commit}`,
-    { label: 'storyboard', phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', schema: STORYBOARD },
+    { label: 'storyboard', phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', effort: 'medium', schema: STORYBOARD },
   )
   if (!specs) throw new Error('The designer returned nothing')
   if (specs.stopped_because || specs.options.length < 2) {
@@ -239,7 +239,7 @@ if ((brief.recommend === 'go' || brief.overruled) && brief.screens) {
     `Build option ${o.letter} of the mockups for issue #${brief.issue} in ${brief.repo}. ${designing ? `Read the issue, the specs at \`${storyboard}\` and the screen as it is in \`${now.phone}\` and \`${now.desktop}\`, on the branch \`${branch}\` at origin; keep what the issue says must stay.` : `Read its brief, and the storyboard at \`${storyboard}\` on the branch \`${branch}\` at origin.`} Your option: ${o.name}, ${o.stars} stars. ${o.what} What sets it apart: ${o.distinct} The others, built at the same time by other designers: ${specs.options.filter(other => other !== o).map(other => `${other.letter}. ${other.name}, ${other.stars} stars`).join('; ')}.
 
 Work on the branch at origin, not a local one, since other worktrees have it: \`git fetch origin ${branch}\` and \`git switch --detach FETCH_HEAD\`. Make the page \`${page(o)}.html\`, take its phone and desktop screenshots with the \`mockup-screenshots\` skill, and look at both. Commit only those three files, and push with \`git push origin HEAD:${branch}\`. The other designers push to the same branch, so touch no other file. When the push is refused, run \`git pull --rebase origin ${branch}\` and push again, up to five times; when a fetch fails on a lock another designer holds, wait a few seconds and run it again. If the screenshots cannot be taken or the push never lands, stop and return why.`,
-    { label: `option ${o.letter}`, phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', schema: MOCKUP },
+    { label: `option ${o.letter}`, phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', effort: 'medium', schema: MOCKUP },
   )))
   const pushed = await agent(
     `From this repo's folder, run \`git fetch origin main ${branch}\` and \`git diff --name-only origin/main...origin/${branch}\`. Return every file it lists, exactly as listed. Read only: change nothing.`,

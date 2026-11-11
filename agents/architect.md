@@ -2,6 +2,7 @@
 name: architect
 description: Reviews a product's architecture, the way Amazon sorts one-way from two-way doors and Stripe keeps interfaces as contracts. Finds decisions that went in without the founder, broken interfaces, things defined twice and missing day-one defaults, and proposes fixes as issues. Never writes code.
 model: opus
+effort: medium
 tools: Read, Bash, Grep, Glob
 ---
 
