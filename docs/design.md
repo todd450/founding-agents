@@ -214,22 +214,30 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Merging and the gate
 
-- **The founder merges every PR; no agent merges.** Decided 9 Nov 2026, when the integrator went.
-  On the website every merge deploys, so the integrator only ever readied PRs for the founder, and
-  on Half Badger auto mode refused three of four merges that deploy. Handing the merge over took
-  an `autoMode` entry in the founder's own settings, since a plugin cannot ship one. A click per PR
-  is cheaper than an agent, a hook exemption and a settings entry, and the gate stays one rule
-  with no exception.
+- **GitHub merges an approved PR once its required checks pass; no agent merges.** Decided
+  11 Nov 2026. From 9 Nov, when the integrator went, the founder merged every PR by hand, and two
+  days on called the click a hassle: it added nothing the reviewers and the checks had not already
+  said. `build`'s last step now asks GitHub to merge (`gh pr merge --auto --squash`), so no agent
+  is trusted to merge and nothing goes around a check. The founder still merges by hand a PR whose
+  issue lists "The founder checks", one where a reviewer's findings were left to them, one in a
+  repo that requires no check (asking there would merge with nothing checked), and one where the
+  ask is refused: on Half Badger auto mode refused three of four of the integrator's merges that
+  deploy, and a refusal now costs a click, not the run. The integrator stays gone: it needed an
+  agent, a hook exemption for its name and an `autoMode` entry in the founder's own settings.
 - **The gate: GitHub branch protection with required checks, plus a plugin hook.** `setup` makes
   one CI job, `check`, required on `main`, and requires a PR to be up to date before it merges; it
   runs `check.sh`, the product's single command for every check, which the product owns. The hook
-  blocks `git push` to `main` and `gh pr merge` for every session and agent, with no exemption.
-  Hooks are best-effort, so the hard gate is GitHub's.
+  blocks `git push` to `main` and `gh pr merge` for every session and agent. One merge passes,
+  `gh pr merge --auto` without `--admin`, and never from one of the team's roles, so whoever
+  builds or reviews a change does not ship it. The hook cannot see a review: `build` asks only
+  after its reviewers approve, and a session that asks on its own is held by the required checks
+  alone. Hooks are best-effort, so the hard gate is GitHub's.
 - **Test the merge, not the branch.** Branch protection's up-to-date rule is the Not Rocket
   Science Rule: GitHub refuses a merge whose checks ran against an older `main`. `build`'s last
   step brings the PR up to date (`gh pr update-branch`) and waits for its required checks before
-  it posts "Ready for your merge", so the founder's click is never refused. It posts nothing while
-  a check fails or a `red` issue is open, and it never works around a refusal (principle 8).
+  it asks GitHub to merge or posts "Ready for your merge", so neither the ask nor the founder's
+  click is refused. It does neither while a check fails or a `red` issue is open, and it never
+  works around a refusal (principle 8).
 - **Nothing merges while a `red` issue is open** (principle 9).
 
 ### Edge cases

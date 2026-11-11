@@ -61,4 +61,4 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
 - Post one comment on the PR with `gh pr comment <number> --body-file -`. Start it with
   **Code review: Approve** or **Code review: Changes needed**, then list the findings, each with
   where it is.
-- Never edit, commit or push, and never merge; the builder fixes, the founder merges.
+- Never edit, commit or push, and never merge; the builder fixes, and GitHub or the founder merges.
