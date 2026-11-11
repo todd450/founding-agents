@@ -76,7 +76,8 @@ screen, one design-token source that generates every copy.
 
 - **Roles** → agent files in the plugin's `agents/`, each with its model, effort and tools;
   builders also get their own worktree.
-- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`).
+- **Procedures** → skills (edge-case checklist, design review from screenshots, release, `setup`,
+  and `watch` to see what a run's agents did).
 - **The per-change pipeline** → two saved workflows in the plugin, `propose` and `build`. The
   `sweep` skill finds work for `build` instead of starting from the founder's idea.
 - **Scheduled roles** (ops watch, librarian, and any sweep the founder schedules) → routines, which `setup` creates in each product
@@ -282,6 +283,16 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   routine and a skill comparing PRs made with and without the plugin were dropped: measuring the
   team had become work of its own. Claude Code's own usage view covers what a run costs, and a
   change sent back three times still stops for the founder.
+- **The founder can watch a run, from the record Claude Code already keeps.** Decided 11 Nov 2026.
+  The `watch` skill draws a run as a timeline, a close-up of each agent's steps, waits and failed
+  steps, and a live board of who is working and who has gone quiet. The founder asked for it to
+  see where to improve the team: on the Half Badger run of 27 Oct it showed one change that took
+  three rounds and a QA pass that spent 12 of its 30 minutes waiting on a stalled browser run.
+  It is not the measuring dropped above. It reads the per-agent
+  files Claude Code writes for every workflow run, so no agent or workflow step reports anything,
+  a run costs no more tokens, and nothing is posted or kept; and it shows time and steps, not
+  tokens or cost. The page leaves out every command and its output, which can hold a secret, and
+  the live board answers only this machine with the page and the run's data, never a file.
 - **Nothing falls through to paid billing by accident.** No run meant for the plan sets
   `ANTHROPIC_API_KEY` or uses `--bare`, fast mode or `/code-review ultra`. Whether usage credits
   are on is the founder's call.

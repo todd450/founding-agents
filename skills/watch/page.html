@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Founding Agents run</title>
+<style>
+:root {
+  --bg: #f3f5f8; --surface: #fcfcfb; --ink: #1b2230; --ink-2: #4b5565; --muted: #6d7786; --line: #dde2e9; --band: #e9edf2;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948; --step: #8892a0;
+  --fail: #c9302c; --warn-bg: #fff1d6; --warn-ink: #7a4a00;
+  --sans: system-ui, -apple-system, "Segoe UI", sans-serif; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root {
+  --bg: #111418; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c5c9d0; --muted: #969eaa; --line: #2c323b; --band: #23282f;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s8: #e66767; --step: #7c8694;
+  --fail: #e66767; --warn-bg: #3a2c0c; --warn-ink: #f2cf8a; color-scheme: dark } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--sans); }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 28px 16px 64px; display: flex; flex-direction: column; gap: 28px; }
+h1 { font-size: 1.5rem; line-height: 1.2; font-weight: 600; margin: 0; }
+h2 { font-size: 1.05rem; font-weight: 600; margin: 0; }
+h3 { font-size: .74rem; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0; }
+p { margin: 0; }
+.sub { color: var(--ink-2); font-family: var(--mono); font-size: .85rem; }
+.live { display: inline-block; font: 600 .7rem var(--sans); letter-spacing: .08em; color: var(--warn-ink); background: var(--warn-bg); border-radius: 3px; padding: 2px 7px; vertical-align: middle; margin-left: 8px; }
+header, section { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.note { font-size: .85rem; color: var(--muted); }
+.scroll { overflow-x: auto; }
+.scroll svg { min-width: 760px; width: 100%; height: auto; display: block; }
+svg text { font-family: var(--mono); font-size: 11px; fill: var(--muted); }
+svg text.row { font-family: var(--sans); font-size: 12.5px; fill: var(--ink); }
+svg text.grp { font-family: var(--sans); font-size: 11px; font-weight: 600; letter-spacing: .08em; fill: var(--muted); text-transform: uppercase; }
+.bar { cursor: pointer; } .bar:focus { outline: none; }
+.bar:hover rect.m, .bar:focus-visible rect.m, .bar.on rect.m { stroke: var(--ink); stroke-width: 2; }
+.tick { cursor: default; } .tick:focus { outline: none; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .85rem; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+#tip { position: fixed; z-index: 20; pointer-events: none; background: var(--ink); color: var(--bg); font: 12px/1.45 var(--mono); padding: 8px 10px; border-radius: 4px; max-width: 300px; }
+#tip b { font-family: var(--sans); font-weight: 600; font-size: 13px; }
+.arow { display: grid; grid-template-columns: 210px 70px 1fr; gap: 4px 14px; padding: 8px 0; border-top: 1px solid var(--line); align-items: baseline; font-size: .92rem; }
+.arow:first-child { border-top: 0; padding-top: 0; }
+.arow > * { min-width: 0; overflow-wrap: anywhere; }
+.arow .who { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.arow .dim, .dim { color: var(--muted); }
+.arow .clock { font-family: var(--mono); color: var(--ink-2); }
+.quiet { background: var(--warn-bg); color: var(--warn-ink); padding: 1px 6px; border-radius: 3px; white-space: nowrap; font-size: .85rem; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+@media (max-width: 600px) { .arow { grid-template-columns: 1fr auto; } .arow .act { grid-column: 1 / -1; } }
+.brief { font: 12.5px/1.5 var(--mono); color: var(--ink-2); background: var(--band); padding: 10px 12px; border-radius: 4px; overflow-wrap: anywhere; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; }
+.cols > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-size: .92rem; }
+li { display: flex; gap: 10px; align-items: baseline; }
+li .n { font: 500 12.5px var(--mono); min-width: 62px; font-variant-numeric: tabular-nums; }
+li .x { color: var(--fail); font-weight: 600; }
+summary { cursor: pointer; font-size: .9rem; color: var(--ink-2); }
+.steps { max-height: 320px; overflow: auto; margin-top: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: .85rem; }
+th, td { text-align: left; padding: 5px 10px 5px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; position: sticky; top: 0; background: var(--surface); }
+td.t { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--ink-2); }
+:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Founding Agents run</h1>
+    <p class="sub" id="sub"></p>
+  </header>
+  <p id="empty" hidden>No workflow run is recorded for this product yet. Start a build or propose run and this page fills in within a few seconds.</p>
+
+  <section id="boardbox" hidden>
+    <h2>Working now</h2>
+    <div class="panel" id="board" aria-live="polite"></div>
+    <p class="note">An agent is marked quiet after two minutes without a new step. The board reads the run's record every three seconds.</p>
+  </section>
+
+  <section id="timebox" hidden>
+    <h2>Timeline</h2>
+    <div class="panel">
+      <div class="legend" id="legend"></div>
+      <div class="scroll"><svg id="gantt" role="img" aria-label="Timeline of the run: a row for each role, grouped by the phase of the workflow"></svg></div>
+      <p class="note">Minutes count from the start of the run. Click a bar, or tab to it and press Enter, for that agent's close-up.</p>
+    </div>
+  </section>
+
+  <section id="closebox" hidden>
+    <h2 id="closetitle">Close-up</h2>
+    <div class="panel">
+      <div class="brief" id="brief"></div>
+      <div class="scroll"><svg id="strip" role="img" aria-label="Each step this agent took, placed in time"></svg></div>
+      <div class="legend">
+        <span><svg width="14" height="14"><rect x="6" y="1" width="2" height="12" fill="var(--ink-2)"/></svg>a step</span>
+        <span><svg width="14" height="14"><rect x="5" y="1" width="4" height="12" fill="var(--s1)"/></svg>a file edit</span>
+        <span><svg width="14" height="14"><path d="M3 3l8 8M11 3l-8 8" stroke="var(--fail)" stroke-width="2" fill="none"/></svg>a failed step</span>
+        <span><span class="sw" style="background:var(--band);border:1px solid var(--line)"></span>a wait over one minute</span>
+      </div>
+      <div class="cols">
+        <div><h3>Longest waits</h3><ul id="waits"></ul></div>
+        <div><h3>Failed steps</h3><ul id="fails"></ul></div>
+      </div>
+      <details id="all"><summary>Every step as a table</summary><div class="steps"><table id="steptab"></table></div></details>
+    </div>
+  </section>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = __DATA__;
+const KNOWN = ['builder', 'reviewer', 'designer', 'security-reviewer', 'architect'];
+const QUIET = 120;
+const $ = id => document.getElementById(id);
+const mmss = s => { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const dur = s => { s = Math.max(0, Math.round(s)); const m = Math.floor(s / 60); return m ? m + 'm ' + String(s % 60).padStart(2, '0') + 's' : s + 's'; };
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const roleName = r => r === 'workflow-subagent' ? 'Workflow step' : (r.charAt(0).toUpperCase() + r.slice(1)).replace(/-/g, ' ');
+const kind = k => k === 'StructuredOutput' ? 'Result' : k;
+const what = e => e.d || (e.k === 'StructuredOutput' ? (e.x ? 'Result rejected, to be sent again' : 'Returned its result') : e.k);
+let chosen = null, colours = {};
+
+const tip = $('tip');
+function showTip(html, x, y) {
+  tip.innerHTML = html; tip.hidden = false;
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(8, Math.min(x + 12, innerWidth - w - 8)) + 'px';
+  tip.style.top = (y + h + 20 > innerHeight ? y - h - 10 : y + 14) + 'px';
+}
+function wireTips(root) {
+  root.querySelectorAll('[data-tip]').forEach(el => {
+    el.addEventListener('mousemove', e => showTip(el.dataset.tip, e.clientX, e.clientY));
+    el.addEventListener('mouseleave', () => tip.hidden = true);
+    el.addEventListener('focus', () => { const r = el.getBoundingClientRect(); showTip(el.dataset.tip, r.left, r.bottom); });
+    el.addEventListener('blur', () => tip.hidden = true);
+  });
+}
+
+// A colour belongs to a role, in a fixed order, so the same role is the same colour in every run.
+function colourOf(role) {
+  if (role === 'workflow-subagent') return 'var(--step)';
+  if (!colours[role]) {
+    const fixed = KNOWN.indexOf(role), taken = Object.values(colours);
+    let slot = fixed >= 0 ? fixed + 1 : KNOWN.length + 1;
+    while (fixed < 0 && taken.includes(slot) && slot < 8) slot++;
+    colours[role] = slot;
+  }
+  return 'var(--s' + colours[role] + ')';
+}
+
+function prepare(run) {
+  const working = DATA.live ? run.agents.filter(a => !a.done) : [];
+  run.agents.forEach(a => {
+    a.working = working.includes(a);
+    a.end = a.working ? Math.max(a.e, run.now) : a.e;
+    a.fails = a.steps.filter(e => e.x).length;
+    // The workflow's own name for the step says the role and the round already.
+    a.name = a.label ? a.label.charAt(0).toUpperCase() + a.label.slice(1) : roleName(a.role) + (a.subject ? ' · ' + a.subject : '');
+    a.col = colourOf(a.role);
+  });
+  run.end = Math.max(1, ...run.agents.map(a => a.end));
+  run.working = working;
+}
+
+function drawHead(run) {
+  $('title').innerHTML = esc(DATA.product) + (run.working.length ? '<span class="live">LIVE</span>' : '');
+  $('sub').textContent = `${run.id} · started ${run.started} · ${dur(run.end)} · ${run.agents.length} agent${run.agents.length === 1 ? '' : 's'}`;
+}
+
+function drawBoard(run) {
+  $('boardbox').hidden = !DATA.live;
+  if (!DATA.live) return;
+  const done = run.agents.length - run.working.length;
+  let h = '';
+  if (!run.working.length) h = `<p class="dim">No agent is working right now: the run is between steps or has finished. ${done} finished so far.</p>`;
+  run.working.forEach(a => {
+    const last = a.steps[a.steps.length - 1], idle = run.now - (last ? last.t : a.s);
+    h += `<div class="arow"><span class="who"><span class="dot" style="background:${a.col}"></span>${esc(a.name)}</span>`
+      + `<span class="clock">${mmss(run.now - a.s)}</span>`
+      + `<span class="act">${esc(last ? what(last) : 'Reading its instructions')} <span class="dim">· step ${a.steps.length}${a.fails ? ' · ' + a.fails + ' failed' : ''}</span> ${idle >= QUIET ? `<span class="quiet">▲ quiet for ${dur(idle)}</span>` : ''}</span></div>`;
+  });
+  $('board').innerHTML = h;
+}
+
+function drawTimeline(run) {
+  const W = 1000, L = 150, R = 62, PW = W - L - R, x = s => L + s / run.end * PW;
+  const groups = [];
+  run.agents.forEach(a => {
+    // A newer record names each step's phase; an older one only lets us read the issue from the instructions.
+    const key = a.phase || a.subject || 'Workflow';
+    let g = groups.find(g => g.key === key); if (!g) groups.push(g = {key, roles: []});
+    let r = g.roles.find(r => r.role === a.role); if (!r) g.roles.push(r = {role: a.role, lanes: []});
+    // Agents of one role that ran at the same time each get a lane, so no bar hides another.
+    let lane = r.lanes.find(l => l[l.length - 1].end <= a.s); if (!lane) r.lanes.push(lane = []);
+    lane.push(a);
+  });
+  let y = 30, out = '';
+  groups.forEach(g => {
+    out += `<text class="grp" x="0" y="${y + 4}">${esc(g.key)}</text>`; y += 16;
+    g.roles.forEach(r => {
+      let n = 0;
+      r.lanes.forEach((lane, li) => {
+        if (!li) out += `<text class="row" x="0" y="${y + 15}">${esc(roleName(r.role))}</text>`;
+        lane.forEach(a => {
+          n++;
+          const d = a.end - a.s, w = Math.max(3, x(a.end) - x(a.s) - 2);
+          const t = `<b>${esc(a.name)}${r.lanes.length === 1 && lane.length > 1 ? ' · round ' + (lane.indexOf(a) + 1) : ''}</b><br>${mmss(a.s)} to ${a.working ? 'now' : mmss(a.end)} · ${dur(d)}<br>${a.steps.length} steps · ${a.fails} failed${a.model ? '<br>model: ' + esc(a.model) : ''}`;
+          out += `<g class="bar${a.id === chosen ? ' on' : ''}" tabindex="0" role="button" data-id="${esc(a.id)}" data-tip="${esc(t)}"><rect class="m" x="${x(a.s)}" y="${y + 4}" width="${w}" height="14" rx="4" fill="${a.col}"${a.working ? ' fill-opacity=".55"' : ''}/></g>`;
+          const next = lane[lane.indexOf(a) + 1];
+          if (w > 60 && (!next || x(next.s) - x(a.end) > 54)) out += `<text x="${x(a.end) + 4}" y="${y + 15}">${dur(d)}</text>`;
+        });
+        y += 26;
+      });
+    });
+    y += 12;
+  });
+  const H = y + 4, step = [60, 120, 300, 600, 900, 1800, 3600, 7200].find(s => run.end / s <= 8) || 14400;
+  let grid = '';
+  for (let s = 0; s <= run.end; s += step) grid += `<line x1="${x(s)}" x2="${x(s)}" y1="20" y2="${H - 14}" stroke="var(--line)" stroke-width="1"/><text x="${x(s)}" y="12" text-anchor="middle">${mmss(s)}</text>`;
+  const g = $('gantt'); g.setAttribute('viewBox', `0 0 ${W} ${H}`); g.innerHTML = grid + out; wireTips(g);
+  g.querySelectorAll('.bar').forEach(b => {
+    const pick = () => { chosen = b.dataset.id; g.querySelectorAll('.bar').forEach(o => o.classList.toggle('on', o === b)); drawCloseUp(run); $('closebox').scrollIntoView({behavior: 'smooth', block: 'nearest'}); };
+    b.addEventListener('click', pick);
+    b.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  });
+  const seen = [...new Set(run.agents.map(a => a.role))];
+  $('legend').innerHTML = seen.map(r => `<span><span class="sw" style="background:${colourOf(r)}"></span>${esc(roleName(r))}</span>`).join('');
+}
+
+function drawCloseUp(run) {
+  const a = run.agents.find(a => a.id === chosen);
+  if (!a) return;
+  const W = 1000, L = 8, PW = W - 16, span = Math.max(1, a.end - a.s), x = t => L + (t - a.s) / span * PW;
+  $('closetitle').textContent = `Close-up: ${a.name}, ${dur(a.end - a.s)}${a.working ? ' so far' : ''}`;
+  $('brief').textContent = 'Told: ' + a.brief + '…';
+  const marks = a.steps.concat(a.working ? [{t: a.end, d: 'now', k: '', now: 1}] : []);
+  const gaps = marks.map((e, i) => ({from: i ? marks[i - 1] : {t: a.s, d: 'reading its instructions', k: ''}, to: e, g: e.t - (i ? marks[i - 1].t : a.s)}));
+  let s = `<line x1="${L}" x2="${L + PW}" y1="58" y2="58" stroke="var(--line)"/>`;
+  gaps.filter(g => g.g >= 60).forEach(g => { s += `<rect x="${x(g.from.t) + 2}" y="22" width="${Math.max(1, x(g.to.t) - x(g.from.t) - 4)}" height="36" fill="var(--band)"/>`; });
+  a.steps.forEach(e => {
+    const edit = e.k === 'Edit' || e.k === 'Write' || e.k === 'NotebookEdit', t = `<b>${esc(what(e))}</b><br>${esc(kind(e.k))} · ${mmss(e.t)}${e.x ? '<br>failed' : ''}`;
+    s += `<g class="tick" tabindex="-1" data-tip="${esc(t)}"><rect x="${x(e.t) - 4}" y="14" width="8" height="46" fill="transparent"/><rect x="${x(e.t) - (edit ? 2 : 1)}" y="${edit ? 26 : 32}" width="${edit ? 4 : 2}" height="${edit ? 32 : 26}" fill="${edit ? 'var(--s1)' : 'var(--ink-2)'}"/>`
+      + (e.x ? `<path d="M${x(e.t) - 4} 10l8 8M${x(e.t) + 4} 10l-8 8" stroke="var(--fail)" stroke-width="2" fill="none"/>` : '') + `</g>`;
+  });
+  s += `<text x="${L}" y="74">${mmss(a.s)}</text><text x="${L + PW}" y="74" text-anchor="end">${a.working ? 'now' : mmss(a.end)}</text>`;
+  const st = $('strip'); st.setAttribute('viewBox', `0 0 ${W} 80`); st.innerHTML = s; wireTips(st);
+  const top = gaps.slice().sort((p, q) => q.g - p.g).slice(0, 5).filter(g => g.g >= 20);
+  $('waits').innerHTML = top.length ? top.map(g => `<li><span class="n">${dur(g.g)}</span><span>after ${esc(g.from.d ? '“' + g.from.d + '”' : kind(g.from.k))}${g.to.now ? ', and still waiting' : ''}</span></li>`).join('') : '<li>No wait longer than 20 seconds.</li>';
+  const f = a.steps.filter(e => e.x);
+  $('fails').innerHTML = f.length ? f.map(e => `<li><span class="n">${mmss(e.t)}</span><span><span class="x">×</span> ${esc(what(e))}</span></li>`).join('') : '<li>None.</li>';
+  $('steptab').innerHTML = '<tr><th>At</th><th>Kind</th><th>What</th><th>Outcome</th></tr>' + a.steps.map(e => `<tr><td class="t">${mmss(e.t)}</td><td>${esc(kind(e.k))}</td><td>${esc(e.d)}</td><td>${e.x ? 'failed' : 'ok'}</td></tr>`).join('');
+}
+
+function draw(run) {
+  const none = !run || !run.agents.length;
+  $('empty').hidden = !none;
+  ['timebox', 'closebox'].forEach(id => $(id).hidden = none);
+  if (none) { $('boardbox').hidden = true; return; }
+  prepare(run);
+  // The close-up opens on the longest agent, the likeliest place to look first.
+  if (!run.agents.some(a => a.id === chosen)) chosen = run.agents.slice().sort((p, q) => (q.end - q.s) - (p.end - p.s))[0].id;
+  drawHead(run); drawBoard(run); drawTimeline(run); drawCloseUp(run);
+}
+
+if (DATA.live) {
+  const ask = () => fetch('run.json', {cache: 'no-store'}).then(r => r.json()).then(draw).catch(() => { $('sub').textContent = 'The board has stopped. Start it again to keep watching.'; });
+  ask(); setInterval(ask, 3000);
+} else {
+  draw(DATA.run);
+}
+</script>
+</body>
+</html>
