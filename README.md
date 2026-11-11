@@ -45,6 +45,10 @@ How much of the team a change uses depends on its size:
 - **Smaller than that:** no Claude session merges, yours included. Have
   Claude open a PR, then merge it yourself on GitHub once `check` passes.
 
+To see what a run's agents did, ask Claude to run the `watch` skill in the product's repo: a
+timeline of the run, a close-up of each agent, and a live board while a run is going. It reads the
+record Claude Code keeps on your machine, so it costs no tokens.
+
 The design comes from five months of building one product with agent sessions (June–October 2026)
 and from what published agent teams at Cursor, Anthropic and OpenAI reported by October 2026.
 
