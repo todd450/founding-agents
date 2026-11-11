@@ -2,7 +2,7 @@
 # End-to-end check of the merge guard with real Claude Code sessions, against a throwaway local
 # repo. Manual, not run in CI: it needs the `claude` command line signed in and spends a little
 # usage. Prints whether each session's push was blocked, and the agent_type it reported to hooks.
-# Every session should be blocked: the founder merges, and no agent is exempt.
+# Every session should be blocked: nothing pushes to main, and no agent is exempt.
 set -euo pipefail
 
 plugin="$(cd "$(dirname "$0")/.." && pwd)"

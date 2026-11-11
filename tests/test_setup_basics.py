@@ -41,10 +41,11 @@ class BasicsTest(unittest.TestCase):
             install(root, plan(root, "basics"))
             self.assertEqual((root / "CLAUDE.md").read_text(), "# Site\n")
 
-    def test_the_founder_merges_every_pr(self):
-        # No agent merges, whether or not merging deploys (the integrator went on 9 Nov 2026).
+    def test_no_agent_merges_a_pr(self):
+        # GitHub merges once the checks pass, whether or not merging deploys (11 Nov 2026).
         shipping = " ".join((SETUP / "basics" / "CLAUDE.md").read_text().split())
-        self.assertIn("the founder merges every one on GitHub", shipping)
+        self.assertIn("no agent merges one", shipping)
+        self.assertIn("`build` asks GitHub to merge it", shipping)
         self.assertNotIn("autoMode", (SETUP / "SKILL.md").read_text())
 
 if __name__ == "__main__":

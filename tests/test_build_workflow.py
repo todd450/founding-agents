@@ -59,20 +59,49 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertIn("it must be open and labelled `decided`", prompt)
         self.assertNotIn("Part of", prompt)
 
-    def test_an_approved_change_is_left_for_the_founders_merge(self):
-        # The founder merges every PR; on Half Badger, auto mode refused an agent's merges that
-        # deploy, and each approved PR waited for the whole run to end.
+    def test_an_approved_change_github_did_not_merge_is_left_for_the_founders_merge(self):
+        # On Half Badger, auto mode refused an agent's merges that deploy, and each approved PR
+        # waited for the whole run to end.
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "ready for your merge": [READIED]})
         self.assertEqual(run["result"]["status"], "ready for your merge")
         self.assertEqual(run["result"]["queue_item"], "https://github.com/o/r/pull/4#c1")
         self.assertEqual(self.labels(run), ["check #12", "builder #12, round 1", "qa #12, round 1", "code review #12, round 1",
                                             "ready for your merge, PR #4", "tidy worktrees"])
 
-    def test_the_ready_step_tests_the_merge_and_never_merges(self):
+    def test_an_approved_change_is_merged_by_github_once_its_checks_pass(self):
+        # Decided 11 Nov 2026: a click per PR was the founder's hassle. GitHub merges, so no agent
+        # is trusted to and nothing goes around a check.
+        merged = {"ready": True, "merged": True, "comment_url": "https://github.com/o/r/pull/4#c2", "reason": ""}
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "ready for your merge": [merged]})
+        self.assertEqual(run["result"]["status"], "merged")
+        self.assertNotIn("queue_item", run["result"])
+        prompt = run["calls"][-2]["prompt"]
+        self.assertIn("gh pr merge 4 --repo o/r --auto --squash", prompt)
+        self.assertIn("never `--admin`", prompt)
+        self.assertIn("**Merged:** PR #4 builds #12, Add slugify. QA, Code review approved it", prompt)
+        # The wait for the checks comes before the ask, so GitHub merges what was tested.
+        self.assertLess(prompt.index("--required --watch"), prompt.index("gh pr merge 4"))
+
+    def test_a_refused_merge_costs_the_founder_a_click_not_the_run(self):
+        # On Half Badger, auto mode refused an agent's merges that deploy.
+        prompt = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE],
+                                    "ready for your merge": [READIED]})["calls"][-2]["prompt"]
+        self.assertIn("do not try again and do not work around it: go to step 5", prompt)
+        self.assertIn("has no required checks, do not merge", prompt)
+
+    def test_a_change_with_checks_that_are_the_founders_is_never_merged_for_them(self):
+        ticket = {**READY, "body": READY["body"] + "\n\n## The founder checks\n- The dashboard shows the new page."}
+        run = self.run_workflow({"check": [ticket], "builder": [PR], "qa": [APPROVE], "ready for your merge": [READIED]})
+        prompt = run["calls"][-2]["prompt"]
+        self.assertNotIn("gh pr merge", prompt)
+        self.assertIn("Do not merge: #12 lists checks that are the founder's to make", prompt)
+        self.assertEqual(run["result"]["status"], "ready for your merge")
+
+    def test_the_ready_step_tests_the_merge_and_merges_no_other_way(self):
         run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "ready for your merge": [READIED]})
         item = run["calls"][-2]
         self.assertEqual(item["model"], "haiku")
-        self.assertIn("Never merge it, and never push to `main`", item["prompt"])
+        self.assertIn("Never merge it any other way than step 4 names, and never push to `main`", item["prompt"])
         self.assertIn("gh pr update-branch 4 --repo o/r", item["prompt"])
         self.assertIn("gh pr checks 4 --repo o/r --required --watch", item["prompt"])
         self.assertIn("--label red --state open", item["prompt"])

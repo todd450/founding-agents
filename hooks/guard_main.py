@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""PreToolUse hook: no session or agent pushes to main or merges a PR; the founder merges on GitHub.
+"""PreToolUse hook: no session or agent pushes to main or merges a PR itself; GitHub merges.
 
 Reads the hook event on stdin. When a Bash command would push to a protected branch or merge a PR,
-it exits 2 with the reason on stderr, which blocks the call and tells the agent why. There is no
-exemption, so no agent's name can pass it. This is best-effort parsing of shell commands; GitHub branch
-protection is the hard gate (docs/design.md, "The gate").
+it exits 2 with the reason on stderr, which blocks the call and tells the agent why. One merge
+passes: `gh pr merge --auto`, which asks GitHub to merge once the PR's required checks pass, from
+a session or a workflow's own step. The team's roles (the builder, the reviewers and the rest) are
+never let through, so whoever writes or reviews a change does not ship it. This is best-effort
+parsing of shell commands; GitHub branch protection is the hard gate (docs/design.md, "The gate").
 """
 
 import json
@@ -13,8 +15,10 @@ import re
 import shlex
 import subprocess
 import sys
+from pathlib import Path
 
 PROTECTED = {"main", "master"}
+ROLES = {path.stem for path in (Path(__file__).resolve().parent.parent / "agents").glob("*.md")}
 
 SEGMENT_BREAKS = re.compile(r"&&|\|\||[;|\n]")
 MERGE_API = re.compile(r"pulls/\d+/merge\b|/merges\b")
@@ -76,7 +80,13 @@ def pushed_protected_branch(args, cwd):
     return next((target for target in targets if target in protected), None)
 
 
-def violations(command, cwd):
+def asks_github_to_merge(words):
+    """True for `gh pr merge --auto`: GitHub merges once the required checks pass. `--admin` merges
+    around them, so it never counts."""
+    return "--auto" in words and "--admin" not in words
+
+
+def violations(command, cwd, role=False):
     for segment in SEGMENT_BREAKS.split(command):
         try:
             words = shlex.split(segment, comments=True)
@@ -93,7 +103,8 @@ def violations(command, cwd):
             if branch:
                 yield f"git push to {branch}"
         elif words[0] == "gh" and words[1:3] == ["pr", "merge"]:
-            yield "gh pr merge"
+            if role or not asks_github_to_merge(words[3:]):
+                yield "gh pr merge"
         elif words[0] == "gh" and words[1:2] == ["api"] and MERGE_API.search(segment):
             yield "a merge through gh api"
 
@@ -109,14 +120,18 @@ def main():
     if "push" not in command and "merge" not in command:
         return 0
 
-    found = next(violations(command, event.get("cwd") or os.getcwd()), None)
+    agent = event.get("agent_type")
+    role = str(agent or "").split(":")[-1] in ROLES
+    found = next(violations(command, event.get("cwd") or os.getcwd(), role), None)
     if not found:
         return 0
-    agent = event.get("agent_type")
     caller = f"the {agent} agent" if agent else "this session"
+    way = ("The founder merges, or `build` asks GitHub to once the reviewers approve." if role else
+           "Ask GitHub to merge once the required checks pass, with `gh pr merge <number> --auto --squash`, "
+           "or leave the PR for the founder.")
     print(
-        f"Blocked {found} by {caller}. The founder merges every PR on GitHub; no session pushes to "
-        "main or merges. Push your own branch and open a PR instead.",
+        f"Blocked {found} by {caller}. No session or agent pushes to main, merges a PR itself, or "
+        f"merges around its checks. {way}",
         file=sys.stderr,
     )
     return 2

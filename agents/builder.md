@@ -43,11 +43,11 @@ guidance on small changes describe.
 - When the ticket has pass marks, meet each one and say in the PR description how you checked it.
   When its details are in a private security advisory, read it with `gh api` and keep them out of
   the PR's description, commits and comments.
-- Push your own branch and open a PR. You never push to `main` and never merge; the founder
-  merges, and a hook blocks you if you try.
+- Push your own branch and open a PR. You never push to `main` and never merge; GitHub or the
+  founder merges, and a hook blocks you if you try.
 - Run `check.sh` before you push, then return the PR without waiting for CI. CI runs while the
-  reviewers work, the code reviewer sends back a failing run as a finding, and `build` readies
-  the PR for the founder's merge only once it is green.
+  reviewers work, the code reviewer sends back a failing run as a finding, and `build` has
+  the PR merged only once it is green.
 - If the change needs a technical one-way decision the ticket does not name as the founder's
   (a framework, a build step, how it deploys, a new store for data, a dependency that ships to
   users, an outside service), stop and say which, instead of choosing one. A check tool you add to

@@ -166,9 +166,9 @@ alias and the alias has run an older Opus.
    rule worth keeping becomes a check, not a paragraph. Two facts every product states:
    - **Whether merging to `main` deploys to production.** Check rather than assume:
      `gh api repos/<owner>/<repo>/deployments --jq '[.[].environment] | unique'` lists
-     `Production`, `production` or `github-pages` when it does. Either way the founder merges
-     every PR on GitHub; `build` leaves a "Ready for your merge" comment once a PR is reviewed and
-     its required checks pass. Where merging deploys, the merge is the release.
+     `Production`, `production` or `github-pages` when it does. Either way no agent merges:
+     once a PR is reviewed and its required checks pass, `build` asks GitHub to merge it, or leaves
+     a "Ready for your merge" comment when the issue has checks that are the founder's. Where merging deploys, the merge is the release.
    - **The local preview command,** bound to this machine (`python3 -m http.server 0 --bind
      127.0.0.1`, with `--directory` for the web root). Then list the folder it serves, dotfiles
      included (`ls -a`), and look for secrets: `.env*`, `.vercel/`, a key. If one is there, tell the
