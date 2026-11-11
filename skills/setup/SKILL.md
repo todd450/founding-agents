@@ -154,8 +154,10 @@ For each kind the founder picks:
 
 Every product gets a short `CLAUDE.md`, the map every session loads, a `fixtures/` folder for
 the visible edge-case scenarios builders write their tests from, and a `.claude/settings.json` that
-pins `opus` to Opus 5.5 (`ANTHROPIC_DEFAULT_OPUS_MODEL`), since a workflow step can name only an
-alias and the alias has run an older Opus.
+pins `opus`, `sonnet` and `haiku` to Opus 5.5, Sonnet 5.5 and Haiku 5.5
+(`ANTHROPIC_DEFAULT_OPUS_MODEL`, `ANTHROPIC_DEFAULT_SONNET_MODEL`, `ANTHROPIC_DEFAULT_HAIKU_MODEL`),
+since a workflow step can name only an alias: `opus` has run an older Opus, and `haiku` still means
+Haiku 4.5 on an older Claude Code.
 
 1. **Dry run.** `python3 <this skill's directory>/install_kit.py basics` shows the three starter
    files. A product that already has any of them keeps its own; for an existing `CLAUDE.md`, suggest

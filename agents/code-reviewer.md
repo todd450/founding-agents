@@ -2,6 +2,7 @@
 name: code-reviewer
 description: Code review for one PR before merge, the way Google reviews code. Reads the diff and the code around it, checks the tests, and posts its findings on the PR. Never edits code and never merges.
 model: opus
+effort: medium
 tools: Read, Bash, Grep, Glob
 isolation: worktree
 ---

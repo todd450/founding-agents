@@ -25,6 +25,8 @@ class BasicsTest(unittest.TestCase):
             install(root, plan(root, "basics"))
             settings = json.loads((root / ".claude" / "settings.json").read_text())
             self.assertEqual(settings["env"]["ANTHROPIC_DEFAULT_OPUS_MODEL"], "claude-opus-5-5")
+            self.assertEqual(settings["env"]["ANTHROPIC_DEFAULT_SONNET_MODEL"], "claude-sonnet-5-5")
+            self.assertEqual(settings["env"]["ANTHROPIC_DEFAULT_HAIKU_MODEL"], "claude-haiku-5-5")
 
     def test_never_replaces_the_products_own_settings(self):
         with tempfile.TemporaryDirectory() as folder:

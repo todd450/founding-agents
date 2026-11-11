@@ -1,4 +1,4 @@
-"""Every agent file names itself, its model and its tools, so no role runs on a default by accident."""
+"""Every agent file names itself, its model, its effort and its tools, so no role runs on a default by accident."""
 
 import re
 import unittest
@@ -7,6 +7,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 AGENTS = sorted((ROOT / "agents").glob("*.md"))
 MODELS = {"opus", "sonnet", "haiku"}
+EFFORTS = {"low", "medium", "high"}
 
 
 def words(path):
@@ -24,10 +25,11 @@ class AgentFileTest(unittest.TestCase):
         for path in AGENTS:
             self.assertEqual(frontmatter(path).get("name"), path.stem, path.name)
 
-    def test_each_agent_names_its_model_and_its_tools(self):
+    def test_each_agent_names_its_model_its_effort_and_its_tools(self):
         for path in AGENTS:
             meta = frontmatter(path)
             self.assertIn(meta.get("model"), MODELS, path.name)
+            self.assertIn(meta.get("effort"), EFFORTS, path.name)
             self.assertTrue(meta.get("tools"), path.name)
             self.assertTrue(meta.get("description"), path.name)
 
@@ -49,6 +51,16 @@ class AgentFileTest(unittest.TestCase):
             self.assertIn("`mockup-screenshots` skill", text, role)
             self.assertIn("`screenshots/issue-<n>`", text, role)
             self.assertIn("No visible change.", text, role)
+
+    def test_every_workflow_step_names_its_model_and_its_effort(self):
+        # The builder, the reviewers, the designer and the brief once named no effort, and ran on
+        # whatever the session that started the run was set to.
+        for script in (ROOT / "workflows").glob("*.js"):
+            steps = re.findall(r"\{ label: [^\n]*\}", script.read_text())
+            self.assertTrue(steps, script.name)
+            for step in steps:
+                self.assertRegex(step, r"\bmodel: ", f"{script.name}: {step[:60]}")
+                self.assertRegex(step, r"\beffort: ", f"{script.name}: {step[:60]}")
 
     def test_every_agent_a_workflow_runs_has_an_agent_file(self):
         names = {path.stem for path in AGENTS}

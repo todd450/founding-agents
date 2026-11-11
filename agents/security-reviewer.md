@@ -2,6 +2,7 @@
 name: security-reviewer
 description: Security review for a PR that touches routes, sign-in, permissions, stored data, secrets, outside input, model calls or a dependency that ships. Checks against OWASP ASVS and writes findings the way Trail of Bits does. Never edits code and never merges.
 model: opus
+effort: high
 tools: Read, Bash, Grep, Glob
 isolation: worktree
 ---
