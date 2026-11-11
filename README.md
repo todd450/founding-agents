@@ -42,8 +42,9 @@ How much of the team a change uses depends on its size:
 - **A small change** (a typo, a colour, a line of copy): skip `propose`. Open an issue
   that says what to change, add the `decided` label, and run `/founding-agents:build <issue>`.
   Wording alone gets one code review, on Sonnet.
-- **Smaller than that:** no Claude session merges, yours included. Have
-  Claude open a PR, then merge it yourself on GitHub once `check` passes.
+- **Smaller than that:** no Claude session merges a PR itself, yours included. Have
+  Claude open a PR and ask GitHub to merge it once `check` passes
+  (`gh pr merge --auto --squash`), or merge it yourself on GitHub.
 
 To see what a run's agents did, ask Claude to run the `watch` skill in the product's repo: a
 timeline of the run, a close-up of each agent, and a live board while a run is going. It reads the

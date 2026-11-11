@@ -1,4 +1,5 @@
-"""The merge guard blocks pushes to main and PR merges by every session and agent: the founder merges."""
+"""The merge guard blocks pushes to main and merges by every session and agent. One merge passes:
+asking GitHub to merge once the required checks pass, and never from one of the team's roles."""
 
 import json
 import subprocess
@@ -86,10 +87,28 @@ class GuardTest(unittest.TestCase):
     def test_blocks_merges(self):
         for command in (
             "gh pr merge 12 --squash",
-            "gh pr merge --auto --merge",
+            "gh pr merge 12 --merge --delete-branch",
             "gh api -X PUT repos/o/r/pulls/3/merge",
         ):
             self.assertBlocked(command)
+            self.assertBlocked(command, agent=None)
+
+    def test_a_session_or_a_workflow_step_may_ask_github_to_merge_once_checks_pass(self):
+        # Decided 11 Nov 2026: a click per PR was the founder's hassle, and GitHub's own auto-merge
+        # needs no agent trusted to merge.
+        for command in ("gh pr merge 12 --auto --squash", "gh pr merge --auto --squash 12 --repo o/r",
+                        "cd . && gh pr merge 12 --auto --squash"):
+            self.assertAllowed(command, agent=None)
+            self.assertAllowed(command, agent="workflow-subagent")
+
+    def test_no_merge_goes_around_the_checks(self):
+        for command in ("gh pr merge 12 --auto --squash --admin", "gh pr merge 12 --admin"):
+            self.assertBlocked(command, agent=None)
+
+    def test_the_roles_that_build_and_review_a_change_never_ship_it(self):
+        for agent in ("founding-agents:builder", "founding-agents:code-reviewer", "founding-agents:qa",
+                      "founding-agents:security-reviewer", "other-plugin:builder", "designer"):
+            self.assertBlocked("gh pr merge 12 --auto --squash", agent=agent)
 
     def test_blocks_a_session_that_is_not_an_agent(self):
         self.assertBlocked("gh pr merge 1", agent=None)
@@ -99,7 +118,7 @@ class GuardTest(unittest.TestCase):
         self.assertBlocked("gh pr merge 1", agent="other-plugin:builder")
 
     def test_no_agent_name_is_exempt(self):
-        # The integrator was exempt until 9 Nov 2026; now the founder merges every PR.
+        # The integrator was exempt until 9 Nov 2026; no name has passed a plain merge since.
         for agent in ("founding-agents:integrator", "integrator", "other-plugin:integrator"):
             self.assertBlocked("gh pr merge 1 --merge", agent=agent)
             self.assertBlocked("git push origin main", agent=agent)

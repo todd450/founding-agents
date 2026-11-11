@@ -13,8 +13,9 @@ rule that must hold becomes a test in `check.sh`, a lint rule or a hook, and its
   it stores data, a dependency that ships, an outside service) are the founder's; each is
   recorded in the issue that decided it. Never settle one in code.
 - **Edge cases:** the visible scenarios are in `fixtures/`, one folder per failure class.
-- **Shipping:** changes reach `main` only through a pull request, and the founder merges every
-  one on GitHub; `build` leaves a "Ready for your merge" comment once it is reviewed and green.
+- **Shipping:** changes reach `main` only through a pull request, and no agent merges one.
+  Once it is reviewed and green, `build` asks GitHub to merge it; one with checks that are the
+  founder's gets a "Ready for your merge" comment instead.
   Merging to `main` deploys to production: <yes or no>.
 - **Local preview:** `<the command, bound to this machine, such as
   python3 -m http.server 0 --bind 127.0.0.1 --directory site>`. The folder it serves holds no
