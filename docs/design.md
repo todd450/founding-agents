@@ -189,7 +189,8 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 - **`build` runs a check, the builder and the reviewers, then readies the PR for the founder.** The check refuses an
   issue that is not decided, settles an unanswered one-way door, or arrives while a `red` issue is
-  open. The builder and each reviewer work in their own worktree, and reviewers see the issue and
+  open. The builder and each reviewer work in their own worktree, which the workflow asks for (an
+  agent file's own `isolation` did not give a reviewer one), and reviewers see the issue and
   the PR, never the builder's summary. After three rounds, or when a fixed must-fix comes back, the
   run stops for the founder.
 - **One issue per run.** `build` once built every issue `plan` cut from a brief, two to four
@@ -210,6 +211,12 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   data, secrets, outside input, model calls or a dependency that ships) adds security review. When
   unsure, the higher. Any reviewer can raise the tier; nothing lowers it.
 - **After the first round, reviewers review only what changed.**
+- **Reviewers read CI's result and do not run the suite again.** The builder runs it before it
+  pushes, and CI's run on the PR is the one that gates the merge. On go-bag's #113 the suite ran
+  about 17 times for a change that passed first time, and with the product's own stop hook that was
+  two-thirds of a 31-minute run; four of those runs were reviewers', two at once in one folder at
+  190 seconds each where one takes 75. A reviewer runs a test only to settle a finding, and the
+  whole suite only when the PR has no checks.
 - **A finding's severity depends on who can reach it.** A must-fix that only a trusted writer can
   reach counts as a Nit when review would see it or the product refuses it loudly; anything a
   reader, a user or an outside service can reach stays must-fix.

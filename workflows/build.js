@@ -188,6 +188,9 @@ const RESUMED = `${REPEATS}
 
 If you reviewed this PR before (an earlier comment on it starts with your heading), review only what changed since your latest review: find the commit its branch was at when you posted it with \`gh pr view <number> --json commits\`, diff from there, and check whether each finding in that review is fixed. Leave alone what has not changed since: you saw it then. If you have not reviewed it before, review all of it.`
 
+// Each reviewer gets its own worktree from the workflow, as the builder does: the `isolation` in an
+// agent's own file did not give it one on go-bag's #113, where QA and code review shared the
+// session's checkout and ran the suite on top of each other.
 // The reviewers the tier needs, side by side, each posting its own comment on the PR; the change is
 // approved only when all approve. A reviewer that rates the change riskier raises the tier, and the
 // reviewers the new tier adds start as soon as it returns, without waiting for the others. Returns
@@ -204,7 +207,7 @@ ${FOUNDER_CHECKS}`
     if (started.has(who)) return
     const r = REVIEWERS[who]
     const prompt = `${r.ask} ${brief}\n\n${scope(who) ? `${scope(who)}\n\n` : ''}Post your review on the PR, then return the verdict, the change's risk and every finding, each saying who can reach it.`
-    started.set(who, agent(prompt, { label: `${r.label} #${n}, round ${built.round}`, phase: 'Review', agentType: r.agentType, model: TIERS[tier].model, effort: REVIEW_EFFORT[who], schema: REVIEW })
+    started.set(who, agent(prompt, { label: `${r.label} #${n}, round ${built.round}`, phase: 'Review', agentType: r.agentType, isolation: 'worktree', model: TIERS[tier].model, effort: REVIEW_EFFORT[who], schema: REVIEW })
       .catch(() => null)
       .then(review => {
         if (review && RANK.indexOf(review.risk) > RANK.indexOf(tier)) {

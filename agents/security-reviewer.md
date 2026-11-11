@@ -50,8 +50,11 @@ path. Never `pkill` or `killall` by a name or pattern: every other run's server 
 
 **On a PR**
 
-- Start in your own worktree with `gh pr checkout <number>`, and read the diff with `gh pr diff
-  <number>` and the code it reaches.
+- Start in your own worktree with `gh pr checkout <number> --detach` (the builder's worktree keeps
+  the branch), and read the diff with `gh pr diff <number>` and the code it reaches.
+- CI runs the whole suite on the PR, so do not run it again, nor `check.sh`: read its result with
+  `gh pr checks <number>` when a finding turns on it. Run a test yourself only to settle one
+  finding.
 - When the issue's details are in a private security advisory, read it with `gh api`, and say only
   which of its pass marks hold: the steps to reproduce stay out of the PR.
 - From the second round, review only what changed since your last review (the builder's fixes)

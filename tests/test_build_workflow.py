@@ -138,8 +138,11 @@ class BuildWorkflowTest(unittest.TestCase):
         builder, qa, code = run["calls"][1:4]
         self.assertEqual((builder["agentType"], builder["isolation"], builder["model"]),
                          ("founding-agents:builder", "worktree", "opus"))
-        self.assertEqual((qa["agentType"], qa["model"]), ("founding-agents:qa", "opus"))
-        self.assertEqual((code["agentType"], code["model"]), ("founding-agents:code-reviewer", "opus"))
+        # On go-bag's #113 QA and code review shared the session's checkout: an agent file's own
+        # `isolation` did not give them a worktree, so the workflow asks for each one's.
+        self.assertEqual((qa["agentType"], qa["isolation"], qa["model"]), ("founding-agents:qa", "worktree", "opus"))
+        self.assertEqual((code["agentType"], code["isolation"], code["model"]),
+                         ("founding-agents:code-reviewer", "worktree", "opus"))
 
     def test_the_builder_tries_harder_on_a_change_the_reviewers_sent_back(self):
         # Effort goes up before the model does: round one at medium, a sent-back change at high.

@@ -92,6 +92,17 @@ class ProportionTest(unittest.TestCase):
         for role in ("code-reviewer", "security-reviewer"):
             self.assertIn("refuses", self.read(role))
 
+    def test_reviewers_read_ci_and_do_not_run_the_suite_again(self):
+        # On go-bag's #113 the suite ran about 17 times for a change that passed first time, four of
+        # them by reviewers, two of those at once in one folder at 190 seconds where one takes 75.
+        for name in ("qa", "code-reviewer", "security-reviewer"):
+            text = self.read(name)
+            self.assertIn("CI runs the whole suite on the PR, so do not run it again", text, name)
+            self.assertIn("gh pr checks <number>", text, name)
+            self.assertNotIn("Run the whole test suite", text, name)
+            # The builder's worktree holds the PR's branch, so a reviewer takes the commit, not the branch.
+            self.assertIn("gh pr checkout <number> --detach", text, name)
+
     def test_reviewers_review_only_what_changed_from_the_second_round(self):
         # On the website's #35, each of 13 rounds re-read the whole PR and found something new.
         for name in ("qa", "code-reviewer", "security-reviewer"):

@@ -60,7 +60,7 @@ def options(argv, flags=()):
 ALIASES = {"b": "body", "F": "body-file", "t": "title", "l": "label", "q": "jq", "s": "state", "R": "repo",
            "H": "head", "B": "base", "L": "limit", "S": "search", "c": "comments"}
 FLAGS = {"comments", "c", "approve", "request-changes", "comment", "squash", "merge", "rebase", "delete-branch", "d",
-         "auto", "admin", "web", "w", "fill", "f", "draft", "name-only", "patch", "force"}
+         "auto", "admin", "web", "w", "fill", "f", "draft", "name-only", "patch", "force", "detach"}
 
 
 def parse(argv):
@@ -259,6 +259,11 @@ def pr(state, verb, rest):
     if verb == "checkout":
         git("fetch", "-q", "origin")
         branch = target["headRefName"]
+        if "detach" in named:
+            result = git("checkout", "--detach", f"origin/{branch}")
+            if result.returncode:
+                fail(result.stderr.strip())
+            return print(f"HEAD is now at origin/{branch}")
         result = git("checkout", branch)
         if result.returncode:
             result = git("checkout", "-b", branch, f"origin/{branch}")
