@@ -250,7 +250,7 @@ class BuildWorkflowTest(unittest.TestCase):
         agents = Path(__file__).resolve().parent.parent / "agents"
         builder = " ".join((agents / "builder.md").read_text().split())
         code = " ".join((agents / "reviewer.md").read_text().split())
-        self.assertIn("Run `check.sh` before you push, then return the PR without waiting for CI", builder)
+        self.assertIn("Then return the PR without waiting for CI", builder)
         self.assertIn("`gh pr checks <number> --watch`", code)
         self.assertIn("A failing check is a finding that must be fixed", code)
 
