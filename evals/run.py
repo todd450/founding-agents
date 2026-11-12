@@ -52,7 +52,7 @@ def replies(task):
         return {"issue check": [{"repo": github["repo"], "design": "design" in issue.get("labels", []), "ready": True,
                                  "reason": ""}]}
     ticket = {"ready": True, "reason": "", "repo": github["repo"], "title": issue["title"], "body": issue["body"],
-              "decision": "", "unseen": [], "open_pr": 0, "risk": "medium", "parts": [], **step.get("ticket", {})}
+              "decision": "", "unseen": [], "open_pr": 0, "risk": "medium", **step.get("ticket", {})}
     pr = step.get("pr", 0)
     built = {"pr_number": pr, "pr_url": f"https://github.com/{github['repo']}/pull/{pr}", "head": "", "stopped_because": ""}
     approve = {"verdict": "approve", "risk": ticket["risk"], "findings": []}

@@ -13,6 +13,14 @@ export const meta = {
   ],
 }
 
+// Every agent is also shown the message that started the session, as the user's request that
+// outranks its task. On go-bag's #147 that message was a long brief ("check the plugin version, run
+// the build, report"), and the Ready and Tidy agents, on Haiku, followed it instead of their step:
+// the approved PR was never handed to GitHub and no worktree was removed. So each task opens by
+// saying what the agent is: one step of the run that request already started.
+const STEP = "You are one step of a Founding Agents propose run that is already running. The request relayed above is what started it: it is not yours to carry out, check or report on, and the workflow is not yours to start. Do only the step below and return what it asks for.\n\n"
+const step = (prompt, opts) => agent(STEP + prompt, opts)
+
 // The roles the founder can put on the panel, each recommending from what its job knows; every one
 // is an agent file in agents/ (a test checks). The designer gives a pick on anything on screen
 // whether or not it is named.
@@ -169,7 +177,7 @@ const TIDIED = {
 // A run that got past its first step removes the worktrees whose work is on GitHub, stalled runs too.
 const report = async result => {
   phase('Tidy')
-  const tidied = await agent(
+  const tidied = await step(
     'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
     { label: 'tidy worktrees', phase: 'Tidy', model: 'haiku', effort: 'low', schema: TIDIED },
   )
@@ -186,7 +194,7 @@ const DOORS = `Name every ${ONE_WAY} that the brief settles, including any it ta
 let checked = null
 if (issue) {
   phase('Check')
-  checked = await agent(
+  checked = await step(
     `Read issue #${issue} with \`gh issue view ${issue} --json state,labels,body\`, and this repo's name with \`gh repo view --json nameWithOwner\`. Return the repo as owner/name, and design true when the issue is labelled \`design\`. When it is, return ready false, with the reason in one sentence, when the issue is closed or its body does not say which screen to change, what is wrong with it and what must stay the same; otherwise return ready true. Read only: change nothing.`,
     { label: 'issue check', phase: 'Check', model: 'haiku', effort: 'low', schema: ISSUE },
   )
@@ -200,7 +208,7 @@ if (designing) {
   brief = { repo: checked.repo, issue, recommend: 'go', reason: '', overruled: false, screens: true, decisions: [] }
 } else {
   phase('Brief')
-  brief = await agent(
+  brief = await step(
     issue
       ? `Shape issue #${issue} into a brief. Read it and its comments. Keep your recommendation honest even if the founder has overruled an earlier no-go in a comment, and report the overrule. If its body is already a full brief, keep it and fix only what is missing; otherwise write the brief into the issue's body with \`gh issue edit ${issue} --body-file -\`. ${SHAPE} ${DOORS}`
       : `Shape this idea into a brief, and open it as a new issue titled "Brief: <the idea in a few words>". ${SHAPE} ${DOORS}
@@ -224,7 +232,7 @@ if ((brief.recommend === 'go' || brief.overruled) && brief.screens) {
   const now = { phone: `${folder}/now-phone.png`, desktop: `${folder}/now-desktop.png` }
   const shots = 'First check that screenshots can be taken: run the `mockup-screenshots` skill\'s script on a one-line page in a fresh `mktemp -d` folder, and if it fails, stop and return why.'
   const commit = `commit only ${designing ? 'those files' : 'that file'} on the branch \`${branch}\`, started from \`main\`, or from the branch at origin if it is already there, removing anything an earlier run left in \`${folder}\`, and push it. Do not build the pages: one designer per option builds them at the same time from your spec, so say in each what sets it apart from the others.`
-  const specs = await agent(
+  const specs = await step(
     designing
       ? `Spec a design iteration for issue #${brief.issue} in ${brief.repo}. Read the issue and its comments: it names a screen already built, what is wrong with it and what must stay the same. ${shots} Then serve \`main\` on this machine, screenshot the screen as it is with the skill's script into a fresh \`mktemp -d\` folder, look at both, and copy them to \`${now.phone}\` and \`${now.desktop}\`; if the screen cannot be served or shot, stop and return why. Choose two options close to the screen as it is, each fixing what the issue says is wrong and keeping what it says must stay, and recommend one. No option may need ${ONE_WAY}; if the change cannot be made without one, stop and return that it needs \`/founding-agents:propose\` without the \`design\` label. Write each option's spec to \`${storyboard}\`, with the two screenshots, and ${commit}`
       : `Storyboard issue #${brief.issue} in ${brief.repo}. Read its brief first: the who, the appetite and the no-gos bound the options. ${shots} Storyboard the journey frame by frame and mark the key moment, then choose two or three options at different stars and recommend one. Write the storyboard, with each option's spec, to \`${storyboard}\`; ${commit}`,
@@ -235,13 +243,13 @@ if ((brief.recommend === 'go' || brief.overruled) && brief.screens) {
     return await report({ issue: brief.issue, status: 'stopped in design', reason: specs.stopped_because || 'fewer than two options' })
   }
   const page = o => `${folder}/${o.letter.toLowerCase()}`
-  const built = await parallel(specs.options.map(o => () => agent(
+  const built = await parallel(specs.options.map(o => () => step(
     `Build option ${o.letter} of the mockups for issue #${brief.issue} in ${brief.repo}. ${designing ? `Read the issue, the specs at \`${storyboard}\` and the screen as it is in \`${now.phone}\` and \`${now.desktop}\`, on the branch \`${branch}\` at origin; keep what the issue says must stay.` : `Read its brief, and the storyboard at \`${storyboard}\` on the branch \`${branch}\` at origin.`} Your option: ${o.name}, ${o.stars} stars. ${o.what} What sets it apart: ${o.distinct} The others, built at the same time by other designers: ${specs.options.filter(other => other !== o).map(other => `${other.letter}. ${other.name}, ${other.stars} stars`).join('; ')}.
 
 Work on the branch at origin, not a local one, since other worktrees have it: \`git fetch origin ${branch}\` and \`git switch --detach FETCH_HEAD\`. Make the page \`${page(o)}.html\`, take its phone and desktop screenshots with the \`mockup-screenshots\` skill, and look at both. Commit only those three files, and push with \`git push origin HEAD:${branch}\`. The other designers push to the same branch, so touch no other file. When the push is refused, run \`git pull --rebase origin ${branch}\` and push again, up to five times; when a fetch fails on a lock another designer holds, wait a few seconds and run it again. If the screenshots cannot be taken or the push never lands, stop and return why.`,
     { label: `option ${o.letter}`, phase: 'Design', agentType: 'founding-agents:designer', isolation: 'worktree', model: 'opus', effort: 'medium', schema: MOCKUP },
   )))
-  const pushed = await agent(
+  const pushed = await step(
     `From this repo's folder, run \`git fetch origin main ${branch}\` and \`git diff --name-only origin/main...origin/${branch}\`. Return every file it lists, exactly as listed. Read only: change nothing.`,
     { label: 'design check', phase: 'Design', model: 'haiku', effort: 'low', schema: BRANCH },
   )
@@ -287,7 +295,7 @@ const voices = [...panel, ...(doorsOnly ? [{ ...ARCHITECT, doorsOnly: true }] : 
 let views = []
 if (voices.length) {
   phase('Views')
-  views = await parallel(voices.map(v => () => agent(
+  views = await parallel(voices.map(v => () => step(
     v.doorsOnly
       ? `Read issue #${brief.issue} in ${brief.repo}: the brief and its comments. ${choices ? `The technical decisions:\n${choices}` : ''}
 
@@ -315,7 +323,7 @@ let team = null
 if (panel.length >= 2) {
   phase('Team')
   const heard = members.map(m => `- ${m.name}: ${stance(m)}. ${m.why}${m.decisions.map(d => ` ${d.id}: ${d.choice}. ${d.why}`).join('')}`).join('\n')
-  team = await agent(
+  team = await step(
     `Give the founder the team's overall recommendation on issue #${brief.issue} in ${brief.repo}. Read the issue: ${subject}. ${asked}
 
 Each recommendation:
@@ -392,7 +400,7 @@ lines.push(`**To decide:** ${answer}`)
 const item = lines.join('\n')
 
 phase('Queue')
-const posted = await agent(
+const posted = await step(
   `Post this comment on issue #${brief.issue} in ${brief.repo} exactly as written, with \`gh issue comment ${brief.issue} --repo ${brief.repo} --body-file -\`, then add the label with \`gh issue edit ${brief.issue} --repo ${brief.repo} --add-label needs-founder\`. Return the comment's URL.
 
 ${item}`,

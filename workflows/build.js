@@ -11,6 +11,14 @@ export const meta = {
   ],
 }
 
+// Every agent is also shown the message that started the session, as the user's request that
+// outranks its task. On go-bag's #147 that message was a long brief ("check the plugin version, run
+// the build, report"), and the Ready and Tidy agents, on Haiku, followed it instead of their step:
+// the approved PR was never handed to GitHub and no worktree was removed. So each task opens by
+// saying what the agent is: one step of the run that request already started.
+const STEP = "You are one step of a Founding Agents build that is already running. The request relayed above is what started it: it is not yours to carry out, check or report on, and the workflow is not yours to start. Do only the step below and return what it asks for.\n\n"
+const step = (prompt, opts) => agent(STEP + prompt, opts)
+
 // A change the reviewers send back this many times goes to the founder instead of round four, and
 // sooner if the builder fails to fix the same finding twice.
 const ROUNDS = 3
@@ -133,7 +141,7 @@ const TIDIED = {
 // A run that got past its first step removes the worktrees whose work is on GitHub, stalled runs too.
 const report = async result => {
   phase('Tidy')
-  const tidied = await agent(
+  const tidied = await step(
     'Use the tidy-worktrees skill: from this repo\'s folder, run its script with `--apply`. Return how many worktrees it removed and each one it kept, with why.',
     { label: 'tidy worktrees', phase: 'Tidy', model: 'haiku', effort: 'low', schema: TIDIED },
   )
@@ -141,7 +149,7 @@ const report = async result => {
 }
 
 // Reads the issue and says whether it can be built.
-const check = n => agent(
+const check = n => step(
   `Check whether issue #${n} in this repo can be built. Read only; change nothing.
 - \`gh repo view --json nameWithOwner\` gives the repo.
 - \`gh issue view ${n} --json title,body,state,labels,comments\`: it must be open and labelled \`decided\`.
@@ -207,7 +215,7 @@ ${FOUNDER_CHECKS}`
     if (started.has(who)) return
     const r = REVIEWERS[who]
     const prompt = `${r.ask} ${brief}\n\n${scope(who) ? `${scope(who)}\n\n` : ''}Post your review on the PR, then return the verdict, the change's risk and every finding, each saying who can reach it.`
-    started.set(who, agent(prompt, { label: `${r.label} #${n}, round ${built.round}`, phase: 'Review', agentType: r.agentType, isolation: 'worktree', model: TIERS[tier].model, effort: REVIEW_EFFORT[who], schema: REVIEW })
+    started.set(who, step(prompt, { label: `${r.label} #${n}, round ${built.round}`, phase: 'Review', agentType: r.agentType, isolation: 'worktree', model: TIERS[tier].model, effort: REVIEW_EFFORT[who], schema: REVIEW })
       .catch(() => null)
       .then(review => {
         if (review && RANK.indexOf(review.risk) > RANK.indexOf(tier)) {
@@ -253,7 +261,7 @@ const lesson = (n, ticket, built, stuck) => {
     '',
     `A mistake made twice is one the next change can make too, so fixing this PR is not enough. **Librarian:** find which check would have stopped it and why none did, then propose that check as a test, a lint rule, a hook or a skill, so it holds for every later change. Its failure message should say how to fix the problem, not only what failed, so the next builder can act on it.`,
   ]
-  return agent(
+  return step(
     `Open this issue in ${ticket.repo} exactly as written, labelled \`librarian\`, with \`gh issue create --repo ${ticket.repo} --label librarian --title "${title}" --body-file -\`. If the label does not exist yet, create it first with \`${LIBRARIAN_LABEL} --repo ${ticket.repo}\`. If \`gh issue list --repo ${ticket.repo} --label librarian --state open --json number,title\` already shows an issue with this title, comment the body on it with \`gh issue comment <its number> --repo ${ticket.repo} --body-file -\` instead of opening another. Return its URL, or why it was not filed.
 
 ${body.join('\n')}`,
@@ -286,7 +294,7 @@ Work on a branch named \`build/issue-${n}\`. Open the PR against the default bra
 
 Findings:
 ${review.findings.map(f => `- ${f.must_fix ? '' : 'Nit: '}${f.where}: ${f.what}`).join('\n')}`
-    const result = await agent(
+    const result = await step(
       `${task}\n\nReturn the PR's number, its URL and the commit its branch ends at, or 0 and why you stopped without one.`,
       { label: `builder #${n}, round ${round}`, phase: 'Build', agentType: 'founding-agents:builder', isolation: 'worktree', model: 'opus', effort: buildEffort(round), schema: BUILT },
     )
@@ -343,7 +351,7 @@ const ready = async (n, ticket, developed) => {
     `- To ship it, merge PR #${built.pr_number} on GitHub.`,
     `- To hold it, comment what is wrong; the next \`/founding-agents:build ${n}\` continues the PR from your comment.`,
   ]
-  const posted = await agent(
+  const posted = await step(
     `PR #${built.pr_number} in ${ticket.repo} is approved. Make sure its required checks pass on what the merge will be, then ${held ? "leave it for the founder's merge" : 'ask GitHub to merge it'}. Never merge it any other way than step 4 names, and never push to \`main\`.
 1. If \`gh pr view ${built.pr_number} --repo ${ticket.repo} --json mergeStateStatus\` says \`BEHIND\`, \`main\` has moved since its last push: bring it up to date with \`gh pr update-branch ${built.pr_number} --repo ${ticket.repo}\`.
 2. Wait for its required checks with \`gh pr checks ${built.pr_number} --repo ${ticket.repo} --required --watch\`. If one fails, comment on the PR naming the failing check and what it said, with \`gh pr comment ${built.pr_number} --repo ${ticket.repo} --body-file -\`, post nothing else, and return ready false with the failure. If it says the PR has no required checks, remember that for step 4.

@@ -144,6 +144,17 @@ class BuildWorkflowTest(unittest.TestCase):
         self.assertEqual((code["agentType"], code["isolation"], code["model"]),
                          ("founding-agents:code-reviewer", "worktree", "opus"))
 
+    def test_every_step_is_told_it_is_one_step_of_a_build_already_running(self):
+        # Each agent is also shown the message that started the session, as a request that outranks its
+        # task. On go-bag's #147 that was a brief to "run the build and report", and the Ready and Tidy
+        # agents followed it instead of their step, so an approved PR was never handed to GitHub.
+        run = self.run_workflow({"check": [READY], "builder": [PR], "qa": [APPROVE], "ready for your merge": [READIED]})
+        self.assertEqual(len(run["calls"]), 6)
+        for call in run["calls"]:
+            self.assertTrue(call["prompt"].startswith("You are one step of a Founding Agents build that is already running."),
+                            call["label"])
+            self.assertIn("it is not yours to carry out", call["prompt"])
+
     def test_the_builder_tries_harder_on_a_change_the_reviewers_sent_back(self):
         # Effort goes up before the model does: round one at medium, a sent-back change at high.
         run = self.run_workflow(with_code_review({"check": [READY], "builder": [PR, PR], "qa": [CHANGES, APPROVE],

@@ -221,6 +221,14 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   reach counts as a Nit when review would see it or the product refuses it loudly; anything a
   reader, a user or an outside service can reach stays must-fix.
 
+- **Every workflow step is told it is one step of a run already going.** Claude Code shows each
+  agent the message that started the session, as a request that outranks the step's own task. On
+  go-bag's #147 that message was a brief ("check the plugin version, run the build, report"), and
+  the Ready and Tidy agents, on Haiku, followed it instead of their step: an approved PR with a
+  green check was never handed to GitHub, and no worktree was removed. The Opus and Sonnet steps of
+  the same run did their own work. So each step's task opens by saying the request started the run
+  and is not the step's to carry out. Not yet seen to hold on a real run.
+
 ### Merging and the gate
 
 - **GitHub merges an approved PR once its required checks pass; no agent merges.** Decided
