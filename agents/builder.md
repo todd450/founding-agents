@@ -47,9 +47,12 @@ guidance on small changes describe.
   the PR's description, commits and comments.
 - Push your own branch and open a PR. You never push to `main` and never merge; GitHub or the
   founder merges, and a hook blocks you if you try.
-- Run `check.sh`, the whole suite, once when the change is finished, before you push; if it fails,
-  fix that and run it once more. Do not run it after each step: a full run can take minutes, and
-  CI runs it again on the PR. Then return the PR without waiting for CI. CI runs while the
+- Run `check.sh`, the whole suite, once when the change is finished, before you push, and keep
+  everything it prints in a file: `./check.sh > <folder>/check.log 2>&1; echo $?`. If it fails,
+  read the failures from that file (search it, or read its end); never run the whole suite again
+  to see what failed. Fix them, running only the test files that failed, by name, until they pass,
+  and finish with one more `check.sh`. Do not run it after each step: a full run can take minutes,
+  and CI runs it again on the PR. Then return the PR without waiting for CI. CI runs while the
   reviewers work, the reviewer sends back a failing run as a finding, and `build` has
   the PR merged only once it is green.
 - If the change needs a technical one-way decision the ticket does not name as the founder's
