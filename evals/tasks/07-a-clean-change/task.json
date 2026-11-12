@@ -1,5 +1,5 @@
 {
-  "role": "code-reviewer",
+  "role": "reviewer",
   "kind": "regression",
   "class": "a sound change the reviewer should approve, not send back",
   "origin": "the website's one-round merges (#10, #12); a reviewer that sends everything back scores nothing here",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 15,
-    "label": "code review",
+    "label": "review",
     "pr": 16
   },
   "commits": [
@@ -25,6 +25,14 @@
         "pr"
       ],
       "message": "Link the band's facts from the footer"
+    },
+    {
+      "branch": "screenshots/issue-15",
+      "orphan": true,
+      "dirs": [
+        "shots"
+      ],
+      "message": "Screenshots"
     }
   ],
   "github": {
@@ -44,7 +52,7 @@
       {
         "number": 16,
         "title": "Link the band's facts from the footer",
-        "body": "Adds a footer line that links to docs/status.md. The link test already covers it.\n\nCloses #15",
+        "body": "Adds a footer line that links to docs/status.md. The link test already covers it.\n\n## Screenshots\n\n### Home\n\n<img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-15/before/home-phone.png?raw=true\" width=\"195\" alt=\"Home before, on a phone\"> <img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-15/after/home-phone.png?raw=true\" width=\"195\" alt=\"Home after, on a phone\">\n\n<img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-15/before/home-desktop.png?raw=true\" width=\"560\" alt=\"Home before, on a desktop\">\n<img src=\"https://github.com/todd450/founding-agents-site/blob/screenshots/issue-15/after/home-desktop.png?raw=true\" width=\"560\" alt=\"Home after, on a desktop\">\n\nCloses #15",
         "headRefName": "build/issue-15",
         "baseRefName": "main",
         "state": "OPEN",

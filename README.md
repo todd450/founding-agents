@@ -9,13 +9,13 @@ decides scope and taste and talks to users; the agents plan, build, check, ship 
 `/founding-agents:propose`, which turns an idea into a brief and mockups for the founder to decide,
 and `/founding-agents:build`, which has merged eight decided issues on the site. Step 5,
 growing the team on demand, has begun: every role now
-exists: edge-case QA, code and security review in `build`; ops watch and the
+exists: the reviewer and, on request, the security reviewer in `build`; ops watch and the
 librarian as routines `setup` creates. `/founding-agents:sweep <kind>` reviews the whole product
 for one kind of work (architecture, design, security, the codebase or the tests) and files up to
 three findings for the founder to pick for `build`; each kind also runs on a schedule, the
 architecture sweep weekly by default. On the website, a codebase sweep, a security review and the
 librarian have all run. Still to run on a real product: a `tests`, `design` or `security` sweep,
-risk tiers and the check-back.
+security review on request and the check-back.
 
 - [docs/design.md](docs/design.md) — the team, how a change flows, the principles behind it, the
   decisions and the build order.
@@ -35,13 +35,12 @@ read the commits before you update. Issues are welcome; pull requests by invitat
 How much of the team a change uses depends on its size:
 
 - **A new idea:** `/founding-agents:propose <idea>` writes the brief and mockups. Name roles
-  after an issue number for their views too (`propose 7 builder qa`, or `all`), or label the issue
+  after an issue number for their views too (`propose 7 builder reviewer`, or `all`), or label the issue
   `design` to change a screen already built without a brief. Once you have decided,
   `/founding-agents:build <brief>` builds it. A brief too big for one change: cut it into issues
   in a session first, each labelled `decided`, and build them one at a time.
 - **A small change** (a typo, a colour, a line of copy): skip `propose`. Open an issue
   that says what to change, add the `decided` label, and run `/founding-agents:build <issue>`.
-  Wording alone gets one code review, on Sonnet.
 - **Smaller than that:** no Claude session merges a PR itself, yours included. Have
   Claude open a PR and ask GitHub to merge it once `check` passes
   (`gh pr merge --auto --squash`), or merge it yourself on GitHub.

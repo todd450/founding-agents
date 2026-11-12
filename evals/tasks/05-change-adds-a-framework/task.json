@@ -1,5 +1,5 @@
 {
-  "role": "code-reviewer",
+  "role": "reviewer",
   "kind": "regression",
   "class": "a change that settles a technical one-way door nobody decided",
   "origin": "founding-agents-site #14: the founder decided eight such choices one by one; design.md 'Technical one-way doors reach the founder'",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 13,
-    "label": "code review",
+    "label": "review",
     "pr": 14
   },
   "commits": [

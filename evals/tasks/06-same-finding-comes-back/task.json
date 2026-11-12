@@ -1,5 +1,5 @@
 {
-  "role": "code-reviewer",
+  "role": "reviewer",
   "kind": "capability",
   "class": "the same finding comes back unfixed, and the reviewer must say so",
   "origin": "founding-agents-site #4 and #6 (PRs #7 and #9): the same findings came back round after round; the two stalls were 43% of the website's spend",
@@ -8,7 +8,7 @@
   "step": {
     "workflow": "build",
     "args": 6,
-    "label": "code review",
+    "label": "review",
     "pr": 9,
     "ticket": {
       "open_pr": 9
@@ -61,7 +61,7 @@
         "comments": [
           {
             "author": "todd450",
-            "body": "**Code review: Changes needed**\n\n- `tests/test_record.py` `_li_count`: counts the literal text `<li>`, so an entry written `<li class=\"late\">` is invisible to `test_every_entry_has_a_date`, and an undated entry passes. Match the element, not the text.\n- `tests/test_record.py` `test_record_is_newest_first`: skips any date it cannot parse, so an entry with a malformed date passes. Fail on it instead."
+            "body": "**Review: Changes needed**\n\n- `tests/test_record.py` `_li_count`: counts the literal text `<li>`, so an entry written `<li class=\"late\">` is invisible to `test_every_entry_has_a_date`, and an undated entry passes. Match the element, not the text.\n- `tests/test_record.py` `test_record_is_newest_first`: skips any date it cannot parse, so an entry with a malformed date passes. Fail on it instead."
           }
         ]
       }

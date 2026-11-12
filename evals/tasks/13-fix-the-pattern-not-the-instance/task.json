@@ -53,7 +53,7 @@
         "comments": [
           {
             "author": "todd450",
-            "body": "**Code review: Changes needed**\n\n- `tests/test_sections.py` `test_every_record_entry_has_a_date`: matches the literal text `<li>`, so an entry written `<li class=\"late\">` is invisible to it and an undated entry passes. Match the element, not the text."
+            "body": "**Review: Changes needed**\n\n- `tests/test_sections.py` `test_every_record_entry_has_a_date`: matches the literal text `<li>`, so an entry written `<li class=\"late\">` is invisible to it and an undated entry passes. Match the element, not the text."
           }
         ]
       }

@@ -20,7 +20,7 @@ class ServeGuardTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def check(self, command, agent="founding-agents:qa"):
+    def check(self, command, agent="founding-agents:reviewer"):
         event = {"tool_name": "Bash", "tool_input": {"command": command}, "cwd": str(self.repo), "agent_type": agent}
         result = subprocess.run([sys.executable, str(GUARD)], input=json.dumps(event), capture_output=True, text=True)
         return result.returncode, result.stderr

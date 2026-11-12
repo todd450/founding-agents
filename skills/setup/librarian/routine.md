@@ -41,8 +41,8 @@ stays open for next week.
 ## Incidents from the last seven days
 
 - `red` issues opened or closed.
-- Pull requests that reviewers sent back two or more times (comments starting **QA: Changes
-  needed**, **Code review: Changes needed** or **Security: Changes needed**), and the findings that
+- Pull requests that reviewers sent back two or more times (comments starting **Review: Changes
+  needed** or **Security: Changes needed**), and the findings that
   kept coming back. Skip one a `librarian` issue already names.
 - Fixes merged for something an earlier merge broke: a revert, or a pull request whose issue says
   what broke after a merge.

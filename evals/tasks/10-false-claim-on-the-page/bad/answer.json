@@ -14,7 +14,7 @@
     {
       "kind": "pr comment",
       "number": 11,
-      "body": "**QA: Approve**\n\n- Nit: index.html: the record: No step test asserts a link; drop 'and a link'."
+      "body": "**Review: Approve**\n\n- Nit: index.html: the record: No step test asserts a link; drop 'and a link'."
     }
   ]
 }
