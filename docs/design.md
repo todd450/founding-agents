@@ -35,13 +35,15 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
    is cut into issues in a session first.
 4. The **reviewer** reads the diff and drives the product; the **security reviewer** joins when the
    issue or the diff touches routes, sign-in, stored data or secrets, or when the founder asks.
-5. Once the reviewers approve and the required checks pass, `build` leaves a "Ready for your
-   merge" comment → the **founder** merges on GitHub → **ops watch** watches it run.
+5. Once the reviewers approve and the required checks pass, `build` asks GitHub to merge the PR →
+   **ops watch** watches it run. A merge left to the **founder** gets a "Ready for your merge"
+   comment instead: an issue that lists "The founder checks", findings left to them, or a repo
+   that requires no check.
 6. Two weeks after a brief's last issue merges (or as long as the brief says), **ops watch**
    checks whether it did what "how we'll know" said; a "didn't" goes back to the founder as keep,
    change or remove.
 
-The founder sees steps 1 and 2, step 3 only when a cut is needed, step 5 when a merge is the release they kept, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
+The founder sees steps 1 and 2, step 3 only when a cut is needed, step 5 only when a merge is left to them, and step 6 when a brief did not work. Every hand-off is a file, a ticket or a PR, so the next agent
 starts with the context it needs.
 
 ## Principles
@@ -204,6 +206,11 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   pushes.** On go-bag's #113 it ran the whole suite five times in a 13-minute round, 6.9 minutes of
   it, for a change that passed first time. A break far from the change is caught one step later, by
   that last run or by CI's on the PR, which gates the merge either way.
+- **The builder keeps a whole-suite run's output and reads a failure from it.** Replaying #113 on
+  0.43.0 (12 Nov 2026), the one run at the end failed 50 of 618 tests and the builder ran the suite
+  three more times, 3.7 minutes, only to see which. Now the run's output goes to a file, the
+  builder re-runs just the failing test files while it fixes them, and the whole suite runs once
+  more at the end. That replay took 25.6 minutes against 30.0 on 0.41.0, 18.1 of them the builder's.
 
 ### Review
 
@@ -238,7 +245,9 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   the Ready and Tidy agents, on Haiku, followed it instead of their step: an approved PR with a
   green check was never handed to GitHub, and no worktree was removed. The Opus and Sonnet steps of
   the same run did their own work. So each step's task opens by saying the request started the run
-  and is not the step's to carry out. Not yet seen to hold on a real run.
+  and is not the step's to carry out. It held on the
+  replay of #113 on 12 Nov 2026: Ready handed the PR to GitHub and Tidy removed the worktrees, both
+  on Haiku.
 
 ### Merging and the gate
 

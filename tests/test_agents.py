@@ -107,6 +107,14 @@ class ProportionTest(unittest.TestCase):
         self.assertIn("once when the change is finished, before you push", text)
         self.assertNotIn("then run the whole suite", text)
 
+    def test_the_builder_reads_a_failing_run_from_its_saved_output(self):
+        # On the replay of go-bag's #113 the builder's one whole-suite run failed 50 of 618 tests, and
+        # it ran the suite three more times, 3.7 minutes, only to read which ones.
+        text = self.read("builder")
+        self.assertIn("check.log 2>&1", text)
+        self.assertIn("never run the whole suite again to see what failed", text)
+        self.assertIn("running only the test files that failed, by name", text)
+
     def test_reviewers_review_only_what_changed_from_the_second_round(self):
         # On the website's #35, each of 13 rounds re-read the whole PR and found something new.
         for name in ("reviewer", "security-reviewer"):
