@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/logo/mark-dark.svg">
+  <img src="docs/logo/mark.svg" width="48" height="48" alt="">
+</picture>
+
 # Founding Agents
 
 A reusable team of Claude Code agents that builds products alongside one founder. The founder
