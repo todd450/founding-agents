@@ -1,6 +1,6 @@
 ---
 name: mockup-screenshots
-description: Take phone and desktop screenshots of HTML mockup pages, or of a running product's pages, with headless Chrome, so the founder can compare options in an issue or a change's before and after in a PR. Use when the designer has written mockups, or when a builder or QA needs a page's screenshots.
+description: Take phone and desktop screenshots of HTML mockup pages, or of a running product's pages, with headless Chrome, so the founder can compare options in an issue or a change's before and after in a PR. Use when the designer has written mockups, or when a builder or the reviewer needs a page's screenshots.
 ---
 
 # Screenshot pages

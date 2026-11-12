@@ -1,14 +1,14 @@
 {
-  "role": "qa",
+  "role": "reviewer",
   "kind": "regression",
-  "class": "a correct change QA should approve, not send back",
+  "class": "a correct change the reviewer should approve, not send back",
   "origin": "the band as #10 left it: every fact from docs/status.md and a gutter at both widths",
   "summary": "The band with true facts and a gutter at desktop width; the right review approves it.",
   "right_answer": "approve",
   "step": {
     "workflow": "build",
     "args": 31,
-    "label": "qa",
+    "label": "review",
     "pr": 32
   },
   "commits": [

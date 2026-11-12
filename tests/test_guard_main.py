@@ -106,7 +106,7 @@ class GuardTest(unittest.TestCase):
             self.assertBlocked(command, agent=None)
 
     def test_the_roles_that_build_and_review_a_change_never_ship_it(self):
-        for agent in ("founding-agents:builder", "founding-agents:code-reviewer", "founding-agents:qa",
+        for agent in ("founding-agents:builder", "founding-agents:reviewer",
                       "founding-agents:security-reviewer", "other-plugin:builder", "designer"):
             self.assertBlocked("gh pr merge 12 --auto --squash", agent=agent)
 
@@ -114,7 +114,7 @@ class GuardTest(unittest.TestCase):
         self.assertBlocked("gh pr merge 1", agent=None)
 
     def test_blocks_other_agents(self):
-        self.assertBlocked("gh pr merge 1", agent="founding-agents:code-reviewer")
+        self.assertBlocked("gh pr merge 1", agent="founding-agents:reviewer")
         self.assertBlocked("gh pr merge 1", agent="other-plugin:builder")
 
     def test_no_agent_name_is_exempt(self):

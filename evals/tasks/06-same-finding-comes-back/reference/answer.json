@@ -14,7 +14,7 @@
     {
       "kind": "pr comment",
       "number": 9,
-      "body": "**Code review: Changes needed**\n\n- tests/test_record.py:15: _li_count still counts the literal '<li>', so <li class=\"late\"> is invisible and an undated entry passes. Raised in the last review and not fixed."
+      "body": "**Review: Changes needed**\n\n- tests/test_record.py:15: _li_count still counts the literal '<li>', so <li class=\"late\"> is invisible and an undated entry passes. Raised in the last review and not fixed."
     }
   ]
 }

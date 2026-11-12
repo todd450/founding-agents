@@ -10,9 +10,8 @@ A team of agents that builds products with one founder.
 | | **Designer** | before code, and again after the build; the `design` sweep | mockups to pick from; a review of the rendered screens; at most three findings a sweep: screens that differ, values outside the token source, phone width, states nobody designed | mockups and issues |
 | Build | **Architect** | the `architecture` sweep, weekly by default; in `propose`, its choice on any technical one-way door, or a full view when the founder puts it on the panel | at most three findings a sweep: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
 | | **Builder** | one decided issue at a time, in its own worktree | the change, with tests written first from the edge-case fixtures | its own worktree |
-| | **Edge-case QA** | every medium- or high-risk change, before merge | the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; run against the fixtures and the running product | read and run |
-| Check | **Code reviewer** | every change, on Sonnet when it is low risk | correctness and simplification; sees the diff, not the builder's reasoning | read only |
-| | **Security reviewer** | high-risk changes: routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies; the `security` sweep | findings | read only, apart from issues and advisories |
+| Check | **Reviewer** | every change, before merge | reads the diff for correctness, simplicity, tests and undecided one-way doors, then drives the running product through the failure checklist: empty and one-item, other data and account shapes, other language, phone width, failed read, second user, time zones; sees the diff, not the builder's reasoning | read and run |
+| | **Security reviewer** | changes that touch routes, sign-in, permissions, storage, secrets, outside input, model calls or shipped dependencies, as the check, the reviewer or the founder says; the `security` sweep | findings | read only, apart from issues and advisories |
 | | **Optimiser** | the `codebase` and `tests` sweeps, on demand | page cost, dead code, copied code, and the test suite's missing cases, faults it misses, slow or flaky tests, tests of wording and hand-written checks a standard tool does | issues only |
 | Ship & run | **Ops watch** | a daily routine, and a nightly GitHub Actions check | backups, release verdicts, production errors; red reaches the founder; whether each shipped brief did what it said | read plus notifications |
 | | **Librarian** | a weekly routine: the week's incidents, and a prune | a lesson as a test or lint rule; keeps the rules file capped; deletes guards for removed things | tests, lint config, docs |
@@ -20,7 +19,7 @@ A team of agents that builds products with one founder.
 Every role is an agent in `agents/` except where its row says routine, sweep or step. A routine
 runs in the cloud on a schedule, from instructions `setup` copies into each product, since a
 routine loads no plugin; a sweep's instructions are the sweep skill's own files, run on demand or
-as a routine. So there are six agents and ten roles: the product lead is `propose`'s brief step,
+as a routine. So there are five agents and nine roles: the product lead is `propose`'s brief step,
 ops watch and the librarian are routines, the optimiser is the `codebase` and `tests` sweeps, and
 the architect, the designer and the security reviewer are agents that also each run a sweep of
 the whole product.
@@ -34,8 +33,8 @@ designer and Google SRE for ops watch: [exemplars.md](exemplars.md).
 2. **Designer** mocks it up → the roles the founder put on the panel recommend → founder picks.
 3. **Builders** build the decided issue, each in its own worktree. A brief too big for one change
    is cut into issues in a session first.
-4. The reviewers the issue's risk calls for run in parallel: **code review** always, **edge-case QA** from
-   medium, the **security reviewer** at high.
+4. The **reviewer** reads the diff and drives the product; the **security reviewer** joins when the
+   issue or the diff touches routes, sign-in, stored data or secrets, or when the founder asks.
 5. Once the reviewers approve and the required checks pass, `build` leaves a "Ready for your
    merge" comment → the **founder** merges on GitHub → **ops watch** watches it run.
 6. Two weeks after a brief's last issue merges (or as long as the brief says), **ops watch**
@@ -138,7 +137,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   founder, who can overrule it. The founder answers with a letter and `decided`, and `build` hands
   that answer to the builder and the reviewers.
 - **The founder chooses the panel on each run.** Decided 9 Nov 2026. `propose 7` asks no one
-  beyond the brief and the designer; `propose 7 builder qa` adds those two, `propose 7 all` every
+  beyond the brief and the designer; `propose 7 builder reviewer` adds those two, `propose 7 all` every
   role, and an idea takes `panel: ...` at its end. A role that does not exist is refused with the
   choices. The architect still gives its choice on any technical one-way door the brief names,
   panel or not, since those are the founder's and the costliest to get wrong. The team step runs
@@ -175,7 +174,7 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   choice that costs a lot to reverse once code or people depend on it, such as a framework, a build
   step, how the product deploys or stores data, or a dependency that ships to users. The product
   lead names each one in the brief, the founder answers it in a queue item, and `build`, the
-  builder and the code reviewer each refuse one the founder has not said yes to. A check tool run
+  builder and the reviewer each refuse one the founder has not said yes to. A check tool run
   from `check.sh` is never one.
 - **No planning workflow.** `plan`, where the architect cut a decided brief into build issues and
   seven roles then weighed in on each open decision, was dropped: cutting a brief takes a few
@@ -199,17 +198,29 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 - **Agents that run at once keep out of each other's way,** each with its own scratch folder and
   port, stopping only the server it started.
 - **Builders use standard tools before writing checks, and test behaviour, not wording.**
-- **Every PR that changes the screen carries before-and-after screenshots,** which QA checks
+- **Every PR that changes the screen carries before-and-after screenshots,** which the reviewer checks
   against the running product, since the founder reviews from a phone.
+- **The builder runs the tests near its change as it works, and the whole suite once before it
+  pushes.** On go-bag's #113 it ran the whole suite five times in a 13-minute round, 6.9 minutes of
+  it, for a change that passed first time. A break far from the change is caught one step later, by
+  that last run or by CI's on the PR, which gates the merge either way.
 
 ### Review
 
-- **Review splits into edge-case QA, code review and security review,** and a change is approved
-  only when every reviewer it gets approves.
-- **Review is proportional to risk.** Low risk (wording or static content) gets code review alone;
-  medium (styling, layout or ordinary logic) adds QA; high (routes, sign-in, permissions, stored
-  data, secrets, outside input, model calls or a dependency that ships) adds security review. When
-  unsure, the higher. Any reviewer can raise the tier; nothing lowers it.
+- **One reviewer reads the diff and drives the product.** Code review and edge-case QA were two
+  agents from 27 Oct to 9 Nov 2026, split so that only QA could read the holdout scenarios. With
+  the holdouts gone, the two read the same issue and diff, so one agent does both. It shipped on
+  12 Nov 2026, after two go-bag builds: with reviewers reading CI's result, code review took a
+  minute of a run and the second reviewer was mostly a second bill.
+- **Security review is on request.** The security reviewer joins when the check reads in the issue,
+  or the reviewer sees in the diff, a change to routes, sign-in, permissions, stored data, secrets,
+  outside input, model calls or a dependency that ships, or when the founder runs
+  `build <n> security`; once on, it stays on for that PR. The founder chose a separate reviewer
+  over a security checklist inside the reviewer. A change is approved only when every reviewer it
+  gets approves.
+- **Every change gets the same review.** Risk tiers (code review alone on Sonnet for low risk, QA
+  from medium, security review at high, raised by any reviewer) were dropped: rating and raising
+  the tier took more workflow than the cheaper low-risk review saved.
 - **After the first round, reviewers review only what changed.**
 - **Reviewers read CI's result and do not run the suite again.** The builder runs it before it
   pushes, and CI's run on the PR is the one that gates the merge. On go-bag's #113 the suite ran
@@ -217,10 +228,10 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   two-thirds of a 31-minute run; four of those runs were reviewers', two at once in one folder at
   190 seconds each where one takes 75. A reviewer runs a test only to settle a finding, and the
   whole suite only when the PR has no checks.
-- **A finding's severity depends on who can reach it.** A must-fix that only a trusted writer can
-  reach counts as a Nit when review would see it or the product refuses it loudly; anything a
-  reader, a user or an outside service can reach stays must-fix.
-
+- **A must-fix is something a reader or a user could meet.** A problem only someone the team trusts
+  could cause, that review or a loud failure would catch, is a Nit. This was a field on every
+  finding and a workflow rule that downgraded such findings; it is now a sentence in the
+  reviewer's instructions, and its evals hold it.
 - **Every workflow step is told it is one step of a run already going.** Claude Code shows each
   agent the message that started the session, as a request that outranks the step's own task. On
   go-bag's #147 that message was a brief ("check the plugin version, run the build, report"), and
@@ -259,8 +270,8 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 
 ### Edge cases
 
-- **No hidden scenarios.** QA runs the product's visible fixtures and makes its own cases from the
-  failure checklist; builders see everything QA sees. Holdout scenarios, kept from builders in a
+- **No hidden scenarios.** The reviewer runs the product's visible fixtures and makes its own cases
+  from the failure checklist; builders see everything the reviewer sees. Holdout scenarios, kept from builders in a
   private repo behind a hook, were dropped: for one founder, the repo, the hook and their setup
   weighed more than the cases they added.
 
@@ -299,9 +310,9 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
 ### Cost, models and evals
 
 - **Every agent and step names its model.** Opus 5.5 plans, judges and builds: the brief,
-  architect, designer, builders, QA, the code and security reviewers, and the architecture, design
+  architect, designer, builders, the reviewer and the security reviewer, and the architecture, design
   and security sweeps. Sonnet 5.5 runs the librarian's routine, the codebase and
-  tests sweeps, the roles' views and low-risk code review; Haiku 5.5
+  tests sweeps and the roles' views; Haiku 5.5
   runs ops watch and the workflows' small steps. `setup` pins all three in full, since an alias
   can resolve to an older model: `opus` has run an older, dearer Opus, and `haiku` still means
   Haiku 4.5 on an older Claude Code.
@@ -361,11 +372,11 @@ fresh one shows the team from its first commit, with no history to work around.
 4. **The decide lane:** the brief and the designer as `propose`, feeding `needs-founder`. A
    product that can build nothing until its words and look are decided, such as a website, takes
    this step before step 3.
-5. **Grow on demand:** review split into QA, code and
-   security review, the librarian, and the sweeps, each once its kind of work appears.
+5. **Grow on demand:** the security reviewer, the librarian, and the sweeps, each once its kind of
+   work appears.
 
 Every step is built. Still to run on a real product: a `tests`, `design` or `security` sweep, a
-sweep as a routine, risk tiers and the check-back.
+sweep as a routine, security review on request and the check-back.
 
 ## Sources
 

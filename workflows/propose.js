@@ -27,8 +27,7 @@ const step = (prompt, opts) => agent(STEP + prompt, opts)
 const VOICES = [
   { key: 'architect', name: 'Architect', agentType: 'founding-agents:architect', lens: 'how it fits what is already built, and which choices would be costly to undo' },
   { key: 'builder', name: 'Builder', agentType: 'founding-agents:builder', lens: 'how much work it is to build and keep working, and what could make it take longer' },
-  { key: 'qa', name: 'QA', agentType: 'founding-agents:qa', lens: 'what could go wrong for the people using it, and how hard that will be to check' },
-  { key: 'code-reviewer', name: 'Code reviewer', agentType: 'founding-agents:code-reviewer', lens: 'whether it adds more to look after than it is worth, and whether a simpler version would do' },
+  { key: 'reviewer', name: 'Reviewer', agentType: 'founding-agents:reviewer', lens: 'what could go wrong for the people using it, how hard that will be to check, and whether a simpler version would do' },
   { key: 'security-reviewer', name: 'Security reviewer', agentType: 'founding-agents:security-reviewer', lens: "what it risks for people's data, accounts and privacy" },
 ]
 const ARCHITECT = VOICES[0]
