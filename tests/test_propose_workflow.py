@@ -85,6 +85,15 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertIn("Shape issue #7", self.call(run, "brief")["prompt"])
         self.assertEqual(run["result"]["queue_item"], POSTED["comment_url"])
 
+    def test_every_step_is_told_it_is_one_step_of_a_run_already_going(self):
+        # As in build: an agent that takes the message that started the session for its own task does that
+        # instead of its step (go-bag's #147).
+        run = run_workflow("propose", replies(), ALL)
+        self.assertTrue(run["calls"])
+        for call in run["calls"]:
+            self.assertTrue(call["prompt"].startswith("You are one step of a Founding Agents propose run that is already running."),
+                            call["label"])
+
     def test_an_idea_in_words_becomes_a_new_issue(self):
         run = run_workflow("propose", replies(), "a pricing page")
         prompt = run["calls"][0]["prompt"]

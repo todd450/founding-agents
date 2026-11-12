@@ -10,7 +10,6 @@
       "Astro as the site's framework, adding a build step",
       "hosting on Vercel instead of GitHub Pages"
     ],
-    "open_pr": 0,
-    "parts": []
+    "open_pr": 0
   }
 }
