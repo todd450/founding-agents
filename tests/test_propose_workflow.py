@@ -9,7 +9,7 @@ from workflow_harness import HAVE_NODE, run_workflow  # noqa: E402
 
 GO = {"repo": "o/site", "issue": 7, "recommend": "go", "reason": "two founders asked for it", "overruled": False,
       "screens": True, "decisions": []}
-NO_GO = {**GO, "recommend": "no-go", "reason": "no evidence anyone wants it yet"}
+NO_GO = {**GO, "recommend": "no-go", "reason": "two weeks and three one-way doors for one screen"}
 
 
 def option(letter, stars):
@@ -168,11 +168,11 @@ class ProposeWorkflowTest(unittest.TestCase):
         self.assertEqual(run["result"]["team"], "")
 
     def test_a_no_go_skips_the_designer_and_still_reaches_the_founder_with_every_view(self):
-        run = run_workflow("propose", replies(lead=NO_GO, design=None, team=view("no-go", why="Nobody has asked yet.")), ALL)
+        run = run_workflow("propose", replies(lead=NO_GO, design=None, team=view("no-go", why="It costs more than it is worth.")), ALL)
         self.assertEqual(self.labels(run), ["issue check", "brief", *VOICES, "team", "queue item", "tidy worktrees"])
         item = self.queue_item(run)
-        self.assertIn("**The team: no-go.** Nobody has asked yet.", item)
-        self.assertIn("- **The brief:** no-go. no evidence anyone wants it yet", item)
+        self.assertIn("**The team: no-go.** It costs more than it is worth.", item)
+        self.assertIn("- **The brief:** no-go. two weeks and three one-way doors for one screen", item)
         self.assertNotIn("**Designer:**", item)
         self.assertIn("close the issue", item)
         self.assertEqual(run["result"]["options"], [])
@@ -314,9 +314,12 @@ class ProposeWorkflowTest(unittest.TestCase):
     def test_nothing_to_propose_is_an_error(self):
         self.assertIn("Name an issue", run_workflow("propose", {}, None)["error"])
 
-    def test_the_brief_says_no_by_default_and_when_to_check_back(self):
+    def test_the_brief_has_no_default_answer_and_says_when_to_check_back(self):
         prompt = self.call(run_workflow("propose", replies(), 7), "brief")["prompt"]
-        self.assertIn("Say no by default", prompt)
+        self.assertNotIn("no by default", prompt)
+        self.assertNotIn("earns a go", prompt)
+        self.assertIn("with no lean towards go or no-go", prompt)
+        self.assertIn("never give a lack of evidence as a reason for no-go", prompt)
         self.assertIn('"Check back: 3 weeks"', prompt)
         self.assertIn("Never write code, contact users or add the `decided` label", prompt)
 

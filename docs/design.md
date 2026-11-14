@@ -6,7 +6,7 @@ A team of agents that builds products with one founder.
 
 | lane | role | runs | produces | may touch |
 |---|---|---|---|---|
-| Decide | **Product lead** | each new idea, as `propose`'s brief step | a brief (who, what evidence, the appetite, how we'll know); says no by default | issues only |
+| Decide | **Product lead** | each new idea, as `propose`'s brief step | a brief (who, what evidence, the appetite, how we'll know); weighs the idea on its merits, with no default answer | issues only |
 | | **Designer** | before code, and again after the build; the `design` sweep | mockups to pick from; a review of the rendered screens; at most three findings a sweep: screens that differ, values outside the token source, phone width, states nobody designed | mockups and issues |
 | Build | **Architect** | the `architecture` sweep, weekly by default; in `propose`, its choice on any technical one-way door, or a full view when the founder puts it on the panel | at most three findings a sweep: one-way doors that went in undecided, broken interfaces, one thing defined twice, missing day-one defaults | issues only |
 | | **Builder** | one decided issue at a time, in its own worktree | the change, with tests written first from the edge-case fixtures | its own worktree |
@@ -149,11 +149,20 @@ Claude Code docs and the plugins that already cover parts of this (see Sources).
   per run, as with a sweep's kind, keeps the views for the ideas that need them, and `propose`
   does not change when the roles do.
 - **The product lead is a step, not an agent.** Since 9 Nov 2026 the brief step's prompt holds
-  what the product lead agent knew (Shape Up's appetite and no-gos, no by default, evidence apart
-  from inference, a check-back the routine can read), so `propose` is the only place it lives.
+  what the product lead agent knew (Shape Up's appetite and no-gos, evidence apart from
+  inference, a check-back the routine can read), so `propose` is the only place it lives.
+- **A brief has no default answer.** Until 14 Nov 2026 the brief said no by default: an idea
+  earned a go with evidence, and "None yet" under Evidence was a reason for no. On go-bag that
+  day two briefs in a row (#149, #150) came back no-go chiefly because nobody had been seen
+  using the thing, on a product whose only household is the founder's, where that is true of
+  every new idea. The founder asked to drop that reason, and the default with it. A brief now
+  weighs what the idea would do for its people against its appetite, its rabbit holes and the
+  technical decisions it takes, with no lean either way. The Evidence section stays, with what
+  people did kept apart from inference: evidence that an idea would not work still counts
+  against it, and having none does not.
 - **A design iteration skips the brief.** `propose` on an issue labelled `design` changes how a
-  screen already built looks or reads, so there is no who or evidence to weigh, and the brief's
-  default no would only slow it. The issue names the screen, what is wrong with it and what must
+  screen already built looks or reads, so there is no who or evidence to weigh, and a brief
+  would only slow it. The issue names the screen, what is wrong with it and what must
   stay, or `propose` does not start. The designer screenshots the screen as it is, then two
   options close to it are built at once; no option may need a technical one-way door. "Keep it as
   it is" stands beside the options, and the pick goes straight to `build`. It is a mode of

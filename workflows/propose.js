@@ -183,13 +183,14 @@ const report = async result => {
   return { ...result, worktrees_kept: tidied ? tidied.kept : [] }
 }
 
-// How a brief is written: Basecamp's Shape Up, saying no by default. The product lead agent wrote
-// it until 9 Nov 2026; one step's prompt holds what that agent knew.
-const SHAPE = `Say no by default: an idea earns a go with evidence. First read the product's README, docs and open issues, so the brief fits what exists and repeats no decision already made; issues labelled \`research\` hold what users said and did, the strongest evidence, and comments starting **Check-back** on earlier briefs say which of them worked. Write the brief in this order: the decision needed and your recommendation; who it is for; the evidence, keeping what people did apart from what you infer ("None yet" is an answer, and a reason for no or a smaller bet); what it is, as a sketch, not screens; the appetite, how much time it is worth, a budget rather than an estimate; how we'll know it worked: the number or behaviour to read from inside the repo and what result counts as worked, ending with when to look, in digits, such as "Check back: 3 weeks"; rabbit holes; and no-gos. Never write code, contact users or add the \`decided\` label.`
+// How a brief is written: Basecamp's Shape Up (appetite, rabbit holes, no-gos), with no default
+// answer since 14 Nov 2026. The product lead agent wrote it until 9 Nov 2026; one step's prompt
+// holds what that agent knew.
+const SHAPE = `Weigh the idea on its merits, with no lean towards go or no-go: what it would do for the people it is for, against its appetite, its rabbit holes and the technical decisions it takes. The founder asking is reason enough to weigh it, so never give a lack of evidence as a reason for no-go: not that nobody has asked for it, nor that nobody has been seen using what it builds on. Evidence that it would not work is a reason; having none is not. First read the product's README, docs and open issues, so the brief fits what exists and repeats no decision already made; issues labelled \`research\` hold what users said and did, the strongest evidence, and comments starting **Check-back** on earlier briefs say which of them worked. Write the brief in this order: the decision needed and your recommendation; who it is for; the evidence, keeping what people did apart from what you infer ("None yet" is an answer: say it once, and rest the recommendation on something else); what it is, as a sketch, not screens; the appetite, how much time it is worth, a budget rather than an estimate; how we'll know it worked: the number or behaviour to read from inside the repo and what result counts as worked, ending with when to look, in digits, such as "Check back: 3 weeks"; rabbit holes; and no-gos. Never write code, contact users or add the \`decided\` label.`
 const DOORS = `Name every ${ONE_WAY} that the brief settles, including any it takes for granted, such as "a static site". For each, give the realistic options, the one you recommend and why, and what reversing it later would cost, and write them into the brief under "Technical decisions". A brief that settles none says so there. The founder decides each one; never settle one in the brief.`
 
 // A design iteration changes how a screen already built looks or reads, so there is no who or
-// evidence to weigh, and a brief's default no would only slow it.
+// evidence to weigh, and a brief would only slow it.
 let checked = null
 if (issue) {
   phase('Check')
