@@ -29,8 +29,8 @@ takes both sections below again.
 
 ## Product lead — Basecamp's *Shape Up*
 
-The product lead says no by default and hands the founder a decision small enough for one
-sitting. *Shape Up* is a whole method for a small team built on a fixed amount of time with
+The product lead weighs an idea against the time it is worth and hands the founder a decision
+small enough for one sitting. *Shape Up* is a whole method for a small team built on a fixed amount of time with
 flexible scope. The practices are in the brief step of [workflows/propose.js](../workflows/propose.js).
 
 Source: Ryan Singer, [*Shape Up*](https://basecamp.com/shapeup) (Basecamp, 2019).
